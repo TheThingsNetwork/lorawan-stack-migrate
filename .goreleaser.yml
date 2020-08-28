@@ -1,0 +1,102 @@
+project_name: lorawan-stack-migrate
+
+changelog:
+  skip: true
+
+release:
+  prerelease: auto
+
+builds:
+  - id: ttn-lw-migrate
+    main: ./cmd/ttn-lw-migrate
+    binary: ttn-lw-migrate
+    ldflags:
+    - -s
+    - -w
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 6
+      - 7
+    ignore:
+      - goos: darwin
+        goarch: 386
+
+archives:
+  - id: ttn-lw-migrate
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    builds:
+      - ttn-lw-migrate
+    files:
+      - LICENSE
+      - README.md
+    wrap_in_directory: true
+    format_overrides:
+      - goos: windows
+        format: zip
+
+nfpms:
+  - id: ttn-lw-migrate
+    builds:
+      - ttn-lw-migrate
+    vendor: The Things Network
+    homepage: https://www.thethingsnetwork.org
+    maintainer: The Things Network Foundation <stack@thethingsnetwork.org>
+    description: Migrate from other LoRaWAN network servers to The Things Stack
+    license: Apache 2.0
+    formats:
+      - deb
+      - rpm
+    recommends:
+      - lorawan-stack
+
+snapcrafts:
+  - id: ttn-lw-migrate
+    builds:
+      - ttn-lw-migrate
+    name: ttn-lw-migrate
+    summary: Migrate from other LoRaWAN network servers to The Things Stack
+    description: Migrate from other LoRaWAN network servers to The Things Stack
+    grade: stable
+    confinement: strict
+    publish: true
+    apps:
+      ttn-lw-migrate:
+        plugs: [ home, network ]
+        command: ttn-lw-migrate
+
+brews:
+  - name: ttn-lw-migrate
+    ids:
+      - ttn-lw-migrate
+    tap:
+      owner: TheThingsNetwork
+      name: homebrew-lorawan-stack-migrate
+    commit_author:
+      name: ttn-ci
+      email: stack@thethingsnetwork.org
+    homepage: https://www.thethingsnetwork.org
+    description: Migrate from other LoRaWAN network servers to The Things Stack
+    skip_upload: auto
+    install: |
+      bin.install "ttn-lw-migrate"
+
+dockers:
+  - goos: linux
+    goarch: amd64
+    dockerfile: Dockerfile
+    binaries:
+      - ttn-lw-migrate
+    image_templates:
+      - '{{ or (index .Env "DOCKER_IMAGE") "lorawan-stack-migrate" }}:{{ .Major }}.{{ .Minor }}'
+      - '{{ or (index .Env "DOCKER_IMAGE") "lorawan-stack-migrate" }}:{{ .Version }}'
+    skip_push: auto
