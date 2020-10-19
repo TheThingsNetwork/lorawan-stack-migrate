@@ -49,12 +49,13 @@ var (
 	}
 )
 
-// Execute runs the root command.
-func Execute() {
+// Execute runs the root command and returns the exit code.
+func Execute() int {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return 1
 	}
+	return 0
 }
 
 func init() {

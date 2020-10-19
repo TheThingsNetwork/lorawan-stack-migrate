@@ -22,7 +22,7 @@ import (
 type token string
 
 // GetRequestMetadata implements PerRPCCredentials.
-func (a token) GetRequestMetadata(ctx context.Context, url ...string) (map[string]string, error) {
+func (a token) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
 	return map[string]string{
 		"authorization": fmt.Sprintf("Bearer %s", a),
 	}, nil
