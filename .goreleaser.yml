@@ -13,6 +13,9 @@ builds:
     ldflags:
     - -s
     - -w
+    - -X go.thethings.network/lorawan-stack-migrate/pkg/version.BuildDate={{ .Date }}
+    - -X go.thethings.network/lorawan-stack-migrate/pkg/version.GitCommit={{ .ShortCommit }}
+    - -X go.thethings.network/lorawan-stack-migrate/pkg/version.Version={{ .Version }}
     env:
       - CGO_ENABLED=0
     goos:
