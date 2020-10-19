@@ -83,7 +83,7 @@ brews:
       - ttn-lw-migrate
     tap:
       owner: TheThingsNetwork
-      name: homebrew-lorawan-stack-migrate
+      name: homebrew-lorawan-stack
     commit_author:
       name: ttn-ci
       email: stack@thethingsnetwork.org
