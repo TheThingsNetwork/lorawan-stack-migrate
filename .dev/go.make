@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-GO_PACKAGES := $(shell go list -f '{{.Dir}}' ./...)
-
 .PHONY: go.fmt go.unconvert go.lint go.binaries go.test
+
+GO_PACKAGES := $(shell go list -f '{{.Dir}}' ./...)
 
 go.fmt:
 	gofmt -w -s $(GO_PACKAGES)

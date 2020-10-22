@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+.PHONY: git.diff git.hooks
+
 git.diff:
 	@if [[ ! -z "`git diff`" ]]; then \
 		echo "Previous operations have created changes that were not recorded in the repository. Please make those changes on your local machine before pushing them to the repository:"; \
@@ -19,4 +21,5 @@ git.diff:
 		exit 1; \
 	fi
 
-.PHONY: git.diff git.hooks
+git.hooks:
+	go run ./.hooks/install-hooks.go
