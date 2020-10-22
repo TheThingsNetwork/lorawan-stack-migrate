@@ -30,13 +30,8 @@ block_comment_start = /*
 block_comment = *
 block_comment_end = */
 
-[{*.make,go.mod,go.sum,Makefile,makefile}]
+[{*.make,go.mod,go.sum,Makefile}]
 indent_style = tab
-
-[doc/themes/the-things-stack/layouts/shortcodes/*.html]
-indent_size = unset
-indent_style = unset
-insert_final_newline = false
 
 [.gitkeep]
 indent_size = 0
