@@ -8,14 +8,6 @@ Binaries are available on [GitHub](https://github.com/TheThingsNetwork/lorawan-s
 
 Docker images are available on [Docker Hub](https://hub.docker.com/r/TheThingsNetwork/lorawan-stack-migrate).
 
-## Building from source
-
-Requires Go version 1.14 or higher. [Download Go](https://golang.org/dl/).
-
-```bash
-$ go install go.thethings.network/lorawan-stack-migrate/cmd/ttn-lw-migrate
-```
-
 ## Support
 
 - [X] [ChirpStack Network Server](https://www.chirpstack.io/)
@@ -108,3 +100,83 @@ $ ttn-lw-migrate application --source chirpstack < application_names.txt > devic
 - ABP devices without an active session are successfully exported from ChirpStack, but cannot be imported into The Things Stack.
 - MaxEIRP may not be always set properly.
 - ChirpStack payload formatters also accept a `variables` parameter. This will always be `null` on The Things Stack.
+
+## Development Environment
+
+Requires Go version 1.14 or higher. [Download Go](https://golang.org/dl/).
+
+### Building from source
+
+```bash
+$ git clone https://github.com/TheThingsNetwork/lorawan-stack-migrate.git
+$ cd lorawan-stack-migrate/
+$ go install go.thethings.network/lorawan-stack-migrate/cmd/ttn-lw-migrate
+$ $(go env GOPATH)/bin/ttn-lw-migrate --help
+```
+
+### Development
+
+Initialize the development environment using `make`:
+
+```bash
+$ make init
+```
+
+For development/testing purposes, the binary can be executed directly using `go run`:
+
+```bash
+$ go run ./cmd/ttn-lw-migrate
+```
+
+It is also possible to use `go build`.
+
+## Releasing
+
+### Snapshot releases
+
+Releases are created using [`goreleaser`](https://github.com/goreleaser/goreleaser). You can build a release snapshot from your local branch with `go run github.com/goreleaser/goreleaser --snapshot`.
+
+> Note: You will at least need to have [`rpm`](http://rpm5.org/) and [`snapcraft`](https://snapcraft.io/) in your `PATH`.
+
+This will compile binaries for all supported platforms, `deb`, `rpm` and Snapcraft packages, release archives in `dist`, as well as Docker images.
+
+> Note: The operating system and architecture represent the name of the directory in `dist` in which the binaries are placed.
+> For example, the binaries for Darwin x64 (macOS) will be located at `dist/darwin_amd64`.
+
+### Release from master
+
+1. Create a `release/${version}` branch off the `master` branch.
+```bash
+$ git checkout master
+$ git checkout -b release/${version}
+```
+2. Update the `CHANGELOG.md` file as explained below:
+- Change the **Unreleased** section to the new version and add date obtained via `date +%Y-%m-%d` (e.g. `## [1.0.0] - 2020-10-18`)
+  - Check if we didn't forget anything important
+  - Remove empty subsections
+  - Update the list of links in the bottom of the file
+  - Add new **Unreleased** section:
+    ```md
+    ## [Unreleased]
+
+    ### Added
+
+    ### Changed
+
+    ### Deprecated
+
+    ### Removed
+
+    ### Fixed
+
+    ### Security
+    ```
+4. Create a pull request targeting `master`.
+5. Once this PR is approved and merged, checkout the latest `master` branch locally.
+6. Create a version tag, and push to GitHub:
+```bash
+$ git tag -s -a "v${version}" -m "ttn-lw-migrate v${version}"
+$ git push origin "v${version}"
+```
+7. CI will automatically start building and pushing to package managers. When this is done, you'll find a new release on the [releases page](https://github.com/TheThingsNetwork/lorawan-stack-migrate/releases).
+8. Edit the release notes on the GitHub releases page, typically copied from `CHANGELOG.md`.
