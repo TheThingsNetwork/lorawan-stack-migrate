@@ -15,10 +15,13 @@
 package version
 
 // BuildDate of the binary
-var BuildDate = ""
+var (
+	// BuildDate is the date the binary was built. For release builds, this is set by goreleaser.
+	BuildDate = ""
 
-// GitCommit from which the binary was built
-var GitCommit = ""
+	// GitCommit is the commit from which the binary was built. For release builds, this is set by goreleaser.
+	GitCommit = ""
 
-// Version is the release version
-var Version = "dev"
+	// Version is the binary version. For release builds, this is set by goreleaser.
+	Version = "dev"
+)
