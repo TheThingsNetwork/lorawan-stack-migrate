@@ -1,0 +1,17 @@
+# Root
+/ @johanstokking @neoaggelos
+/CODEOWNERS @johanstokking @neoaggelos
+/LICENSE @johanstokking
+
+# Dependencies
+/go.mod @johanstokking @htdvisser @rvolosatovs @neoaggelos
+/go.sum @johanstokking @htdvisser @rvolosatovs @neoaggelos
+
+# Build pipeline and tooling
+/Makefile @htdvisser @rvolosatovs @johanstokking @neoaggelos
+/.dev @htdvisser @rvolosatovs @johanstokking @neoaggelos
+/.github/workflows @htdvisser @rvolosatovs @johanstokking @neoaggelos
+
+# Commands
+/cmd @neoaggelos @htdvisser @johanstokking
+/pkg @neoaggelos @johanstokking
