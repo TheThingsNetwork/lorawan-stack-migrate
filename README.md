@@ -103,7 +103,7 @@ $ ttn-lw-migrate application --source chirpstack < application_names.txt > devic
 
 ## Development Environment
 
-Requires Go version 1.14 or higher. [Download Go](https://golang.org/dl/).
+Requires Go version 1.15 or higher. [Download Go](https://golang.org/dl/).
 
 ### Building from source
 

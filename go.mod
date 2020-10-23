@@ -1,6 +1,6 @@
 module go.thethings.network/lorawan-stack-migrate
 
-go 1.14
+go 1.15
 
 // Dependency of lorawan-stack.
 replace gopkg.in/DATA-DOG/go-sqlmock.v1 => gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0
