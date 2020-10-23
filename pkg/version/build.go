@@ -14,7 +14,6 @@
 
 package version
 
-// BuildDate of the binary
 var (
 	// BuildDate is the date the binary was built. For release builds, this is set by goreleaser.
 	BuildDate = ""
