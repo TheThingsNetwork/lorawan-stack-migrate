@@ -4,13 +4,13 @@
 /LICENSE @johanstokking
 
 # Dependencies
-/go.mod @johanstokking @htdvisser @rvolosatovs @neoaggelos
-/go.sum @johanstokking @htdvisser @rvolosatovs @neoaggelos
+/go.mod @johanstokking @rvolosatovs @neoaggelos
+/go.sum @johanstokking @rvolosatovs @neoaggelos
 
 # Build pipeline and tooling
-/Makefile @htdvisser @rvolosatovs @johanstokking @neoaggelos
-/.dev @htdvisser @rvolosatovs @johanstokking @neoaggelos
-/.github/workflows @htdvisser @rvolosatovs @johanstokking @neoaggelos
+/Makefile @htdvisser @rvolosatovs @neoaggelos
+/.dev @htdvisser @rvolosatovs @neoaggelos
+/.github/workflows @htdvisser @rvolosatovs @neoaggelos
 
 # Commands
 /cmd @neoaggelos @htdvisser @johanstokking
