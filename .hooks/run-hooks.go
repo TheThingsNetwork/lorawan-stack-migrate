@@ -28,6 +28,7 @@ var gitCommitPrefixes = []string{
 	"dev",
 	"cli",
 	"fix",
+	"all",
 }
 
 func commitMsg(messageFile string) error {
