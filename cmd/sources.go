@@ -27,7 +27,7 @@ var sourcesCmd = &cobra.Command{
 	Short:   "List available sources",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		for name, description := range source.Sources() {
-			fmt.Printf("%-20s %s", name, description)
+			fmt.Printf("%-20s %s\n", name, description)
 		}
 		return nil
 	},
