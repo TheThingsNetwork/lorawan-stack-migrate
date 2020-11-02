@@ -12,23 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package chirpstack
+// +build tools
+
+package migrate
 
 import (
-	"context"
-	"fmt"
+	_ "github.com/mdempsky/unconvert" // make go.unconvert
+	_ "github.com/mgechev/revive"     // make go.lint
 )
-
-type token string
-
-// GetRequestMetadata implements PerRPCCredentials.
-func (a token) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
-	return map[string]string{
-		"authorization": fmt.Sprintf("Bearer %s", a),
-	}, nil
-}
-
-// RequireTransportSecurity implements PerRPCCredentials.
-func (a token) RequireTransportSecurity() bool {
-	return false
-}

@@ -1,0 +1,57 @@
+name: Tag release
+
+on:
+  push:
+    tags:
+      - 'v[0-9].[0-9]+.[0-9]+'
+      - 'v[0-9].[0-9]+.[0-9]+-rc[0-9]'
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Login to Docker
+      uses: azure/docker-login@v1
+      with:
+        username: '${{ secrets.DOCKER_USERNAME }}'
+        password: '${{ secrets.DOCKER_PASSWORD }}'
+    - name: Install Snapcraft
+      run: sudo apt-get -yq --no-install-suggests --no-install-recommends install snapcraft
+    - name: Login to Snapcraft
+      env:
+        SNAPCRAFT_LOGIN: ${{ secrets.SNAPCRAFT_LOGIN }}
+      run: snapcraft login --with <(printf "$SNAPCRAFT_LOGIN")
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '~1.15'
+    - name: Download Go dependencies
+      run: go mod download
+    - name: Check for diff
+      run: make git.diff
+    - name: Determine date
+      id: date
+      run: echo "::set-output name=value::$(date +%Y-%m-%d)"
+    - name: Generate CHANGELOG reference
+      uses: actions/github-script@v2
+      id: changelog_reference
+      with:
+        result-encoding: string
+        script: |
+          const tag = context.ref.slice('refs/rev/v'.length);
+          const tagParts = tag.split('.');
+          require('fs').writeFileSync('/tmp/release-notes.md', `[Release notes](https://github.com/TheThingsNetwork/lorawan-stack-migrate/blob/${tag}/CHANGELOG.md#${tagParts[0]}${tagParts[1]}${tagParts[2]}---${{ steps.date.outputs.value }})`);
+    - name: Determine Goreleaser version
+      id: goreleaser_version
+      run: echo "::set-output name=value::$(cat go.mod | grep 'github.com/goreleaser/goreleaser v' | cut -d ' ' -f 2)"
+    - name: Run Goreleaser
+      uses: goreleaser/goreleaser-action@v2
+      with:
+        version: ${{ steps.goreleaser_version.outputs.value }}
+        args: release --release-notes /tmp/release-notes.md
+      env:
+        DOCKER_IMAGE: TheThingsNetwork/lorawan-stack-migrate
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

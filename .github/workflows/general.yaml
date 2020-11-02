@@ -1,0 +1,18 @@
+name: General
+
+on:
+  push:
+    branches: master
+  pull_request:
+
+jobs:
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Check out Code
+      uses: actions/checkout@v2
+    - name: Editor Config
+      uses: snow-actions/eclint@v1.0.1
+    - name: Check for diff
+      run: make git.diff

@@ -15,11 +15,13 @@
 package main
 
 import (
+	"os"
+
 	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack" // ChirpStack source
 
 	"go.thethings.network/lorawan-stack-migrate/cmd"
 )
 
 func main() {
-	cmd.Execute()
+	os.Exit(cmd.Execute())
 }

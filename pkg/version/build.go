@@ -12,23 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package chirpstack
+package version
 
-import (
-	"context"
-	"fmt"
+var (
+	// BuildDate is the date the binary was built. For release builds, this is set by goreleaser.
+	BuildDate = ""
+
+	// GitCommit is the commit from which the binary was built. For release builds, this is set by goreleaser.
+	GitCommit = ""
+
+	// Version is the binary version. For release builds, this is set by goreleaser.
+	Version = "dev"
 )
-
-type token string
-
-// GetRequestMetadata implements PerRPCCredentials.
-func (a token) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
-	return map[string]string{
-		"authorization": fmt.Sprintf("Bearer %s", a),
-	}, nil
-}
-
-// RequireTransportSecurity implements PerRPCCredentials.
-func (a token) RequireTransportSecurity() bool {
-	return false
-}

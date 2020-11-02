@@ -1,0 +1,65 @@
+name: Go Code
+
+on:
+  push:
+    branches: master
+  pull_request:
+    paths:
+    - '*.go'
+    - 'cmd/**'
+    - 'go.mod'
+    - 'go.sum'
+    - 'pkg/**'
+
+jobs:
+  quality:
+    name: Go Code Quality
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Check out Code
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '~1.15'
+    - name: Initialize Go module cache
+      uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - name: Download Go dependencies
+      run: go mod download
+    - name: Remove unnecessary type conversions
+      run: make go.unconvert
+    - name: Format Code
+      run: make go.fmt
+    - name: Lint Code
+      run: make go.lint
+    - name: Check for diff
+      run: make git.diff
+
+  test:
+    name: Go Tests
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Check out Code
+      uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '~1.15'
+    - name: Initialize Go module cache
+      uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - name: Download Go dependencies
+      run: go mod download
+    - name: Test binary execution
+      run: make go.binaries
+    - name: Unit tests
+      run: make go.test

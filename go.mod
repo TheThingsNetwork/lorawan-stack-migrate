@@ -1,6 +1,6 @@
 module go.thethings.network/lorawan-stack-migrate
 
-go 1.14
+go 1.15
 
 // Dependency of lorawan-stack.
 replace gopkg.in/DATA-DOG/go-sqlmock.v1 => gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0
@@ -29,6 +29,8 @@ require (
 	github.com/jarcoal/httpmock v1.0.6 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.7 // indirect
+	github.com/mdempsky/unconvert v0.0.0-20200228143138-95ecdbfc0b5f
+	github.com/mgechev/revive v1.0.2
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/onsi/ginkgo v1.14.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
