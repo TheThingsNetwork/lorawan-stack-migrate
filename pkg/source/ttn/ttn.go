@@ -19,7 +19,7 @@ import "go.thethings.network/lorawan-stack-migrate/pkg/source"
 func init() {
 	source.RegisterSource(source.Registration{
 		Name:        "ttn",
-		Description: "Migrate from The Things Network",
+		Description: "Migrate from The Things Network Stack V2",
 		FlagSet:     flagSet(),
 		Create:      NewSource,
 	})

@@ -10,7 +10,7 @@ Docker images are available on [Docker Hub](https://hub.docker.com/r/TheThingsNe
 
 ## Support
 
-- [X] [The Things Network](https://thethingsnetwork.org/)
+- [X] The Things Network Stack V2
 - [X] [ChirpStack Network Server](https://www.chirpstack.io/)
 - [ ] [LORIOT Network Server](https://www.loriot.io/)
 
@@ -102,7 +102,7 @@ $ ttn-lw-migrate application --source chirpstack < application_names.txt > devic
 - MaxEIRP may not be always set properly.
 - ChirpStack payload formatters also accept a `variables` parameter. This will always be `null` on The Things Stack.
 
-## The Things Network
+## The Things Network Stack V2
 
 ### Configuration
 
@@ -114,7 +114,7 @@ $ export TTN_APP_ACCESS_KEY="ttn-account-v2.a..."   # TTN App Access Key (needs 
 $ export FREQUENCY_PLAN_ID="EU_863_870_TTN"         # Frequency Plan for exported devices
 ```
 
-Private TTN v2 deployments are also supported, and require extra configuration. See `ttn-lw-migrate --help` for more details. For example, to override the discovery server address:
+Private TTN V2 deployments are also supported, and require extra configuration. See `ttn-lw-migrate --help` for more details. For example, to override the discovery server address:
 
 ```bash
 $ export TTN_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
