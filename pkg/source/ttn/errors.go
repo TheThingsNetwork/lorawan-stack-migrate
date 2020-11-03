@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package ttn
 
-import (
-	"os"
+import "go.thethings.network/lorawan-stack/v3/pkg/errors"
 
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack" // ChirpStack source
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttn"        // TTN source
+var (
+	errRead = errors.DefinePermissionDenied("read", "failed to read `{file}`")
 
-	"go.thethings.network/lorawan-stack-migrate/cmd"
+	errNoAppID           = errors.DefineInvalidArgument("no_app_id", "no app id")
+	errNoAppAccessKey    = errors.DefineInvalidArgument("no_app_access_key", "no app access key")
+	errNoFrequencyPlanID = errors.DefineInvalidArgument("no_frequency_plan_id", "no frequency plan id")
 )
-
-func main() {
-	os.Exit(cmd.Execute())
-}
