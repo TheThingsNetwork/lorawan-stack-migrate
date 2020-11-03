@@ -10,6 +10,7 @@ Docker images are available on [Docker Hub](https://hub.docker.com/r/TheThingsNe
 
 ## Support
 
+- [X] [The Things Network](https://thethingsnetwork.org/)
 - [X] [ChirpStack Network Server](https://www.chirpstack.io/)
 - [ ] [LORIOT Network Server](https://www.loriot.io/)
 
@@ -100,6 +101,61 @@ $ ttn-lw-migrate application --source chirpstack < application_names.txt > devic
 - ABP devices without an active session are successfully exported from ChirpStack, but cannot be imported into The Things Stack.
 - MaxEIRP may not be always set properly.
 - ChirpStack payload formatters also accept a `variables` parameter. This will always be `null` on The Things Stack.
+
+## The Things Network
+
+### Configuration
+
+Configure with environment variables, or command-line arguments. See `--help` for more details:
+
+```bash
+$ export TTN_APP_ID="my-ttn-app"                    # TTN App ID
+$ export TTN_APP_ACCESS_KEY="ttn-account-v2.a..."   # TTN App Access Key (needs `devices` permissions)
+$ export FREQUENCY_PLAN_ID="EU_863_870_TTN"         # Frequency Plan for exported devices
+```
+
+Private TTN v2 deployments are also supported, and require extra configuration. See `ttn-lw-migrate --help` for more details. For example, to override the discovery server address:
+
+```bash
+$ export TTN_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
+```
+
+### Export Devices
+
+To export a single device using its Device ID (e.g. `mydevice`):
+
+```
+$ ttn-lw-migrate device --source chirpstack "mydevice" > devices.json
+```
+
+In order to export a large number of devices, create a file named `device_ids.txt` with one DevEUI per line:
+
+```
+mydevice
+otherdevice
+device3
+device4
+device5
+```
+
+And then export with:
+
+```bash
+$ ttn-lw-migrate device --source ttn < device_ids.txt > devices.json
+```
+
+### Export Applications
+
+Similarly, to export all devices of application `my-app-id`:
+
+```bash
+$ ttn-lw-migrate application --source ttn "my-app-id" > devices.json
+```
+
+### Notes
+
+- Payload formatters are not exported. See [Payload Formatters](https://thethingsstack.io/integrations/payload-formatters/).
+- If you want to export the device frame counters, use the `--ttn.with-frame-counters` option.
 
 ## Development Environment
 
