@@ -100,15 +100,19 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	v3dev.FrequencyPlanID = s.config.frequencyPlanID
 
 	v3dev.MACSettings = &ttnpb.MACSettings{
-		Supports32BitFCnt: &pbtypes.BoolValue{
-			Value: dev.Uses32BitFCnt,
-		},
-		ResetsFCnt: &pbtypes.BoolValue{
-			Value: dev.DisableFCntCheck,
-		},
 		Rx1Delay: &ttnpb.RxDelayValue{
 			Value: ttnpb.RX_DELAY_1,
 		},
+	}
+	if dev.Uses32BitFCnt {
+		v3dev.MACSettings.Supports32BitFCnt = &pbtypes.BoolValue{
+			Value: dev.Uses32BitFCnt,
+		}
+	}
+	if dev.DisableFCntCheck {
+		v3dev.MACSettings.ResetsFCnt = &pbtypes.BoolValue{
+			Value: dev.DisableFCntCheck,
+		}
 	}
 
 	if dev.AppKey != nil && !dev.AppKey.IsEmpty() {
