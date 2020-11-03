@@ -45,7 +45,7 @@ type config struct {
 
 func flagSet() *pflag.FlagSet {
 	flags := &pflag.FlagSet{}
-	flags.Bool("ttn.with-frame-counters", false, "Export device frame counters as well (slower)")
+	flags.Bool("ttn.without-frame-counters", false, "Do not export device frame counters (faster)")
 	flags.String("ttn.frequency-plan-id", os.Getenv("FREQUENCY_PLAN_ID"), "Frequency Plan ID of exported devices")
 	flags.String("ttn.app-id", os.Getenv("TTN_APP_ID"), "TTN Application ID")
 	flags.String("ttn.app-access-key", os.Getenv("TTN_APP_ACCESS_KEY"), "TTN Application Access Key (with 'devices' permissions)")
@@ -132,6 +132,6 @@ func getConfig(ctx context.Context, flags *pflag.FlagSet) (config, error) {
 		appAccessKey:    appAccessKey,
 		frequencyPlanID: frequencyPlanID,
 
-		withFrameCounters: boolFlag("ttn.with-frame-counters"),
+		withFrameCounters: !boolFlag("ttn.without-frame-counters"),
 	}, nil
 }

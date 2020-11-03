@@ -155,7 +155,7 @@ $ ttn-lw-migrate application --source ttn "my-app-id" > devices.json
 ### Notes
 
 - Payload formatters are not exported. See [Payload Formatters](https://thethingsstack.io/integrations/payload-formatters/).
-- If you want to export the device frame counters, use the `--ttn.with-frame-counters` option.
+- Exporting a large number of devices may take a long time. If you plan on having the devices rejoin on V3, you can speed up the process by setting the `--ttn.without-frame-counters` flag.
 
 ## Development Environment
 
