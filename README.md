@@ -125,7 +125,7 @@ $ export TTN_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
 To export a single device using its Device ID (e.g. `mydevice`):
 
 ```
-$ ttn-lw-migrate device --source chirpstack "mydevice" > devices.json
+$ ttn-lw-migrate device --source ttn "mydevice" > devices.json
 ```
 
 In order to export a large number of devices, create a file named `device_ids.txt` with one DevEUI per line:
