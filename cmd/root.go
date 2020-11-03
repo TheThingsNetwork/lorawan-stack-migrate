@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -52,7 +51,7 @@ var (
 // Execute runs the root command and returns the exit code.
 func Execute() int {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		printStack(os.Stderr, err)
 		return 1
 	}
 	return 0
