@@ -18,7 +18,7 @@ import (
 	"os"
 
 	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack" // ChirpStack source
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttn"        // TTN source
+	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv2"      // TTNv2 source
 
 	"go.thethings.network/lorawan-stack-migrate/cmd"
 )

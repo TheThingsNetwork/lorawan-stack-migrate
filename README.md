@@ -41,9 +41,9 @@ $ ttn-lw-cli end-devices create --application-id test-app < devices.json
 Configure with environment variables, or command-line arguments. See `--help` for more details:
 
 ```bash
-$ export TTN_APP_ID="my-ttn-app"                    # TTN App ID
-$ export TTN_APP_ACCESS_KEY="ttn-account-v2.a..."   # TTN App Access Key (needs `devices` permissions)
-$ export FREQUENCY_PLAN_ID="EU_863_870_TTN"         # Frequency Plan for exported devices
+$ export TTNV2_APP_ID="my-ttn-app"                    # TTN App ID
+$ export TTNV2_APP_ACCESS_KEY="ttn-account-v2.a..."   # TTN App Access Key (needs `devices` permissions)
+$ export FREQUENCY_PLAN_ID="EU_863_870_TTN"           # Frequency Plan for exported devices
 ```
 
 See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for the list of frequency plans available on The Things Stack. For example, to use `United States 902-928 MHz, FSB 1`, you need to specify the `US_902_928_FSB_1` frequency plan ID.
@@ -51,7 +51,7 @@ See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for 
 Private The Things Network Stack V2 deployments are also supported, and require extra configuration. See `ttn-lw-migrate device --help` for more details. For example, to override the discovery server address:
 
 ```bash
-$ export TTN_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
+$ export TTNV2_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
 ```
 
 ### Export Devices
@@ -59,7 +59,7 @@ $ export TTN_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
 To export a single device using its Device ID (e.g. `mydevice`):
 
 ```bash
-$ ttn-lw-migrate device --source ttn "mydevice" > devices.json
+$ ttn-lw-migrate device --source ttnv2 "mydevice" > devices.json
 ```
 
 In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
@@ -75,7 +75,7 @@ device5
 And then export with:
 
 ```bash
-$ ttn-lw-migrate device --source ttn < device_ids.txt > devices.json
+$ ttn-lw-migrate device --source ttnv2 < device_ids.txt > devices.json
 ```
 
 ### Export Applications
@@ -83,13 +83,13 @@ $ ttn-lw-migrate device --source ttn < device_ids.txt > devices.json
 Similarly, to export all devices of application `my-app-id`:
 
 ```bash
-$ ttn-lw-migrate application --source ttn "my-app-id" > devices.json
+$ ttn-lw-migrate application --source ttnv2 "my-app-id" > devices.json
 ```
 
 ### Notes
 
 - Payload formatters are not exported. See [Payload Formatters](https://thethingsstack.io/integrations/payload-formatters/).
-- Active device sessions are exported by default. You can disable this by using the `--ttn.with-session=false` flag. It is recommended that you do not export session keys for devices that can instead re-join on The Things Stack.
+- Active device sessions are exported by default. You can disable this by using the `--ttnv2.with-session=false` flag. It is recommended that you do not export session keys for devices that can instead re-join on The Things Stack.
 
 ## ChirpStack
 

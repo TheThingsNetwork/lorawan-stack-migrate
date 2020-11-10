@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ttn
+package ttnv2
 
-import "go.thethings.network/lorawan-stack-migrate/pkg/source"
+import "go.thethings.network/lorawan-stack/v3/pkg/errors"
 
-func init() {
-	source.RegisterSource(source.Registration{
-		Name:        "ttn",
-		Description: "Migrate from The Things Network Stack V2",
-		FlagSet:     flagSet(),
-		Create:      NewSource,
-	})
-}
+var (
+	errRead = errors.DefinePermissionDenied("read", "failed to read `{file}`")
+
+	errNoAppID           = errors.DefineInvalidArgument("no_app_id", "no app id")
+	errNoAppAccessKey    = errors.DefineInvalidArgument("no_app_access_key", "no app access key")
+	errNoFrequencyPlanID = errors.DefineInvalidArgument("no_frequency_plan_id", "no frequency plan id")
+)

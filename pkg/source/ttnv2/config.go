@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ttn
+package ttnv2
 
 import (
 	"context"
@@ -44,17 +44,17 @@ type config struct {
 
 func flagSet() *pflag.FlagSet {
 	flags := &pflag.FlagSet{}
-	flags.String("ttn.frequency-plan-id", os.Getenv("FREQUENCY_PLAN_ID"), "Frequency Plan ID of exported devices")
-	flags.String("ttn.app-id", os.Getenv("TTN_APP_ID"), "TTN Application ID")
-	flags.String("ttn.app-access-key", os.Getenv("TTN_APP_ACCESS_KEY"), "TTN Application Access Key (with 'devices' permissions)")
-	flags.String("ttn.ca-cert", os.Getenv("TTN_CA_CERT"), "(only for private networks) CA for TLS")
-	flags.String("ttn.handler-address", os.Getenv("TTN_HANDLER_ADDRESS"), "(only for private networks) Address for the Handler")
-	flags.String("ttn.account-server-address", os.Getenv("TTN_ACCOUNT_SERVER_ADDRESS"), "(only for private networks) Address for the Account Server")
-	flags.String("ttn.account-server-client-id", os.Getenv("TTN_ACCOUNT_SERVER_CLIENT_ID"), "(only for private networks) Client ID for the Account Server")
-	flags.String("ttn.account-server-client-secret", os.Getenv("TTN_ACCOUNT_SERVER_CLIENT_SECRET"), "(only for private networks) Client secret for the Account Server")
-	flags.String("ttn.discovery-server-address", os.Getenv("TTN_DISCOVERY_SERVER_ADDRESS"), "(only for private networks) Address for the Discovery Server")
-	flags.Bool("ttn.discovery-server-insecure", false, "(only for private networks) Not recommended")
-	flags.Bool("ttn.with-session", true, "Export device session keys and frame counters")
+	flags.String("ttnv2.frequency-plan-id", os.Getenv("FREQUENCY_PLAN_ID"), "Frequency Plan ID of exported devices")
+	flags.String("ttnv2.app-id", os.Getenv("TTNV2_APP_ID"), "TTN Application ID")
+	flags.String("ttnv2.app-access-key", os.Getenv("TTNV2_APP_ACCESS_KEY"), "TTN Application Access Key (with 'devices' permissions)")
+	flags.String("ttnv2.ca-cert", os.Getenv("TTNV2_CA_CERT"), "(only for private networks) CA for TLS")
+	flags.String("ttnv2.handler-address", os.Getenv("TTNV2_HANDLER_ADDRESS"), "(only for private networks) Address for the Handler")
+	flags.String("ttnv2.account-server-address", os.Getenv("TTNV2_ACCOUNT_SERVER_ADDRESS"), "(only for private networks) Address for the Account Server")
+	flags.String("ttnv2.account-server-client-id", os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_ID"), "(only for private networks) Client ID for the Account Server")
+	flags.String("ttnv2.account-server-client-secret", os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_SECRET"), "(only for private networks) Client secret for the Account Server")
+	flags.String("ttnv2.discovery-server-address", os.Getenv("TTNV2_DISCOVERY_SERVER_ADDRESS"), "(only for private networks) Address for the Discovery Server")
+	flags.Bool("ttnv2.discovery-server-insecure", false, "(only for private networks) Not recommended")
+	flags.Bool("ttnv2.with-session", true, "Export device session keys and frame counters")
 	return flags
 }
 
@@ -69,24 +69,24 @@ func getConfig(ctx context.Context, flags *pflag.FlagSet) (config, error) {
 	}
 
 	cfg := ttnsdk.NewCommunityConfig(clientName)
-	if f := stringFlag("ttn.account-server-address"); f != "" {
+	if f := stringFlag("ttnv2.account-server-address"); f != "" {
 		cfg.AccountServerAddress = f
 	}
-	if f := stringFlag("ttn.account-server-client-id"); f != "" {
+	if f := stringFlag("ttnv2.account-server-client-id"); f != "" {
 		cfg.AccountServerClientID = f
 	}
-	if f := stringFlag("ttn.account-server-client-secret"); f != "" {
+	if f := stringFlag("ttnv2.account-server-client-secret"); f != "" {
 		cfg.AccountServerClientSecret = f
 	}
-	if f := stringFlag("ttn.handler-address"); f != "" {
+	if f := stringFlag("ttnv2.handler-address"); f != "" {
 		cfg.HandlerAddress = f
 	}
-	if f := stringFlag("ttn.discovery-server-address"); f != "" {
+	if f := stringFlag("ttnv2.discovery-server-address"); f != "" {
 		cfg.DiscoveryServerAddress = f
 	}
-	cfg.DiscoveryServerInsecure = boolFlag("ttn.discovery-server-insecure")
+	cfg.DiscoveryServerInsecure = boolFlag("ttnv2.discovery-server-insecure")
 
-	if ca := stringFlag("ttn.ca-cert"); ca != "" {
+	if ca := stringFlag("ttnv2.ca-cert"); ca != "" {
 		if cfg.TLSConfig == nil {
 			cfg.TLSConfig = &tls.Config{}
 		}
@@ -104,15 +104,15 @@ func getConfig(ctx context.Context, flags *pflag.FlagSet) (config, error) {
 		rootCAs.AppendCertsFromPEM(pemBytes)
 	}
 
-	appAccessKey := stringFlag("ttn.app-access-key")
+	appAccessKey := stringFlag("ttnv2.app-access-key")
 	if appAccessKey == "" {
 		return config{}, errNoAppAccessKey.New()
 	}
-	appID := stringFlag("ttn.app-id")
+	appID := stringFlag("ttnv2.app-id")
 	if appID == "" {
 		return config{}, errNoAppID.New()
 	}
-	frequencyPlanID := stringFlag("ttn.frequency-plan-id")
+	frequencyPlanID := stringFlag("ttnv2.frequency-plan-id")
 	if frequencyPlanID == "" {
 		return config{}, errNoFrequencyPlanID.New()
 	}
@@ -130,6 +130,6 @@ func getConfig(ctx context.Context, flags *pflag.FlagSet) (config, error) {
 		appAccessKey:    appAccessKey,
 		frequencyPlanID: frequencyPlanID,
 
-		withSession: boolFlag("ttn.with-session"),
+		withSession: boolFlag("ttnv2.with-session"),
 	}, nil
 }
