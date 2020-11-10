@@ -89,7 +89,7 @@ $ ttn-lw-migrate application --source ttn "my-app-id" > devices.json
 ### Notes
 
 - Payload formatters are not exported. See [Payload Formatters](https://thethingsstack.io/integrations/payload-formatters/).
-- Exporting a large number of devices may take a long time. If you plan on having the devices rejoin on The Things Stack, you can speed up the process by setting the `--ttn.without-frame-counters` flag.
+- Active device sessions are exported by default. You can disable this by using the `--ttn.with-session=false` flag. It is recommended that you do not export session keys for devices that can instead re-join on The Things Stack.
 
 ## ChirpStack
 

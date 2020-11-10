@@ -34,12 +34,12 @@ const (
 type config struct {
 	sdkConfig ttnsdk.ClientConfig
 
-	debug bool
-
 	appAccessKey string
 	appID        string
 
 	frequencyPlanID string
+
+	withSession bool
 }
 
 func flagSet() *pflag.FlagSet {
@@ -54,7 +54,7 @@ func flagSet() *pflag.FlagSet {
 	flags.String("ttn.account-server-client-secret", os.Getenv("TTN_ACCOUNT_SERVER_CLIENT_SECRET"), "(only for private networks) Client secret for the Account Server")
 	flags.String("ttn.discovery-server-address", os.Getenv("TTN_DISCOVERY_SERVER_ADDRESS"), "(only for private networks) Address for the Discovery Server")
 	flags.Bool("ttn.discovery-server-insecure", false, "(only for private networks) Not recommended")
-
+	flags.Bool("ttn.with-session", true, "Export device session keys and frame counters")
 	return flags
 }
 
@@ -129,5 +129,7 @@ func getConfig(ctx context.Context, flags *pflag.FlagSet) (config, error) {
 		appID:           appID,
 		appAccessKey:    appAccessKey,
 		frequencyPlanID: frequencyPlanID,
+
+		withSession: boolFlag("ttn.with-session"),
 	}, nil
 }

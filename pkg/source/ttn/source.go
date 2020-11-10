@@ -33,9 +33,10 @@ type Source struct {
 
 	config config
 	mgr    ttnsdk.DeviceManager
+	devices map[string]*ttnsdk.Device
 }
 
-// NewSource creates a new TTN Source.
+// NewSource creates a new TTNv2 Source.
 func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error) {
 	config, err := getConfig(ctx, flags)
 	if err != nil {
@@ -43,8 +44,9 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 	}
 
 	return &Source{
-		ctx:    ctx,
-		config: config,
+		ctx:     ctx,
+		config:  config,
+		devices: make(map[string]*ttnsdk.Device),
 	}, nil
 }
 
@@ -62,13 +64,16 @@ func (s *Source) getDeviceManager(appID string) (ttnsdk.DeviceManager, error) {
 
 // ExportDevice implements the source.Source interface.
 func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
-	mgr, err := s.getDeviceManager(s.config.appID)
-	if err != nil {
-		return nil, err
-	}
-	dev, err := mgr.Get(devID)
-	if err != nil {
-		return nil, errors.FromGRPCError(err)
+	dev := s.devices[devID]
+	if s.config.withSession {
+		mgr, err := s.getDeviceManager(s.config.appID)
+		if err != nil {
+			return nil, err
+		}
+		dev, err = mgr.Get(devID)
+		if err != nil {
+			return nil, errors.FromGRPCError(err)
+		}
 	}
 
 	v3dev := &ttnpb.EndDevice{}
@@ -130,7 +135,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		}
 	}
 
-	if dev.DevAddr != nil && dev.NwkSKey != nil && dev.AppSKey != nil {
+	if s.config.withSession && dev.DevAddr != nil && dev.NwkSKey != nil && dev.AppSKey != nil {
 		v3dev.Session = &ttnpb.Session{
 			SessionKeys: ttnpb.SessionKeys{
 				AppSKey: &ttnpb.KeyEnvelope{
@@ -170,6 +175,7 @@ func (s *Source) RangeDevices(appID string, f func(source.Source, string) error)
 	}
 
 	for _, dev := range devices {
+		s.devices[dev.DevID] = dev.AsDevice()
 		if err := f(s, dev.DevID); err != nil {
 			return err
 		}
