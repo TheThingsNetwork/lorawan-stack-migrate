@@ -114,7 +114,7 @@ $ export TTN_APP_ACCESS_KEY="ttn-account-v2.a..."   # TTN App Access Key (needs 
 $ export FREQUENCY_PLAN_ID="EU_863_870_TTN"         # Frequency Plan for exported devices
 ```
 
-Private TTN V2 deployments are also supported, and require extra configuration. See `ttn-lw-migrate --help` for more details. For example, to override the discovery server address:
+Private TTN V2 deployments are also supported, and require extra configuration. See `ttn-lw-migrate device --help` for more details. For example, to override the discovery server address:
 
 ```bash
 $ export TTN_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
@@ -155,7 +155,7 @@ $ ttn-lw-migrate application --source ttn "my-app-id" > devices.json
 ### Notes
 
 - Payload formatters are not exported. See [Payload Formatters](https://thethingsstack.io/integrations/payload-formatters/).
-- Exporting a large number of devices may take a long time. If you plan on having the devices rejoin on V3, you can speed up the process by setting the `--ttn.without-frame-counters` flag.
+- Exporting a large number of devices may take a long time. If you plan on having the devices rejoin on The Things Stack, you can speed up the process by setting the `--ttn.without-frame-counters` flag.
 
 ## Development Environment
 
