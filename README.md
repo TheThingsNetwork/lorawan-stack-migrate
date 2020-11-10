@@ -48,7 +48,7 @@ $ export FREQUENCY_PLAN_ID="EU_863_870_TTN"         # Frequency Plan for exporte
 
 See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for the list of frequency plans available on The Things Stack. For example, to use `United States 902-928 MHz, FSB 1`, you need to specify the `US_902_928_FSB_1` frequency plan ID.
 
-Private TTN V2 deployments are also supported, and require extra configuration. See `ttn-lw-migrate device --help` for more details. For example, to override the discovery server address:
+Private The Things Network Stack V2 deployments are also supported, and require extra configuration. See `ttn-lw-migrate device --help` for more details. For example, to override the discovery server address:
 
 ```bash
 $ export TTN_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
