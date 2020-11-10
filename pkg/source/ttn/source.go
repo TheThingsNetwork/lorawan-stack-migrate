@@ -27,12 +27,19 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 )
 
+const (
+	// cooldown between consecutive DeviceManager.Get calls, in order to avoid rate limits.
+	cooldown = 10 * time.Millisecond
+)
+
 // Source implements the Source interface.
 type Source struct {
 	ctx context.Context
 
 	config config
 	mgr    ttnsdk.DeviceManager
+	client ttnsdk.Client
+
 	devices map[string]*ttnsdk.Device
 }
 
@@ -52,9 +59,11 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 
 func (s *Source) getDeviceManager(appID string) (ttnsdk.DeviceManager, error) {
 	if s.mgr == nil {
-		client := s.config.sdkConfig.NewClient(appID, s.config.appAccessKey)
+		if s.client == nil {
+			s.client = s.config.sdkConfig.NewClient(appID, s.config.appAccessKey)
+		}
 		var err error
-		s.mgr, err = client.ManageDevices()
+		s.mgr, err = s.client.ManageDevices()
 		if err != nil {
 			return nil, errors.FromGRPCError(err)
 		}
@@ -181,4 +190,9 @@ func (s *Source) RangeDevices(appID string, f func(source.Source, string) error)
 		}
 	}
 	return nil
+}
+
+// Close implements the Source interface.
+func (s *Source) Close() error {
+	return s.client.Close()
 }
