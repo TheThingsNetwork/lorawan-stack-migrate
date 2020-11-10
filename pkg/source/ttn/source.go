@@ -33,8 +33,6 @@ type Source struct {
 
 	config config
 	mgr    ttnsdk.DeviceManager
-
-	devices map[string]*ttnsdk.SparseDevice
 }
 
 // NewSource creates a new TTN Source.
@@ -45,9 +43,8 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 	}
 
 	return &Source{
-		ctx:     ctx,
-		config:  config,
-		devices: make(map[string]*ttnsdk.SparseDevice),
+		ctx:    ctx,
+		config: config,
 	}, nil
 }
 
@@ -65,17 +62,13 @@ func (s *Source) getDeviceManager(appID string) (ttnsdk.DeviceManager, error) {
 
 // ExportDevice implements the source.Source interface.
 func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
-	dev := s.devices[devID].AsDevice()
-
-	if s.config.withFrameCounters {
-		mgr, err := s.getDeviceManager(s.config.appID)
-		if err != nil {
-			return nil, err
-		}
-		dev, err = mgr.Get(dev.DevID)
-		if err != nil {
-			return nil, errors.FromGRPCError(err)
-		}
+	mgr, err := s.getDeviceManager(s.config.appID)
+	if err != nil {
+		return nil, err
+	}
+	dev, err := mgr.Get(devID)
+	if err != nil {
+		return nil, errors.FromGRPCError(err)
 	}
 
 	v3dev := &ttnpb.EndDevice{}
@@ -177,7 +170,6 @@ func (s *Source) RangeDevices(appID string, f func(source.Source, string) error)
 	}
 
 	for _, dev := range devices {
-		s.devices[dev.DevID] = dev
 		if err := f(s, dev.DevID); err != nil {
 			return err
 		}
