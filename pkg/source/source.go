@@ -30,6 +30,8 @@ type Source interface {
 	ExportDevice(devID string) (*ttnpb.EndDevice, error)
 	// RangeDevices calls a function for all matching devices of an application.
 	RangeDevices(appID string, f func(s Source, devID string) error) error
+	// Close cleans up and terminates any open connections.
+	Close() error
 }
 
 // CreateSource is a function that constructs a new Source.
