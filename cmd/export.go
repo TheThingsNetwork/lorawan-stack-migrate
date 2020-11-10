@@ -35,6 +35,11 @@ func exportCommand(cmd *cobra.Command, args []string, f func(s source.Source, it
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err := s.Close(); err != nil {
+			logger.WithError(err).Fatal("Failed to clean up")
+		}
+	}()
 
 	for {
 		item, err := iter.Next()

@@ -382,3 +382,8 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 
 	return dev, nil
 }
+
+// Close implements the Source interface.
+func (p *Source) Close() error {
+	return p.cc.Close()
+}
