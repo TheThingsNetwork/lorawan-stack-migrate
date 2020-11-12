@@ -14,6 +14,9 @@ require (
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/azure-storage-blob-go v0.10.0 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.2 // indirect
+	github.com/TheThingsNetwork/go-app-sdk v0.0.0-20191121100818-5bae20ae2b27
+	github.com/TheThingsNetwork/go-utils v0.0.0-20190516083235-bdd4967fab4e
+	github.com/TheThingsNetwork/ttn/utils/errors v0.0.0-20190516081709-034d40b328bd
 	github.com/aws/aws-sdk-go v1.34.9 // indirect
 	github.com/brocaar/chirpstack-api/go/v3 v3.7.5
 	github.com/envoyproxy/protoc-gen-validate v0.4.1 // indirect

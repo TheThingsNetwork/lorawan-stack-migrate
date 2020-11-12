@@ -12,17 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package ttnv2
 
-import (
-	"os"
+import "go.thethings.network/lorawan-stack-migrate/pkg/source"
 
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack" // ChirpStack source
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv2"      // TTNv2 source
-
-	"go.thethings.network/lorawan-stack-migrate/cmd"
-)
-
-func main() {
-	os.Exit(cmd.Execute())
+func init() {
+	source.RegisterSource(source.Registration{
+		Name:        "ttnv2",
+		Description: "Migrate from The Things Network Stack V2",
+		FlagSet:     flagSet(),
+		Create:      NewSource,
+	})
 }
