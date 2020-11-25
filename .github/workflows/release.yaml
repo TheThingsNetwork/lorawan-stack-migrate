@@ -53,5 +53,5 @@ jobs:
         version: ${{ steps.goreleaser_version.outputs.value }}
         args: release --release-notes /tmp/release-notes.md
       env:
-        DOCKER_IMAGE: TheThingsNetwork/lorawan-stack-migrate
+        DOCKER_IMAGE: thethingsnetwork/lorawan-stack-migrate
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
