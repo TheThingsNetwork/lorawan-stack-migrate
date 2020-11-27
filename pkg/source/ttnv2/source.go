@@ -144,7 +144,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		}
 	}
 
-	if s.config.withSession && dev.DevAddr != nil && dev.NwkSKey != nil && dev.AppSKey != nil {
+	if s.config.withSession && dev.DevAddr != nil && !dev.DevAddr.IsEmpty() && dev.NwkSKey != nil && !dev.NwkSKey.IsEmpty() && dev.AppSKey != nil && !dev.AppSKey.IsEmpty() {
 		v3dev.Session = &ttnpb.Session{
 			SessionKeys: ttnpb.SessionKeys{
 				AppSKey: &ttnpb.KeyEnvelope{
