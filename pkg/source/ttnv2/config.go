@@ -22,8 +22,10 @@ import (
 	"os"
 
 	ttnsdk "github.com/TheThingsNetwork/go-app-sdk"
+	"github.com/TheThingsNetwork/go-utils/handlers/cli"
 	ttnlog "github.com/TheThingsNetwork/go-utils/log"
-	"github.com/TheThingsNetwork/go-utils/log/apex"
+	ttnapex "github.com/TheThingsNetwork/go-utils/log/apex"
+	apex "github.com/apex/log"
 	"github.com/spf13/pflag"
 )
 
@@ -117,10 +119,14 @@ func getConfig(ctx context.Context, flags *pflag.FlagSet) (config, error) {
 		return config{}, errNoFrequencyPlanID.New()
 	}
 
-	logger := apex.Stdout()
+	logLevel := ttnapex.InfoLevel
 	if boolFlag("verbose") {
-		logger.MustParseLevel("debug")
+		logLevel = ttnapex.DebugLevel
 	}
+	logger := ttnapex.Wrap(&apex.Logger{
+		Level:   logLevel,
+		Handler: cli.New(os.Stderr),
+	})
 	ttnlog.Set(logger)
 
 	return config{
