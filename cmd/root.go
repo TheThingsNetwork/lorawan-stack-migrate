@@ -30,6 +30,7 @@ var (
 		Use:   "ttn-lw-migrate",
 		Short: "Migrate from other LoRaWAN network servers to The Things Stack",
 
+		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			logLevel := log.InfoLevel
 			if verbose, _ := cmd.Flags().GetBool("verbose"); verbose {

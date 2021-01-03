@@ -32,18 +32,34 @@ func toJSON(dev *ttnpb.EndDevice) ([]byte, error) {
 }
 
 var (
-	errExport = errors.Define("export", "export device `{device}`")
-	errFormat = errors.DefineCorruption("format", "format device `{device}`")
+	errExport        = errors.Define("export", "export device `{device_id}`")
+	errFormat        = errors.DefineCorruption("format", "format device `{device_id}`")
+	errInvalidFields = errors.DefineInvalidArgument("invalid_fields", "invalid fields for device `{device_id}`")
+
+	sanitizeID = strings.NewReplacer("_", "-")
 )
 
-func exportDev(s source.Source, devEui string) error {
-	dev, err := s.ExportDevice(devEui)
+func exportDev(s source.Source, devID string) error {
+	dev, err := s.ExportDevice(devID)
 	if err != nil {
-		return errExport.WithAttributes("device", devEui).WithCause(err)
+		return errExport.WithAttributes("device_id", devID).WithCause(err)
+	}
+	// V3 does not allow any underscores in identifiers
+	dev.DeviceID = sanitizeID.Replace(dev.DeviceID)
+	dev.ApplicationID = sanitizeID.Replace(dev.ApplicationID)
+
+	if err := dev.ValidateFields(); err != nil {
+		return errInvalidFields.WithAttributes(
+			"device_id", dev.DeviceID,
+			"dev_eui", dev.DevEUI,
+		).WithCause(err)
 	}
 	b, err := toJSON(dev)
 	if err != nil {
-		return errFormat.WithAttributes("device", devEui).WithCause(err)
+		return errFormat.WithAttributes(
+			"device_id", dev.DeviceID,
+			"dev_eui", dev.DevEUI,
+		).WithCause(err)
 	}
 	_, err = fmt.Fprintln(os.Stdout, string(b))
 	return err
