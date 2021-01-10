@@ -39,8 +39,6 @@ type Source struct {
 	config config
 	mgr    ttnsdk.DeviceManager
 	client ttnsdk.Client
-
-	devices map[string]*ttnsdk.Device
 }
 
 // NewSource creates a new TTNv2 Source.
@@ -50,39 +48,23 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 		return nil, err
 	}
 
-	return &Source{
-		ctx:     ctx,
-		config:  config,
-		devices: make(map[string]*ttnsdk.Device),
-	}, nil
-}
-
-func (s *Source) getDeviceManager(appID string) (ttnsdk.DeviceManager, error) {
-	if s.mgr == nil {
-		if s.client == nil {
-			s.client = s.config.sdkConfig.NewClient(appID, s.config.appAccessKey)
-		}
-		var err error
-		s.mgr, err = s.client.ManageDevices()
-		if err != nil {
-			return nil, errors.FromGRPCError(err)
-		}
+	s := &Source{
+		ctx:    ctx,
+		config: config,
+		client: config.sdkConfig.NewClient(config.appID, config.appAccessKey),
 	}
-	return s.mgr, nil
+	s.mgr, err = s.client.ManageDevices()
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 // ExportDevice implements the source.Source interface.
 func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
-	dev := s.devices[devID]
-	if s.config.withSession {
-		mgr, err := s.getDeviceManager(s.config.appID)
-		if err != nil {
-			return nil, err
-		}
-		dev, err = mgr.Get(devID)
-		if err != nil {
-			return nil, errors.FromGRPCError(err)
-		}
+	dev, err := s.mgr.Get(devID)
+	if err != nil {
+		return nil, errors.FromGRPCError(err)
 	}
 
 	v3dev := &ttnpb.EndDevice{}
@@ -174,17 +156,12 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 
 // RangeDevices implements the source.Source interface.
 func (s *Source) RangeDevices(appID string, f func(source.Source, string) error) error {
-	mgr, err := s.getDeviceManager(appID)
-	if err != nil {
-		return err
-	}
-	devices, err := mgr.List(0, 0)
+	devices, err := s.mgr.List(0, 0)
 	if err != nil {
 		return errors.FromGRPCError(err)
 	}
 
 	for _, dev := range devices {
-		s.devices[dev.DevID] = dev.AsDevice()
 		if err := f(s, dev.DevID); err != nil {
 			return err
 		}
