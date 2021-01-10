@@ -40,6 +40,7 @@ type config struct {
 	frequencyPlanID string
 
 	withSession bool
+	dryRun      bool
 }
 
 func flagSet() *pflag.FlagSet {
@@ -131,5 +132,7 @@ func getConfig(ctx context.Context, flags *pflag.FlagSet) (config, error) {
 		frequencyPlanID: frequencyPlanID,
 
 		withSession: boolFlag("ttnv2.with-session"),
+
+		dryRun: boolFlag("dry-run"),
 	}, nil
 }

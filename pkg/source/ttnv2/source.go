@@ -19,10 +19,12 @@ import (
 	"time"
 
 	ttnsdk "github.com/TheThingsNetwork/go-app-sdk"
+	ttntypes "github.com/TheThingsNetwork/ttn/core/types"
 	"github.com/TheThingsNetwork/ttn/utils/errors"
 	pbtypes "github.com/gogo/protobuf/types"
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 )
@@ -147,6 +149,22 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 			return nil, err
 		}
 		if err := v3dev.Session.SessionKeys.FNwkSIntKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
+			return nil, err
+		}
+	}
+
+	log.FromContext(s.ctx).WithFields(log.Fields(
+		"device_id", dev.DevID,
+		"dev_eui", dev.DevEUI,
+	)).Info("Clearing device keys")
+	if !s.config.dryRun {
+		dev.AppKey = &ttntypes.AppKey{}
+		if s.config.withSession {
+			dev.AppSKey = &ttntypes.AppSKey{}
+			dev.NwkSKey = &ttntypes.NwkSKey{}
+			dev.DevAddr = &ttntypes.DevAddr{}
+		}
+		if err := s.mgr.Set(dev); err != nil {
 			return nil, err
 		}
 	}
