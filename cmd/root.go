@@ -61,4 +61,5 @@ func Execute() int {
 func init() {
 	rootCmd.PersistentFlags().Bool("verbose", false, "Verbose output")
 	rootCmd.PersistentFlags().Bool("dry-run", false, "Do everything except resetting root and session keys of exported devices")
+	rootCmd.PersistentFlags().String("frequency-plans-url", "https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master", "URL for fetching frequency plans")
 }
