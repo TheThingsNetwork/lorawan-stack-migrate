@@ -16,6 +16,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.2 // indirect
 	github.com/TheThingsNetwork/go-app-sdk v0.0.0-20191121100818-5bae20ae2b27
 	github.com/TheThingsNetwork/go-utils v0.0.0-20190516083235-bdd4967fab4e
+	github.com/TheThingsNetwork/ttn/core/types v0.0.0-20190516112328-fcd38e2b9dc6
 	github.com/TheThingsNetwork/ttn/utils/errors v0.0.0-20190516081709-034d40b328bd
 	github.com/apex/log v1.1.0
 	github.com/aws/aws-sdk-go v1.34.9 // indirect

@@ -19,10 +19,12 @@ import (
 	"time"
 
 	ttnsdk "github.com/TheThingsNetwork/go-app-sdk"
+	ttntypes "github.com/TheThingsNetwork/ttn/core/types"
 	"github.com/TheThingsNetwork/ttn/utils/errors"
 	pbtypes "github.com/gogo/protobuf/types"
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 )
@@ -39,8 +41,6 @@ type Source struct {
 	config config
 	mgr    ttnsdk.DeviceManager
 	client ttnsdk.Client
-
-	devices map[string]*ttnsdk.Device
 }
 
 // NewSource creates a new TTNv2 Source.
@@ -50,39 +50,23 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 		return nil, err
 	}
 
-	return &Source{
-		ctx:     ctx,
-		config:  config,
-		devices: make(map[string]*ttnsdk.Device),
-	}, nil
-}
-
-func (s *Source) getDeviceManager(appID string) (ttnsdk.DeviceManager, error) {
-	if s.mgr == nil {
-		if s.client == nil {
-			s.client = s.config.sdkConfig.NewClient(appID, s.config.appAccessKey)
-		}
-		var err error
-		s.mgr, err = s.client.ManageDevices()
-		if err != nil {
-			return nil, errors.FromGRPCError(err)
-		}
+	s := &Source{
+		ctx:    ctx,
+		config: config,
+		client: config.sdkConfig.NewClient(config.appID, config.appAccessKey),
 	}
-	return s.mgr, nil
+	s.mgr, err = s.client.ManageDevices()
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 // ExportDevice implements the source.Source interface.
 func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
-	dev := s.devices[devID]
-	if s.config.withSession {
-		mgr, err := s.getDeviceManager(s.config.appID)
-		if err != nil {
-			return nil, err
-		}
-		dev, err = mgr.Get(devID)
-		if err != nil {
-			return nil, errors.FromGRPCError(err)
-		}
+	dev, err := s.mgr.Get(devID)
+	if err != nil {
+		return nil, errors.FromGRPCError(err)
 	}
 
 	v3dev := &ttnpb.EndDevice{}
@@ -169,22 +153,33 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		}
 	}
 
+	log.FromContext(s.ctx).WithFields(log.Fields(
+		"device_id", dev.DevID,
+		"dev_eui", dev.DevEUI,
+	)).Info("Clearing device keys")
+	if !s.config.dryRun {
+		dev.AppKey = &ttntypes.AppKey{}
+		if s.config.withSession {
+			dev.AppSKey = &ttntypes.AppSKey{}
+			dev.NwkSKey = &ttntypes.NwkSKey{}
+			dev.DevAddr = &ttntypes.DevAddr{}
+		}
+		if err := s.mgr.Set(dev); err != nil {
+			return nil, err
+		}
+	}
+
 	return v3dev, nil
 }
 
 // RangeDevices implements the source.Source interface.
 func (s *Source) RangeDevices(appID string, f func(source.Source, string) error) error {
-	mgr, err := s.getDeviceManager(appID)
-	if err != nil {
-		return err
-	}
-	devices, err := mgr.List(0, 0)
+	devices, err := s.mgr.List(0, 0)
 	if err != nil {
 		return errors.FromGRPCError(err)
 	}
 
 	for _, dev := range devices {
-		s.devices[dev.DevID] = dev.AsDevice()
 		if err := f(s, dev.DevID); err != nil {
 			return err
 		}

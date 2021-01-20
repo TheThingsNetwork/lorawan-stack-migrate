@@ -54,11 +54,22 @@ Private The Things Network Stack V2 deployments are also supported, and require 
 $ export TTNV2_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
 ```
 
+### Notes
+
+- The export process will halt if any error occurs.
+- Execute commands with the `--dry-run` flag to verify whether the outcome will be as expected.
+- Payload formatters are not exported. See [Payload Formatters](https://thethingsstack.io/integrations/payload-formatters/).
+- Device sessions (**AppSKey**, **NwkSKey**, **DevAddr**, **FCntUp** and **FCntDown**) are exported by default. You can disable this by using the `--ttnv2.with-session=false` flag. It is recommended that you do not export session keys for devices that can instead re-join on The Things Stack.
+- **IMPORTANT**: The migration from The Things Network Stack V2 to The Things Stack is one-way. Note that it is crucial that devices are handled by one Network Server at a time. The commands below will clear both the root keys (**AppKey**, if any) and the session (**AppSKey**, **NwkSKey** and **DevAddr**) from The Things Network Stack V2 after exporting the devices. Make sure you understand the ramifications of this. **Note that having the session keys present on both Network Servers is not supported, and you will most likely encounter uplink/downlink traffic issues and/or a corrupted device MAC state**.
+
 ### Export Devices
 
 To export a single device using its Device ID (e.g. `mydevice`):
 
 ```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate device --source ttnv2 "mydevice" --dry-run --verbose > devices.json
+# export device
 $ ttn-lw-migrate device --source ttnv2 "mydevice" > devices.json
 ```
 
@@ -75,7 +86,10 @@ device5
 And then export with:
 
 ```bash
-$ ttn-lw-migrate device --source ttnv2 < device_ids.txt > devices.json
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate devices --source ttnv2 "mydevice" --dry-run --verbose < device_ids.txt > devices.json
+# export devices
+$ ttn-lw-migrate devices --source ttnv2 < device_ids.txt > devices.json
 ```
 
 ### Export Applications
@@ -83,13 +97,11 @@ $ ttn-lw-migrate device --source ttnv2 < device_ids.txt > devices.json
 Similarly, to export all devices of application `my-app-id`:
 
 ```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate application --source ttnv2 "my-app-id" --dry-run --verbose > devices.json
+# export devices
 $ ttn-lw-migrate application --source ttnv2 "my-app-id" > devices.json
 ```
-
-### Notes
-
-- Payload formatters are not exported. See [Payload Formatters](https://thethingsstack.io/integrations/payload-formatters/).
-- Active device sessions are exported by default. You can disable this by using the `--ttnv2.with-session=false` flag. It is recommended that you do not export session keys for devices that can instead re-join on The Things Stack.
 
 ## ChirpStack
 
@@ -107,6 +119,12 @@ $ export FREQUENCY_PLAN_ID="EU_863_870"         # Frequency Plan for exported de
 See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for the list of frequency plans available on The Things Stack. For example, to use `United States 902-928 MHz, FSB 1`, you need to specify the `US_902_928_FSB_1` frequency plan ID.
 
 > *NOTE*: `JoinEUI` and `FrequencyPlanID` are required because ChirpStack does not store these fields.
+
+### Notes
+
+- ABP devices without an active session are successfully exported from ChirpStack, but cannot be imported into The Things Stack.
+- MaxEIRP may not be always set properly.
+- ChirpStack payload formatters also accept a `variables` parameter. This will always be `null` on The Things Stack.
 
 ### Export Devices
 
@@ -154,12 +172,6 @@ And export with:
 ```bash
 $ ttn-lw-migrate application --source chirpstack < application_names.txt > devices.json
 ```
-
-### Notes
-
-- ABP devices without an active session are successfully exported from ChirpStack, but cannot be imported into The Things Stack.
-- MaxEIRP may not be always set properly.
-- ChirpStack payload formatters also accept a `variables` parameter. This will always be `null` on The Things Stack.
 
 ## Development Environment
 

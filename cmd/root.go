@@ -60,4 +60,5 @@ func Execute() int {
 
 func init() {
 	rootCmd.PersistentFlags().Bool("verbose", false, "Verbose output")
+	rootCmd.PersistentFlags().Bool("dry-run", false, "Do everything except resetting root and session keys of exported devices")
 }
