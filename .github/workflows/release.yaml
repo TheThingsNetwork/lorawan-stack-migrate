@@ -18,6 +18,8 @@ jobs:
       with:
         username: '${{ secrets.DOCKER_USERNAME }}'
         password: '${{ secrets.DOCKER_PASSWORD }}'
+    - name: Update apt repositories
+      run: sudo apt-get -yq update
     - name: Install Snapcraft
       run: sudo apt-get -yq --no-install-suggests --no-install-recommends install snapcraft
     - name: Login to Snapcraft
