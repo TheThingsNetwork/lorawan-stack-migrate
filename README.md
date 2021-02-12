@@ -59,6 +59,7 @@ $ export TTNV2_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
 - The export process will halt if any error occurs.
 - Execute commands with the `--dry-run` flag to verify whether the outcome will be as expected.
 - Payload formatters are not exported. See [Payload Formatters](https://thethingsstack.io/integrations/payload-formatters/).
+- For ABP devices, use the `--ttnv2.resets-to-frequency-plan` flag to configure the factory preset frequencies of the device, so that it can keep working with The Things Stack. The list of uplink frequencies is inferred from the Frequency Plan.
 - Device sessions (**AppSKey**, **NwkSKey**, **DevAddr**, **FCntUp** and **FCntDown**) are exported by default. You can disable this by using the `--ttnv2.with-session=false` flag. It is recommended that you do not export session keys for devices that can instead re-join on The Things Stack.
 - **IMPORTANT**: The migration from The Things Network Stack V2 to The Things Stack is one-way. Note that it is crucial that devices are handled by one Network Server at a time. The commands below will clear both the root keys (**AppKey**, if any) and the session (**AppSKey**, **NwkSKey** and **DevAddr**) from The Things Network Stack V2 after exporting the devices. Make sure you understand the ramifications of this. **Note that having the session keys present on both Network Servers is not supported, and you will most likely encounter uplink/downlink traffic issues and/or a corrupted device MAC state**.
 

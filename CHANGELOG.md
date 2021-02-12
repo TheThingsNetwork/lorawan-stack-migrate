@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- `--ttnv2.resets-to-frequency-plan` flag for configuring factory preset frequencies when exporting ABP devices from The Things Network Stack V2. The list of frequencies is inferred from the chosen Frequency Plan.
+
 ### Changed
 
 - Upgrade The Things Stack API to version `3.13.0`.
