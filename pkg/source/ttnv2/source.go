@@ -25,6 +25,8 @@ import (
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
+	"go.thethings.network/lorawan-stack/v3/pkg/networkserver/mac"
+	"go.thethings.network/lorawan-stack/v3/pkg/random"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 )
@@ -90,11 +92,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	v3dev.LoRaWANPHYVersion = ttnpb.PHY_V1_0_2_REV_B
 	v3dev.FrequencyPlanID = s.config.frequencyPlanID
 
-	v3dev.MACSettings = &ttnpb.MACSettings{
-		Rx1Delay: &ttnpb.RxDelayValue{
-			Value: ttnpb.RX_DELAY_1,
-		},
-	}
+	v3dev.MACSettings = &ttnpb.MACSettings{}
 	if dev.Uses32BitFCnt {
 		v3dev.MACSettings.Supports32BitFCnt = &pbtypes.BoolValue{
 			Value: dev.Uses32BitFCnt,
@@ -106,7 +104,10 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		}
 	}
 
-	if dev.AppKey != nil && !dev.AppKey.IsEmpty() {
+	deviceSupportsJoin := dev.AppKey != nil && !dev.AppKey.IsEmpty()
+	deviceHasSession := dev.DevAddr != nil && !dev.DevAddr.IsEmpty() && dev.NwkSKey != nil && !dev.NwkSKey.IsEmpty() && dev.AppSKey != nil && !dev.AppSKey.IsEmpty()
+	if deviceSupportsJoin {
+		// OTAA devices
 		v3dev.SupportsJoin = true
 		v3dev.RootKeys = &ttnpb.RootKeys{}
 		v3dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{
@@ -128,15 +129,14 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		}
 	}
 
-	if s.config.withSession && dev.DevAddr != nil && !dev.DevAddr.IsEmpty() && dev.NwkSKey != nil && !dev.NwkSKey.IsEmpty() && dev.AppSKey != nil && !dev.AppSKey.IsEmpty() {
+	if s.config.withSession && deviceHasSession {
 		v3dev.Session = &ttnpb.Session{
 			SessionKeys: ttnpb.SessionKeys{
-				AppSKey: &ttnpb.KeyEnvelope{
-					Key: &types.AES128Key{},
-				},
-				FNwkSIntKey: &ttnpb.KeyEnvelope{
-					Key: &types.AES128Key{},
-				},
+				SessionKeyID: generateBytes(16),
+				AppSKey:      &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
+				FNwkSIntKey:  &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
+				NwkSEncKey:   &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
+				SNwkSIntKey:  &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
 			},
 			LastFCntUp:    dev.FCntUp,
 			LastNFCntDown: dev.FCntDown,
@@ -149,6 +149,12 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 			return nil, err
 		}
 		if err := v3dev.Session.SessionKeys.FNwkSIntKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
+			return nil, err
+		}
+		if err := v3dev.Session.SessionKeys.NwkSEncKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
+			return nil, err
+		}
+		if err := v3dev.Session.SessionKeys.SNwkSIntKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
 			return nil, err
 		}
 	}
@@ -166,6 +172,24 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		}
 		if err := s.mgr.Set(dev); err != nil {
 			return nil, err
+		}
+	}
+
+	// For OTAA devices with a session, set current parameters instead of MAC settings.
+	if deviceHasSession {
+		var err error
+		if v3dev.MACState, err = mac.NewState(v3dev, s.config.fpStore, ttnpb.MACSettings{}); err != nil {
+			return nil, err
+		}
+		// Ensure MAC state matches v2 configuration.
+		v3dev.MACState.CurrentParameters = v3dev.MACState.DesiredParameters
+		v3dev.MACState.DeviceClass = ttnpb.CLASS_A
+		v3dev.MACState.LoRaWANVersion = ttnpb.MAC_V1_0_2
+		v3dev.MACState.CurrentParameters.Rx1Delay = ttnpb.RX_DELAY_1
+	}
+	if !deviceSupportsJoin {
+		v3dev.MACSettings = &ttnpb.MACSettings{
+			Rx1Delay: &ttnpb.RxDelayValue{Value: ttnpb.RX_DELAY_1},
 		}
 	}
 
@@ -189,5 +213,14 @@ func (s *Source) RangeDevices(appID string, f func(source.Source, string) error)
 
 // Close implements the Source interface.
 func (s *Source) Close() error {
-	return s.client.Close()
+	if s.client != nil {
+		return s.client.Close()
+	}
+	return nil
+}
+
+func generateBytes(length int) []byte {
+	b := make([]byte, length)
+	random.Read(b)
+	return b
 }

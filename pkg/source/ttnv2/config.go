@@ -27,6 +27,8 @@ import (
 	ttnapex "github.com/TheThingsNetwork/go-utils/log/apex"
 	apex "github.com/apex/log"
 	"github.com/spf13/pflag"
+	"go.thethings.network/lorawan-stack/v3/pkg/fetch"
+	"go.thethings.network/lorawan-stack/v3/pkg/frequencyplans"
 )
 
 const (
@@ -43,6 +45,8 @@ type config struct {
 
 	withSession bool
 	dryRun      bool
+
+	fpStore *frequencyplans.Store
 }
 
 func flagSet() *pflag.FlagSet {
@@ -58,6 +62,7 @@ func flagSet() *pflag.FlagSet {
 	flags.String("ttnv2.discovery-server-address", os.Getenv("TTNV2_DISCOVERY_SERVER_ADDRESS"), "(only for private networks) Address for the Discovery Server")
 	flags.Bool("ttnv2.discovery-server-insecure", false, "(only for private networks) Not recommended")
 	flags.Bool("ttnv2.with-session", true, "Export device session keys and frame counters")
+
 	return flags
 }
 
@@ -130,6 +135,11 @@ func getConfig(ctx context.Context, flags *pflag.FlagSet) (config, error) {
 	})
 	ttnlog.Set(logger)
 
+	fpFetcher, err := fetch.FromHTTP(stringFlag("frequency-plans-url"), true)
+	if err != nil {
+		return config{}, err
+	}
+
 	return config{
 		sdkConfig: cfg,
 
@@ -139,6 +149,7 @@ func getConfig(ctx context.Context, flags *pflag.FlagSet) (config, error) {
 
 		withSession: boolFlag("ttnv2.with-session"),
 
-		dryRun: boolFlag("dry-run"),
+		dryRun:  boolFlag("dry-run"),
+		fpStore: frequencyplans.NewStore(fpFetcher),
 	}, nil
 }
