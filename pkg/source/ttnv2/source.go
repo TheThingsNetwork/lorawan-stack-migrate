@@ -20,10 +20,10 @@ import (
 
 	ttnsdk "github.com/TheThingsNetwork/go-app-sdk"
 	ttntypes "github.com/TheThingsNetwork/ttn/core/types"
-	"github.com/TheThingsNetwork/ttn/utils/errors"
 	pbtypes "github.com/gogo/protobuf/types"
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/networkserver/mac"
 	"go.thethings.network/lorawan-stack/v3/pkg/random"
@@ -31,10 +31,8 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 )
 
-const (
-	// cooldown between consecutive DeviceManager.Get calls, in order to avoid rate limits.
-	cooldown = 10 * time.Millisecond
-)
+// backoff to use before next try when client receives an error of type ResourceExhausted.
+const backoff = time.Second
 
 // Source implements the Source interface.
 type Source struct {
@@ -61,6 +59,7 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 	if err != nil {
 		return nil, err
 	}
+	s.mgr = &deviceManagerWithRetry{s.mgr, ctx, 15, backoff}
 	return s, nil
 }
 
@@ -68,7 +67,10 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	dev, err := s.mgr.Get(devID)
 	if err != nil {
-		return nil, errors.FromGRPCError(err)
+		if err, ok := errors.From(err); ok {
+			return nil, err
+		}
+		return nil, err
 	}
 
 	v3dev := &ttnpb.EndDevice{}
@@ -200,7 +202,10 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 func (s *Source) RangeDevices(appID string, f func(source.Source, string) error) error {
 	devices, err := s.mgr.List(0, 0)
 	if err != nil {
-		return errors.FromGRPCError(err)
+		if err, ok := errors.From(err); ok {
+			return err
+		}
+		return err
 	}
 
 	for _, dev := range devices {
