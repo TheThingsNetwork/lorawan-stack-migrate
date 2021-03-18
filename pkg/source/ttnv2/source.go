@@ -31,9 +31,6 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 )
 
-// backoff to use before next try when client receives an error of type ResourceExhausted.
-const backoff = time.Second
-
 // Source implements the Source interface.
 type Source struct {
 	ctx context.Context
@@ -55,11 +52,11 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 		config: config,
 		client: config.sdkConfig.NewClient(config.appID, config.appAccessKey),
 	}
-	s.mgr, err = s.client.ManageDevices()
+	mgr, err := s.client.ManageDevices()
 	if err != nil {
 		return nil, err
 	}
-	s.mgr = &deviceManagerWithRetry{s.mgr, ctx, 15, backoff}
+	s.mgr = newDeviceManager(ctx, mgr)
 	return s, nil
 }
 

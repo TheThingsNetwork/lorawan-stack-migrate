@@ -23,6 +23,17 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 )
 
+const (
+	// cooldown between consecutive RPC calls. Rate limits for V2 are hardcoded at 5 requests/second.
+	defaultCooldown = time.Second / 5
+
+	// backoff before retrying ResourceExhausted errors.
+	defaultBackoff = time.Second
+
+	// maximum retries on retryable errors.
+	defaultMaxRetries = 10
+)
+
 // deviceManagerWithRetry is a ttnsdk.DeviceManager that retries Set() and Get() methods when a resource exhausted or service unavailable error is returned.
 type deviceManagerWithRetry struct {
 	ttnsdk.DeviceManager
@@ -30,6 +41,19 @@ type deviceManagerWithRetry struct {
 	ctx        context.Context
 	maxRetries uint
 	backoff    time.Duration
+
+	limit <-chan time.Time
+}
+
+func newDeviceManager(ctx context.Context, mgr ttnsdk.DeviceManager) ttnsdk.DeviceManager {
+	return &deviceManagerWithRetry{
+		DeviceManager: mgr,
+		ctx:           ctx,
+		maxRetries:    defaultMaxRetries,
+		backoff:       defaultBackoff,
+
+		limit: time.NewTicker(defaultCooldown).C,
+	}
 }
 
 func (d *deviceManagerWithRetry) shouldRetry(ctx context.Context, err error, attempt uint) (bool, time.Duration) {
@@ -45,6 +69,11 @@ func (d *deviceManagerWithRetry) shouldRetry(ctx context.Context, err error, att
 }
 
 func (d *deviceManagerWithRetry) get(ctx context.Context, devID string, attempt uint) (*ttnsdk.Device, error) {
+	select {
+	case <-d.limit:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 	dev, err := d.DeviceManager.Get(devID)
 	if retry, penalty := d.shouldRetry(ctx, err, attempt); retry {
 		select {
@@ -58,6 +87,11 @@ func (d *deviceManagerWithRetry) get(ctx context.Context, devID string, attempt 
 }
 
 func (d *deviceManagerWithRetry) set(ctx context.Context, dev *ttnsdk.Device, attempt uint) error {
+	select {
+	case <-d.limit:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 	err := d.DeviceManager.Set(dev)
 	if retry, penalty := d.shouldRetry(ctx, err, attempt); retry {
 		select {
