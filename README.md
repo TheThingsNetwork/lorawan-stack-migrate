@@ -2,6 +2,8 @@
 
 Migrate devices from other LoRaWAN Network Servers to [The Things Stack](https://thethingsstack.io).
 
+**IMPORTANT**: `ttn-lw-migrate` is compatible with The Things Stack versions **3.12.0** or newer. Trying to import the devices into earlier versions of The Things Stack will fail, due to breaking API changes.
+
 ## Installation
 
 Binaries are available on [GitHub](https://github.com/TheThingsNetwork/lorawan-stack-migrate/releases).
