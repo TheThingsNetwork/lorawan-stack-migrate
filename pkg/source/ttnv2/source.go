@@ -190,9 +190,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		v3dev.MACState.CurrentParameters.Rx1Delay = ttnpb.RX_DELAY_1
 	}
 	if !deviceSupportsJoin {
-		v3dev.MACSettings = &ttnpb.MACSettings{
-			Rx1Delay: &ttnpb.RxDelayValue{Value: ttnpb.RX_DELAY_1},
-		}
+		v3dev.MACSettings.Rx1Delay = &ttnpb.RxDelayValue{Value: ttnpb.RX_DELAY_1}
 	}
 
 	return v3dev, nil
