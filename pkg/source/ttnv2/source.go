@@ -91,7 +91,10 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	v3dev.LoRaWANPHYVersion = ttnpb.PHY_V1_0_2_REV_B
 	v3dev.FrequencyPlanID = s.config.frequencyPlanID
 
-	v3dev.MACSettings = &ttnpb.MACSettings{}
+	v3dev.MACSettings = &ttnpb.MACSettings{
+		StatusTimePeriodicity:  func(t time.Duration) *time.Duration { return &t }(0),
+		StatusCountPeriodicity: &pbtypes.UInt32Value{Value: 0},
+	}
 	if dev.Uses32BitFCnt {
 		v3dev.MACSettings.Supports32BitFCnt = &pbtypes.BoolValue{
 			Value: dev.Uses32BitFCnt,
