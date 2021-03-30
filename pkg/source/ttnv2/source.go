@@ -134,15 +134,17 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if s.config.withSession && deviceHasSession {
 		v3dev.Session = &ttnpb.Session{
 			SessionKeys: ttnpb.SessionKeys{
-				SessionKeyID: generateBytes(16),
-				AppSKey:      &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
-				FNwkSIntKey:  &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
-				NwkSEncKey:   &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
-				SNwkSIntKey:  &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
+				AppSKey:     &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
+				FNwkSIntKey: &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
+				NwkSEncKey:  &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
+				SNwkSIntKey: &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
 			},
 			LastFCntUp:    dev.FCntUp,
 			LastNFCntDown: dev.FCntDown,
 			StartedAt:     time.Now(),
+		}
+		if deviceSupportsJoin {
+			v3dev.Session.SessionKeyID = generateBytes(16)
 		}
 		if err := v3dev.Session.DevAddr.Unmarshal(dev.DevAddr.Bytes()); err != nil {
 			return nil, err
