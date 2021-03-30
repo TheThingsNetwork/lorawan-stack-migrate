@@ -372,7 +372,9 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 			default:
 			}
 
-			dev.Session.SessionKeyID = generateBytes(16)
+			if devProfile.SupportsJoin {
+				dev.Session.SessionKeyID = generateBytes(16)
+			}
 			dev.Session.LastAFCntDown = activation.AFCntDown
 			dev.Session.LastFCntUp = activation.FCntUp
 			dev.Session.LastConfFCntDown = activation.FCntUp
