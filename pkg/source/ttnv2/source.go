@@ -96,12 +96,12 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		StatusCountPeriodicity: &pbtypes.UInt32Value{Value: 0},
 	}
 	if dev.Uses32BitFCnt {
-		v3dev.MACSettings.Supports32BitFCnt = &pbtypes.BoolValue{
+		v3dev.MACSettings.Supports32BitFCnt = &ttnpb.BoolValue{
 			Value: dev.Uses32BitFCnt,
 		}
 	}
 	if dev.DisableFCntCheck {
-		v3dev.MACSettings.ResetsFCnt = &pbtypes.BoolValue{
+		v3dev.MACSettings.ResetsFCnt = &ttnpb.BoolValue{
 			Value: dev.DisableFCntCheck,
 		}
 	}
