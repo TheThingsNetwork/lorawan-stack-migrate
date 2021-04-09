@@ -21,7 +21,6 @@ import (
 	"time"
 
 	csapi "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
-	pbtypes "github.com/gogo/protobuf/types"
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
@@ -224,7 +223,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	dev.SupportsJoin = devProfile.SupportsJoin
 	if !dev.SupportsJoin {
 		if devProfile.RxFreq_2 > 0 {
-			dev.MACSettings.Rx2Frequency = &pbtypes.UInt64Value{
+			dev.MACSettings.Rx2Frequency = &ttnpb.FrequencyValue{
 				Value: uint64(devProfile.RxFreq_2),
 			}
 		}
@@ -234,8 +233,8 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 			}
 		}
 		if devProfile.RxDrOffset_1 >= 0 {
-			dev.MACSettings.DesiredRx1DataRateOffset = &pbtypes.UInt32Value{
-				Value: devProfile.RxDrOffset_1,
+			dev.MACSettings.DesiredRx1DataRateOffset = &ttnpb.DataRateOffsetValue{
+				Value: ttnpb.DataRateOffset(devProfile.RxDrOffset_1),
 			}
 		}
 		if devProfile.RxDatarate_2 >= 0 {
@@ -261,7 +260,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		}
 
 		if devProfile.PingSlotFreq > 0 {
-			dev.MACSettings.DesiredPingSlotFrequency = &pbtypes.UInt64Value{
+			dev.MACSettings.DesiredPingSlotFrequency = &ttnpb.FrequencyValue{
 				Value: uint64(devProfile.PingSlotFreq),
 			}
 		}
@@ -325,7 +324,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 
 	// Configuration
 	if csdev.SkipFCntCheck {
-		dev.MACSettings.ResetsFCnt = &pbtypes.BoolValue{
+		dev.MACSettings.ResetsFCnt = &ttnpb.BoolValue{
 			Value: csdev.SkipFCntCheck,
 		}
 	}
