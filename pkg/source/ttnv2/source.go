@@ -153,6 +153,15 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		if err := v3dev.Session.SessionKeys.FNwkSIntKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
 			return nil, err
 		}
+
+		if v3dev.MACState, err = mac.NewState(v3dev, s.config.fpStore, ttnpb.MACSettings{}); err != nil {
+			return nil, err
+		}
+		// Ensure MAC state matches v2 configuration.
+		v3dev.MACState.CurrentParameters = v3dev.MACState.DesiredParameters
+		v3dev.MACState.DeviceClass = ttnpb.CLASS_A
+		v3dev.MACState.LoRaWANVersion = ttnpb.MAC_V1_0_2
+		v3dev.MACState.CurrentParameters.Rx1Delay = ttnpb.RX_DELAY_1
 	}
 
 	log.FromContext(s.ctx).WithFields(log.Fields(
@@ -172,17 +181,6 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	}
 
 	// For OTAA devices with a session, set current parameters instead of MAC settings.
-	if deviceHasSession {
-		var err error
-		if v3dev.MACState, err = mac.NewState(v3dev, s.config.fpStore, ttnpb.MACSettings{}); err != nil {
-			return nil, err
-		}
-		// Ensure MAC state matches v2 configuration.
-		v3dev.MACState.CurrentParameters = v3dev.MACState.DesiredParameters
-		v3dev.MACState.DeviceClass = ttnpb.CLASS_A
-		v3dev.MACState.LoRaWANVersion = ttnpb.MAC_V1_0_2
-		v3dev.MACState.CurrentParameters.Rx1Delay = ttnpb.RX_DELAY_1
-	}
 	if !deviceSupportsJoin {
 		v3dev.MACSettings.Rx1Delay = &ttnpb.RxDelayValue{Value: ttnpb.RX_DELAY_1}
 	}
