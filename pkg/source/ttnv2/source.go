@@ -136,8 +136,6 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 			SessionKeys: ttnpb.SessionKeys{
 				AppSKey:     &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
 				FNwkSIntKey: &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
-				NwkSEncKey:  &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
-				SNwkSIntKey: &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
 			},
 			LastFCntUp:    dev.FCntUp,
 			LastNFCntDown: dev.FCntDown,
@@ -153,12 +151,6 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 			return nil, err
 		}
 		if err := v3dev.Session.SessionKeys.FNwkSIntKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
-			return nil, err
-		}
-		if err := v3dev.Session.SessionKeys.NwkSEncKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
-			return nil, err
-		}
-		if err := v3dev.Session.SessionKeys.SNwkSIntKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
 			return nil, err
 		}
 	}
