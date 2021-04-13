@@ -13,11 +13,6 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v2
-    - name: Login to Docker
-      uses: azure/docker-login@v1
-      with:
-        username: '${{ secrets.DOCKER_USERNAME }}'
-        password: '${{ secrets.DOCKER_PASSWORD }}'
     - name: Install Snapcraft
       run: sudo apt-get -yq --no-install-suggests --no-install-recommends install snapcraft
     - name: Login to Snapcraft
@@ -44,14 +39,10 @@ jobs:
           const tag = context.ref.slice('refs/rev/v'.length);
           const tagParts = tag.split('.');
           require('fs').writeFileSync('/tmp/release-notes.md', `[Release notes](https://github.com/TheThingsNetwork/lorawan-stack-migrate/blob/${tag}/CHANGELOG.md#${tagParts[0]}${tagParts[1]}${tagParts[2]}---${{ steps.date.outputs.value }})`);
-    - name: Determine Goreleaser version
-      id: goreleaser_version
-      run: echo "::set-output name=value::$(cat go.mod | grep 'github.com/goreleaser/goreleaser v' | cut -d ' ' -f 2)"
     - name: Run Goreleaser
       uses: goreleaser/goreleaser-action@v2
       with:
-        version: ${{ steps.goreleaser_version.outputs.value }}
+        version: 'v0.161.1'
         args: release --release-notes /tmp/release-notes.md
       env:
-        DOCKER_IMAGE: thethingsnetwork/lorawan-stack-migrate
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}

@@ -92,14 +92,3 @@ brews:
     skip_upload: auto
     install: |
       bin.install "ttn-lw-migrate"
-
-dockers:
-  - goos: linux
-    goarch: amd64
-    dockerfile: Dockerfile
-    binaries:
-      - ttn-lw-migrate
-    image_templates:
-      - '{{ or (index .Env "DOCKER_IMAGE") "lorawan-stack-migrate" }}:{{ .Major }}.{{ .Minor }}'
-      - '{{ or (index .Env "DOCKER_IMAGE") "lorawan-stack-migrate" }}:{{ .Version }}'
-    skip_push: auto

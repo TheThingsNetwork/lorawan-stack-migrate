@@ -8,8 +8,6 @@ Migrate devices from other LoRaWAN Network Servers to [The Things Stack](https:/
 
 Binaries are available on [GitHub](https://github.com/TheThingsNetwork/lorawan-stack-migrate/releases).
 
-Docker images are available on [Docker Hub](https://hub.docker.com/r/TheThingsNetwork/lorawan-stack-migrate).
-
 ## Support
 
 - [X] The Things Network Stack V2
@@ -208,11 +206,21 @@ It is also possible to use `go build`.
 
 ### Snapshot releases
 
-Releases are created using [`goreleaser`](https://github.com/goreleaser/goreleaser). You can build a release snapshot from your local branch with `go run github.com/goreleaser/goreleaser --snapshot`.
+Releases are created using [`goreleaser`](https://github.com/goreleaser/goreleaser). First, install GoReleaser:
+
+```bash
+$ go install github.com/goreleaser/goreleaser@v0.161.1
+```
+
+The command to build a release snapshot from your branch is:
+
+```bash
+$ goreleaser --snapshot --rm-dist
+```
 
 > Note: You will at least need to have [`rpm`](http://rpm5.org/) and [`snapcraft`](https://snapcraft.io/) in your `PATH`.
 
-This will compile binaries for all supported platforms, `deb`, `rpm` and Snapcraft packages, release archives in `dist`, as well as Docker images.
+This will compile binaries for all supported platforms, `deb`, `rpm`, Snapcraft packages, as well as release archives in `dist`.
 
 > Note: The operating system and architecture represent the name of the directory in `dist` in which the binaries are placed.
 > For example, the binaries for Darwin x64 (macOS) will be located at `dist/darwin_amd64`.
