@@ -131,7 +131,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		}
 	}
 
-	if s.config.withSession && deviceHasSession {
+	if s.config.withSession && deviceHasSession || !deviceSupportsJoin {
 		v3dev.Session = &ttnpb.Session{
 			SessionKeys: ttnpb.SessionKeys{
 				AppSKey:     &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
