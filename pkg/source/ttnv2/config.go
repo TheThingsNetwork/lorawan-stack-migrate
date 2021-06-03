@@ -15,7 +15,6 @@
 package ttnv2
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
@@ -66,7 +65,7 @@ func flagSet() *pflag.FlagSet {
 	return flags
 }
 
-func getConfig(ctx context.Context, flags *pflag.FlagSet) (config, error) {
+func getConfig(flags *pflag.FlagSet) (config, error) {
 	stringFlag := func(f string) string {
 		s, _ := flags.GetString(f)
 		return s

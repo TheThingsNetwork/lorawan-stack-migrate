@@ -25,7 +25,7 @@ warningCode = 0
 [rule.errorf]
 [rule.exported]
 [rule.file-header]
-  arguments = ["Copyright © 2020 The Things Network Foundation, The Things Industries B.V."]
+  arguments = ["Copyright © 202[0-9] The Things Network Foundation, The Things Industries B.V."]
 [rule.flag-parameter]
 [rule.function-result-limit]
   arguments = [3]

@@ -62,13 +62,13 @@ func (d *deviceManagerWithRetry) shouldRetry(ctx context.Context, err error, att
 	}
 	if err, ok := errors.From(err); ok && (errors.IsResourceExhausted(err) || errors.IsUnavailable(err)) {
 		penalty := d.backoff * time.Duration(attempt)
-		log.FromContext(d.ctx).WithError(err).WithField("attempt", attempt).Debugf("Non-fatal error, will retry after %v", penalty)
+		log.FromContext(ctx).WithError(err).WithField("attempt", attempt).Debugf("Non-fatal error, will retry after %v", penalty)
 		return true, penalty
 	}
 	return false, 0
 }
 
-func (d *deviceManagerWithRetry) get(ctx context.Context, devID string, attempt uint) (*ttnsdk.Device, error) {
+func (d *deviceManagerWithRetry) getDevice(ctx context.Context, devID string, attempt uint) (*ttnsdk.Device, error) {
 	select {
 	case <-d.limit:
 	case <-ctx.Done():
@@ -81,12 +81,12 @@ func (d *deviceManagerWithRetry) get(ctx context.Context, devID string, attempt 
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		}
-		return d.get(ctx, devID, attempt+1)
+		return d.getDevice(ctx, devID, attempt+1)
 	}
 	return dev, err
 }
 
-func (d *deviceManagerWithRetry) set(ctx context.Context, dev *ttnsdk.Device, attempt uint) error {
+func (d *deviceManagerWithRetry) setDevice(ctx context.Context, dev *ttnsdk.Device, attempt uint) error {
 	select {
 	case <-d.limit:
 	case <-ctx.Done():
@@ -99,17 +99,17 @@ func (d *deviceManagerWithRetry) set(ctx context.Context, dev *ttnsdk.Device, at
 		case <-ctx.Done():
 			return ctx.Err()
 		}
-		return d.set(ctx, dev, attempt+1)
+		return d.setDevice(ctx, dev, attempt+1)
 	}
 	return err
 }
 
 func (d *deviceManagerWithRetry) Get(devID string) (*ttnsdk.Device, error) {
-	return d.get(log.NewContextWithFields(d.ctx, log.Fields("device_id", devID, "method", "Get")), devID, 1)
+	return d.getDevice(log.NewContextWithFields(d.ctx, log.Fields("device_id", devID, "method", "Get")), devID, 1)
 }
 
 func (d *deviceManagerWithRetry) Set(dev *ttnsdk.Device) error {
-	return d.set(log.NewContextWithFields(d.ctx, log.Fields("dev_eui", dev.DevEUI, "device_id", dev.DevID, "method", "Set")), dev, 1)
+	return d.setDevice(log.NewContextWithFields(d.ctx, log.Fields("dev_eui", dev.DevEUI, "device_id", dev.DevID, "method", "Set")), dev, 1)
 }
 
 var _ ttnsdk.DeviceManager = &deviceManagerWithRetry{}

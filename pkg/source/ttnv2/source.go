@@ -42,7 +42,7 @@ type Source struct {
 
 // NewSource creates a new TTNv2 Source.
 func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error) {
-	config, err := getConfig(ctx, flags)
+	config, err := getConfig(flags)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 }
 
 // RangeDevices implements the source.Source interface.
-func (s *Source) RangeDevices(appID string, f func(source.Source, string) error) error {
+func (s *Source) RangeDevices(_ string, f func(source.Source, string) error) error {
 	devices, err := s.mgr.List(0, 0)
 	if err != nil {
 		if err, ok := errors.From(err); ok {
