@@ -45,20 +45,20 @@ func exportDev(s source.Source, devID string) error {
 		return errExport.WithAttributes("device_id", devID).WithCause(err)
 	}
 	// V3 does not allow any underscores in identifiers
-	dev.DeviceID = sanitizeID.Replace(dev.DeviceID)
-	dev.ApplicationID = sanitizeID.Replace(dev.ApplicationID)
+	dev.DeviceId = sanitizeID.Replace(dev.DeviceId)
+	dev.ApplicationId = sanitizeID.Replace(dev.ApplicationId)
 
 	if err := dev.ValidateFields(); err != nil {
 		return errInvalidFields.WithAttributes(
-			"device_id", dev.DeviceID,
-			"dev_eui", dev.DevEUI,
+			"device_id", dev.DeviceId,
+			"dev_eui", dev.DevEui,
 		).WithCause(err)
 	}
 	b, err := toJSON(dev)
 	if err != nil {
 		return errFormat.WithAttributes(
-			"device_id", dev.DeviceID,
-			"dev_eui", dev.DevEUI,
+			"device_id", dev.DeviceId,
+			"dev_eui", dev.DevEui,
 		).WithCause(err)
 	}
 	_, err = fmt.Fprintln(os.Stdout, string(b))

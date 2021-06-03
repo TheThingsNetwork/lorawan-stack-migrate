@@ -122,8 +122,8 @@ func (p *Source) RangeDevices(id string, f func(source.Source, string) error) er
 func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	// Allocate
 	dev := &ttnpb.EndDevice{}
-	dev.EndDeviceIdentifiers.DevEUI = &types.EUI64{}
-	dev.EndDeviceIdentifiers.JoinEUI = &types.EUI64{}
+	dev.EndDeviceIdentifiers.DevEui = &types.EUI64{}
+	dev.EndDeviceIdentifiers.JoinEui = &types.EUI64{}
 	dev.Attributes = make(map[string]string)
 	dev.MACSettings = &ttnpb.MACSettings{}
 	dev.MACState = &ttnpb.MACState{}
@@ -148,12 +148,12 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	}
 
 	// Identifiers
-	if err := dev.EndDeviceIdentifiers.DevEUI.UnmarshalText([]byte(devEui)); err != nil {
+	if err := dev.EndDeviceIdentifiers.DevEui.UnmarshalText([]byte(devEui)); err != nil {
 		return nil, errInvalidDevEUI.WithAttributes("dev_eui", devEui).WithCause(err)
 	}
-	dev.EndDeviceIdentifiers.JoinEUI = p.joinEUI
-	dev.ApplicationIdentifiers.ApplicationID = fmt.Sprintf("chirpstack-%d", csdev.ApplicationId)
-	dev.EndDeviceIdentifiers.DeviceID = "eui-" + devEui
+	dev.EndDeviceIdentifiers.JoinEui = p.joinEUI
+	dev.ApplicationIdentifiers.ApplicationId = fmt.Sprintf("chirpstack-%d", csdev.ApplicationId)
+	dev.EndDeviceIdentifiers.DeviceId = "eui-" + devEui
 
 	// Information
 	dev.Name = csdev.Name
