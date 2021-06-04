@@ -42,7 +42,7 @@ type Source struct {
 
 // NewSource creates a new TTNv2 Source.
 func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error) {
-	config, err := getConfig(ctx, flags)
+	config, err := getConfig(flags)
 	if err != nil {
 		return nil, err
 	}
@@ -71,19 +71,19 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	}
 
 	v3dev := &ttnpb.EndDevice{}
-	v3dev.DeviceID = dev.DevID
-	v3dev.ApplicationID = s.config.appID
+	v3dev.DeviceId = dev.DevID
+	v3dev.ApplicationId = s.config.appID
 
 	v3dev.Name = dev.DevID
 	v3dev.Description = dev.Description
 	v3dev.Attributes = dev.Attributes
 
-	v3dev.JoinEUI = &types.EUI64{}
-	if err := v3dev.JoinEUI.Unmarshal(dev.AppEUI.Bytes()); err != nil {
+	v3dev.JoinEui = &types.EUI64{}
+	if err := v3dev.JoinEui.Unmarshal(dev.AppEUI.Bytes()); err != nil {
 		return nil, err
 	}
-	v3dev.DevEUI = &types.EUI64{}
-	if err := v3dev.DevEUI.Unmarshal(dev.DevEUI.Bytes()); err != nil {
+	v3dev.DevEui = &types.EUI64{}
+	if err := v3dev.DevEui.Unmarshal(dev.DevEUI.Bytes()); err != nil {
 		return nil, err
 	}
 
@@ -189,7 +189,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 }
 
 // RangeDevices implements the source.Source interface.
-func (s *Source) RangeDevices(appID string, f func(source.Source, string) error) error {
+func (s *Source) RangeDevices(_ string, f func(source.Source, string) error) error {
 	devices, err := s.mgr.List(0, 0)
 	if err != nil {
 		if err, ok := errors.From(err); ok {
