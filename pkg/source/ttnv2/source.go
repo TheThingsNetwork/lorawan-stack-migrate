@@ -183,6 +183,22 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	// For OTAA devices with a session, set current parameters instead of MAC settings.
 	if !deviceSupportsJoin {
 		v3dev.MACSettings.Rx1Delay = &ttnpb.RxDelayValue{Value: ttnpb.RX_DELAY_1}
+
+		if s.config.resetsToFrequencyPlan {
+			macState, err := mac.NewState(v3dev, s.config.fpStore, ttnpb.MACSettings{})
+			if err != nil {
+				return nil, err
+			}
+			channels := macState.DesiredParameters.GetChannels()
+			freqs := make([]uint64, 0, len(channels))
+			for _, channel := range channels {
+				if channel.EnableUplink && channel.UplinkFrequency > 0 {
+					freqs = append(freqs, channel.UplinkFrequency)
+				}
+			}
+
+			v3dev.MACSettings.FactoryPresetFrequencies = freqs
+		}
 	}
 
 	return v3dev, nil

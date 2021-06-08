@@ -42,8 +42,9 @@ type config struct {
 
 	frequencyPlanID string
 
-	withSession bool
-	dryRun      bool
+	withSession           bool
+	dryRun                bool
+	resetsToFrequencyPlan bool
 
 	fpStore *frequencyplans.Store
 }
@@ -61,6 +62,7 @@ func flagSet() *pflag.FlagSet {
 	flags.String("ttnv2.discovery-server-address", os.Getenv("TTNV2_DISCOVERY_SERVER_ADDRESS"), "(only for private networks) Address for the Discovery Server")
 	flags.Bool("ttnv2.discovery-server-insecure", false, "(only for private networks) Not recommended")
 	flags.Bool("ttnv2.with-session", true, "Export device session keys and frame counters")
+	flags.Bool("ttnv2.resets-to-frequency-plan", false, "Configure preset frequencies for ABP devices so that they match the used Frequency Plan")
 
 	return flags
 }
@@ -146,7 +148,8 @@ func getConfig(flags *pflag.FlagSet) (config, error) {
 		appAccessKey:    appAccessKey,
 		frequencyPlanID: frequencyPlanID,
 
-		withSession: boolFlag("ttnv2.with-session"),
+		withSession:           boolFlag("ttnv2.with-session"),
+		resetsToFrequencyPlan: boolFlag("ttnv2.resets-to-frequency-plan"),
 
 		dryRun:  boolFlag("dry-run"),
 		fpStore: frequencyplans.NewStore(fpFetcher),
