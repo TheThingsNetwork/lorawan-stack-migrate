@@ -26,7 +26,7 @@ func exportCommand(cmd *cobra.Command, args []string, f func(s source.Source, it
 	var iter Iterator
 	switch len(args) {
 	case 0:
-		iter = NewReaderIterator(os.Stdin, byte('\n'))
+		iter = NewReaderIterator(os.Stdin, '\n')
 	default:
 		iter = NewListIterator(args)
 	}

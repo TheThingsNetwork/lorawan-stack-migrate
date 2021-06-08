@@ -104,7 +104,7 @@ func (r *readerIterator) Next() (string, error) {
 	if err == io.EOF && s != "" {
 		return s, nil
 	}
-	return strings.Trim(s, string(r.sep)), err
+	return strings.TrimSpace(s), err
 }
 
 // printStack prints the error stack to w.
