@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+### Security
+
+## [v0.6.0] (2021-06-08)
+
+### Added
+
 - `--ttnv2.resets-to-frequency-plan` flag for configuring factory preset frequencies when exporting ABP devices from The Things Network Stack V2. The list of frequencies is inferred from the chosen Frequency Plan.
 
 ### Changed
@@ -18,10 +30,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Properly handle files with Windows-style line endings ("\r\n").
-
-### Removed
-
-### Security
 
 ## [v0.5.0] (2021-04-13)
 
