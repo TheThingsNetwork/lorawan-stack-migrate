@@ -17,12 +17,9 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 )
 
 var (
-	errNoAppID = errors.DefineInvalidArgument("no_app_id", "no App ID")
-
 	applicationsCmd = &cobra.Command{
 		Use:     "application [app-id] ...",
 		Aliases: []string{"applications", "app"},

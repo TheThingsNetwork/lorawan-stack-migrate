@@ -17,12 +17,9 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 )
 
 var (
-	errNoDeviceID = errors.DefineInvalidArgument("no_device_id", "no Device ID")
-
 	devicesCmd = &cobra.Command{
 		Use:     "device [dev-id] ...",
 		Short:   "Export devices by DevEUI",
