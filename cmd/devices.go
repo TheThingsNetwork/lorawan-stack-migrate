@@ -28,7 +28,7 @@ var (
 		Short:   "Export devices by DevEUI",
 		Aliases: []string{"end-devices", "end-device", "devices", "dev"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return exportCommand(cmd, args, exportDev)
+			return exportCommand(cmd, args, devIDPrefix, exportDev)
 		},
 	}
 )

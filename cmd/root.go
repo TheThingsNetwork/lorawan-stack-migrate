@@ -24,9 +24,10 @@ import (
 )
 
 var (
-	logger  *log.Logger
-	ctx     context.Context
-	rootCmd = &cobra.Command{
+	logger      *log.Logger
+	ctx         context.Context
+	devIDPrefix string
+	rootCmd     = &cobra.Command{
 		Use:   "ttn-lw-migrate",
 		Short: "Migrate from other LoRaWAN network servers to The Things Stack",
 
@@ -36,6 +37,8 @@ var (
 			if verbose, _ := cmd.Flags().GetBool("verbose"); verbose {
 				logLevel = log.DebugLevel
 			}
+
+			devIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
 
 			logger = log.NewLogger(
 				log.WithLevel(logLevel),
@@ -62,4 +65,5 @@ func init() {
 	rootCmd.PersistentFlags().Bool("verbose", false, "Verbose output")
 	rootCmd.PersistentFlags().Bool("dry-run", false, "Do everything except resetting root and session keys of exported devices")
 	rootCmd.PersistentFlags().String("frequency-plans-url", "https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master", "URL for fetching frequency plans")
+	rootCmd.PersistentFlags().String("dev-id-prefix", "", "(optional) value to be prefixed to the resulting device IDs")
 }

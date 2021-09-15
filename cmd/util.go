@@ -39,10 +39,13 @@ var (
 	sanitizeID = strings.NewReplacer("_", "-")
 )
 
-func exportDev(s source.Source, devID string) error {
+func exportDev(s source.Source, prefix, devID string) error {
 	dev, err := s.ExportDevice(devID)
 	if err != nil {
 		return errExport.WithAttributes("device_id", devID).WithCause(err)
+	}
+	if prefix != "" {
+		dev.DeviceId = fmt.Sprintf("%s-%s", prefix, dev.DeviceId)
 	}
 	// V3 does not allow any underscores in identifiers
 	dev.DeviceId = sanitizeID.Replace(dev.DeviceId)

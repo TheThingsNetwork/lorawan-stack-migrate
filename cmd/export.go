@@ -22,7 +22,7 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
-func exportCommand(cmd *cobra.Command, args []string, f func(s source.Source, item string) error) error {
+func exportCommand(cmd *cobra.Command, args []string, prefix string, f func(s source.Source, prefix, item string) error) error {
 	var iter Iterator
 	switch len(args) {
 	case 0:
@@ -54,7 +54,7 @@ func exportCommand(cmd *cobra.Command, args []string, f func(s source.Source, it
 			continue
 		}
 
-		if err := f(s, item); err != nil {
+		if err := f(s, prefix, item); err != nil {
 			return err
 		}
 	}

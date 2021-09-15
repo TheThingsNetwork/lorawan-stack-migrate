@@ -28,8 +28,8 @@ var (
 		Aliases: []string{"applications", "app"},
 		Short:   "Export all devices of an application",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return exportCommand(cmd, args, func(s source.Source, item string) error {
-				return s.RangeDevices(item, exportDev)
+			return exportCommand(cmd, args, devIDPrefix, func(s source.Source, prefix string, item string) error {
+				return s.RangeDevices(item, devIDPrefix, exportDev)
 			})
 		},
 	}
