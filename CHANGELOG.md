@@ -62,6 +62,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 NOTE: These links should respect backports. See https://github.com/TheThingsNetwork/lorawan-stack/pull/1444/files#r333379706.
 -->
 [unreleased]: https://github.com/TheThingsNetwork/lorawan-stack-migrate/v0.7.0...master
-[0.7.0]: https://github.com/TheThingsNetwork/lorawan-stack/compare/v0.6.0...v0.7.0
-[0.6.0]: https://github.com/TheThingsNetwork/lorawan-stack/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/TheThingsNetwork/lorawan-stack/compare/v0.4.0...v0.5.0
+[0.7.0]: https://github.com/TheThingsNetwork/lorawan-stack-migrate/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/TheThingsNetwork/lorawan-stack-migrate/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/TheThingsNetwork/lorawan-stack-migrate/compare/v0.4.0...v0.5.0
