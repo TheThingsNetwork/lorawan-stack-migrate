@@ -31,10 +31,16 @@ func toJSON(dev *ttnpb.EndDevice) ([]byte, error) {
 	return jsonpb.TTN().Marshal(dev)
 }
 
+const (
+	maxIDLength = 36
+)
+
 var (
-	errExport        = errors.Define("export", "export device `{device_id}`")
-	errFormat        = errors.DefineCorruption("format", "format device `{device_id}`")
-	errInvalidFields = errors.DefineInvalidArgument("invalid_fields", "invalid fields for device `{device_id}`")
+	errExport                = errors.Define("export", "export device `{device_id}`")
+	errFormat                = errors.DefineCorruption("format", "format device `{device_id}`")
+	errInvalidFields         = errors.DefineInvalidArgument("invalid_fields", "invalid fields for device `{device_id}`")
+	errDevIDExceedsMaxLength = errors.Define("dev_id_exceeds_max_length", "device ID `{id}` exceeds max length")
+	errAppIDExceedsMaxLength = errors.Define("app_id_exceeds_max_length", "application ID `{id}` exceeds max length")
 
 	sanitizeID = strings.NewReplacer("_", "-")
 )
@@ -54,6 +60,14 @@ func (cfg exportConfig) exportDev(s source.Source, devID string) error {
 	// V3 does not allow any underscores in identifiers
 	dev.DeviceId = sanitizeID.Replace(dev.DeviceId)
 	dev.ApplicationId = sanitizeID.Replace(dev.ApplicationId)
+
+	if len(dev.DeviceId) > maxIDLength {
+		return errDevIDExceedsMaxLength.WithAttributes("id", dev.DeviceId)
+	}
+
+	if len(dev.ApplicationId) > maxIDLength {
+		return errAppIDExceedsMaxLength.WithAttributes("id", dev.ApplicationId)
+	}
 
 	if err := dev.ValidateFields(); err != nil {
 		return errInvalidFields.WithAttributes(
