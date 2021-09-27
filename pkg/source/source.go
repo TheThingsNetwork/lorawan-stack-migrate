@@ -29,8 +29,7 @@ type Source interface {
 	// ExportDevice retrieves an end device from the source and returns it as a ttnpb.EndDevice.
 	ExportDevice(devID string) (*ttnpb.EndDevice, error)
 	// RangeDevices calls a function for all matching devices of an application.
-	// The optional prefix, if set, is prefixed to each exported device.
-	RangeDevices(appID string, prefix string, f func(s Source, prefix, devID string) error) error
+	RangeDevices(appID string, f func(s Source, devID string) error) error
 	// Close cleans up and terminates any open connections.
 	Close() error
 }

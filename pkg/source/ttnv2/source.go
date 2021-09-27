@@ -205,7 +205,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 }
 
 // RangeDevices implements the source.Source interface.
-func (s *Source) RangeDevices(_ string, prefix string, f func(source.Source, string, string) error) error {
+func (s *Source) RangeDevices(_ string, f func(source.Source, string) error) error {
 	devices, err := s.mgr.List(0, 0)
 	if err != nil {
 		if err, ok := errors.From(err); ok {
@@ -215,7 +215,7 @@ func (s *Source) RangeDevices(_ string, prefix string, f func(source.Source, str
 	}
 
 	for _, dev := range devices {
-		if err := f(s, prefix, dev.DevID); err != nil {
+		if err := f(s, dev.DevID); err != nil {
 			return err
 		}
 	}

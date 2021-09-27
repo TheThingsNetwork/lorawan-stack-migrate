@@ -89,7 +89,7 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 }
 
 // RangeDevices implements the Source interface.
-func (p *Source) RangeDevices(id string, prefix string, f func(source.Source, string, string) error) error {
+func (p *Source) RangeDevices(id string, f func(source.Source, string) error) error {
 	app, err := p.getApplication(id)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func (p *Source) RangeDevices(id string, prefix string, f func(source.Source, st
 			return err
 		}
 		for _, devListItem := range devices.Result {
-			if err := f(p, prefix, devListItem.DevEui); err != nil {
+			if err := f(p, devListItem.DevEui); err != nil {
 				return err
 			}
 		}

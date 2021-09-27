@@ -39,13 +39,17 @@ var (
 	sanitizeID = strings.NewReplacer("_", "-")
 )
 
-func exportDev(s source.Source, prefix, devID string) error {
+type exportConfig struct {
+	devIDPrefix string
+}
+
+func (cfg exportConfig) exportDev(s source.Source, devID string) error {
 	dev, err := s.ExportDevice(devID)
 	if err != nil {
 		return errExport.WithAttributes("device_id", devID).WithCause(err)
 	}
-	if prefix != "" {
-		dev.DeviceId = fmt.Sprintf("%s-%s", prefix, dev.DeviceId)
+	if cfg.devIDPrefix != "" {
+		dev.DeviceId = fmt.Sprintf("%s-%s", cfg.devIDPrefix, dev.DeviceId)
 	}
 	// V3 does not allow any underscores in identifiers
 	dev.DeviceId = sanitizeID.Replace(dev.DeviceId)
