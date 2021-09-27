@@ -8,8 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Support optional prefixes to device IDs.
-
 ### Changed
 
 ### Fixed
@@ -17,6 +15,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Removed
 
 ### Security
+
+## [v0.7.0] (2021-09-27)
+
+### Added
+
+- Support optional prefixes to device IDs.
 
 ## [v0.6.0] (2021-06-08)
 
@@ -57,5 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 <!--
 NOTE: These links should respect backports. See https://github.com/TheThingsNetwork/lorawan-stack/pull/1444/files#r333379706.
 -->
-[unreleased]: https://github.com/TheThingsNetwork/lorawan-stack-migrate/v0.5.0...master
+[unreleased]: https://github.com/TheThingsNetwork/lorawan-stack-migrate/v0.7.0...master
+[0.7.0]: https://github.com/TheThingsNetwork/lorawan-stack/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/TheThingsNetwork/lorawan-stack/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/TheThingsNetwork/lorawan-stack/compare/v0.4.0...v0.5.0
