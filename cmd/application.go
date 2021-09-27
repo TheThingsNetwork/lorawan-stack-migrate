@@ -17,19 +17,16 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 )
 
 var (
-	errNoAppID = errors.DefineInvalidArgument("no_app_id", "no App ID")
-
 	applicationsCmd = &cobra.Command{
 		Use:     "application [app-id] ...",
 		Aliases: []string{"applications", "app"},
 		Short:   "Export all devices of an application",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return exportCommand(cmd, args, func(s source.Source, item string) error {
-				return s.RangeDevices(item, exportDev)
+				return s.RangeDevices(item, exportCfg.exportDev)
 			})
 		},
 	}
