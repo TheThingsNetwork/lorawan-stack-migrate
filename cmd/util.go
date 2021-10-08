@@ -46,6 +46,7 @@ var (
 )
 
 type exportConfig struct {
+	euiForID    bool
 	devIDPrefix string
 }
 
@@ -54,17 +55,28 @@ func (cfg exportConfig) exportDev(s source.Source, devID string) error {
 	if err != nil {
 		return errExport.WithAttributes("device_id", devID).WithCause(err)
 	}
+	oldID := dev.DeviceId
+
+	if cfg.euiForID && dev.DevEui != nil {
+		dev.DeviceId = strings.ToLower(dev.DevEui.String())
+	}
 	if cfg.devIDPrefix != "" {
 		dev.DeviceId = fmt.Sprintf("%s-%s", cfg.devIDPrefix, dev.DeviceId)
 	}
-	// V3 does not allow any underscores in identifiers
-	dev.DeviceId = sanitizeID.Replace(dev.DeviceId)
-	dev.ApplicationId = sanitizeID.Replace(dev.ApplicationId)
 
+	dev.DeviceId = sanitizeID.Replace(dev.DeviceId)
 	if len(dev.DeviceId) > maxIDLength {
 		return errDevIDExceedsMaxLength.WithAttributes("id", dev.DeviceId)
 	}
 
+	if dev.DeviceId != oldID {
+		if dev.Attributes == nil {
+			dev.Attributes = make(map[string]string)
+		}
+		dev.Attributes["old-id"] = oldID
+	}
+
+	dev.ApplicationId = sanitizeID.Replace(dev.ApplicationId)
 	if len(dev.ApplicationId) > maxIDLength {
 		return errAppIDExceedsMaxLength.WithAttributes("id", dev.ApplicationId)
 	}
