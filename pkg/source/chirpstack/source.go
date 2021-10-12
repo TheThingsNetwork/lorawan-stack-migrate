@@ -125,8 +125,8 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	dev.EndDeviceIdentifiers.DevEui = &types.EUI64{}
 	dev.EndDeviceIdentifiers.JoinEui = &types.EUI64{}
 	dev.Attributes = make(map[string]string)
-	dev.MACSettings = &ttnpb.MACSettings{}
-	dev.MACState = &ttnpb.MACState{}
+	dev.MacSettings = &ttnpb.MACSettings{}
+	dev.MacState = &ttnpb.MACState{}
 	dev.RootKeys = &ttnpb.RootKeys{}
 	dev.Formatters = &ttnpb.MessagePayloadFormatters{}
 
@@ -175,40 +175,40 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if svcProfile.DevStatusReqFreq > 0 {
 		// ChirpStack frequency is requests/day. TTS is time.Duration of interval
 		d := time.Duration(24) * time.Hour / time.Duration(svcProfile.DevStatusReqFreq)
-		dev.MACSettings.StatusTimePeriodicity = &d
+		dev.MacSettings.StatusTimePeriodicity = &d
 	}
 
 	// Frequency Plan
-	dev.FrequencyPlanID = p.frequencyPlanID
+	dev.FrequencyPlanId = p.frequencyPlanID
 
 	// General
 	switch devProfile.MacVersion {
 	case "1.0.0":
-		dev.LoRaWANVersion = ttnpb.MAC_V1_0
-		dev.LoRaWANPHYVersion = ttnpb.PHY_V1_0
+		dev.LorawanVersion = ttnpb.MAC_V1_0
+		dev.LorawanPhyVersion = ttnpb.TS001_V1_0
 	case "1.0.1":
-		dev.LoRaWANVersion = ttnpb.MAC_V1_0_1
-		dev.LoRaWANPHYVersion = ttnpb.PHY_V1_0_1
+		dev.LorawanVersion = ttnpb.MAC_V1_0_1
+		dev.LorawanPhyVersion = ttnpb.TS001_V1_0_1
 	case "1.0.2":
-		dev.LoRaWANVersion = ttnpb.MAC_V1_0_2
+		dev.LorawanVersion = ttnpb.MAC_V1_0_2
 		switch devProfile.RegParamsRevision {
 		case "A":
-			dev.LoRaWANPHYVersion = ttnpb.PHY_V1_0_2_REV_A
+			dev.LorawanPhyVersion = ttnpb.RP001_V1_0_2
 		case "B":
-			dev.LoRaWANPHYVersion = ttnpb.PHY_V1_0_2_REV_B
+			dev.LorawanPhyVersion = ttnpb.RP001_V1_0_2_REV_B
 		default:
 			return nil, errInvalidPHYVersion.WithAttributes("phy_version", devProfile.RegParamsRevision)
 		}
 	case "1.0.3":
-		dev.LoRaWANVersion = ttnpb.MAC_V1_0_3
-		dev.LoRaWANPHYVersion = ttnpb.PHY_V1_0_3_REV_A
+		dev.LorawanVersion = ttnpb.MAC_V1_0_3
+		dev.LorawanPhyVersion = ttnpb.RP001_V1_0_3_REV_A
 	case "1.1.0":
-		dev.LoRaWANVersion = ttnpb.MAC_V1_1
+		dev.LorawanVersion = ttnpb.MAC_V1_1
 		switch devProfile.RegParamsRevision {
 		case "A":
-			dev.LoRaWANPHYVersion = ttnpb.PHY_V1_1_REV_A
+			dev.LorawanPhyVersion = ttnpb.RP001_V1_1_REV_A
 		case "B":
-			dev.LoRaWANPHYVersion = ttnpb.PHY_V1_1_REV_B
+			dev.LorawanPhyVersion = ttnpb.RP001_V1_1_REV_B
 		default:
 			return nil, errInvalidPHYVersion.WithAttributes("phy_version", devProfile.RegParamsRevision)
 		}
@@ -216,34 +216,34 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		return nil, errInvalidMACVersion.WithAttributes("mac_version", devProfile.MacVersion)
 	}
 	if devProfile.MaxEirp > 0 {
-		dev.MACState.DesiredParameters.MaxEIRP = float32(devProfile.MaxEirp)
+		dev.MacState.DesiredParameters.MaxEirp = float32(devProfile.MaxEirp)
 	}
 
 	// Join (OTAA/ABP)
 	dev.SupportsJoin = devProfile.SupportsJoin
 	if !dev.SupportsJoin {
 		if devProfile.RxFreq_2 > 0 {
-			dev.MACSettings.Rx2Frequency = &ttnpb.FrequencyValue{
+			dev.MacSettings.Rx2Frequency = &ttnpb.FrequencyValue{
 				Value: uint64(devProfile.RxFreq_2),
 			}
 		}
 		if devProfile.RxDelay_1 > 0 {
-			dev.MACSettings.Rx1Delay = &ttnpb.RxDelayValue{
+			dev.MacSettings.Rx1Delay = &ttnpb.RxDelayValue{
 				Value: ttnpb.RxDelay(devProfile.RxDelay_1),
 			}
 		}
 		if devProfile.RxDrOffset_1 >= 0 {
-			dev.MACSettings.DesiredRx1DataRateOffset = &ttnpb.DataRateOffsetValue{
+			dev.MacSettings.DesiredRx1DataRateOffset = &ttnpb.DataRateOffsetValue{
 				Value: ttnpb.DataRateOffset(devProfile.RxDrOffset_1),
 			}
 		}
 		if devProfile.RxDatarate_2 >= 0 {
-			dev.MACSettings.DesiredRx2DataRateIndex = &ttnpb.DataRateIndexValue{
+			dev.MacSettings.DesiredRx2DataRateIndex = &ttnpb.DataRateIndexValue{
 				Value: ttnpb.DataRateIndex(devProfile.RxDatarate_2),
 			}
 		}
 		for _, freq := range devProfile.FactoryPresetFreqs {
-			dev.MACSettings.FactoryPresetFrequencies = append(dev.MACSettings.FactoryPresetFrequencies, uint64(freq))
+			dev.MacSettings.FactoryPresetFrequencies = append(dev.MacSettings.FactoryPresetFrequencies, uint64(freq))
 		}
 	}
 
@@ -252,19 +252,19 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if dev.SupportsClassB {
 		if devProfile.ClassBTimeout > 0 {
 			timeout := time.Duration(devProfile.ClassBTimeout) * time.Second
-			dev.MACSettings.ClassBTimeout = &timeout
+			dev.MacSettings.ClassBTimeout = &timeout
 		}
 		// ChirpStack API returns 2^(seconds + 5)
-		dev.MACSettings.PingSlotPeriodicity = &ttnpb.PingSlotPeriodValue{
+		dev.MacSettings.PingSlotPeriodicity = &ttnpb.PingSlotPeriodValue{
 			Value: ttnpb.PingSlotPeriod(math.Log2(float64(devProfile.PingSlotPeriod)) - 5),
 		}
 
 		if devProfile.PingSlotFreq > 0 {
-			dev.MACSettings.DesiredPingSlotFrequency = &ttnpb.FrequencyValue{
+			dev.MacSettings.DesiredPingSlotFrequency = &ttnpb.FrequencyValue{
 				Value: uint64(devProfile.PingSlotFreq),
 			}
 		}
-		dev.MACSettings.DesiredPingSlotDataRateIndex = &ttnpb.DataRateIndexValue{
+		dev.MacSettings.DesiredPingSlotDataRateIndex = &ttnpb.DataRateIndexValue{
 			Value: ttnpb.DataRateIndex(devProfile.PingSlotDr),
 		}
 	}
@@ -274,14 +274,14 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if dev.SupportsClassC {
 		if devProfile.ClassCTimeout > 0 {
 			timeout := time.Duration(devProfile.ClassCTimeout) * time.Second
-			dev.MACSettings.ClassCTimeout = &timeout
+			dev.MacSettings.ClassCTimeout = &timeout
 		}
 	}
 
 	// Root Keys
 	rootKeys, err := p.getRootKeys(devEui)
 	if err == nil {
-		switch dev.LoRaWANVersion {
+		switch dev.LorawanVersion {
 		case ttnpb.MAC_V1_1:
 			dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{
 				Key: &types.AES128Key{},
@@ -324,7 +324,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 
 	// Configuration
 	if csdev.SkipFCntCheck {
-		dev.MACSettings.ResetsFCnt = &ttnpb.BoolValue{
+		dev.MacSettings.ResetsFCnt = &ttnpb.BoolValue{
 			Value: csdev.SkipFCntCheck,
 		}
 	}
@@ -354,7 +354,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 			if err := dev.Session.FNwkSIntKey.Key.UnmarshalText([]byte(activation.FNwkSIntKey)); err != nil {
 				return nil, errInvalidKey.WithAttributes(activation.FNwkSIntKey).WithCause(err)
 			}
-			switch dev.LoRaWANVersion {
+			switch dev.LorawanVersion {
 			case ttnpb.MAC_V1_1:
 				dev.Session.NwkSEncKey = &ttnpb.KeyEnvelope{
 					Key: &types.AES128Key{},
@@ -372,7 +372,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 			}
 
 			if devProfile.SupportsJoin {
-				dev.Session.SessionKeyID = generateBytes(16)
+				dev.Session.SessionKeyId = generateBytes(16)
 			}
 			dev.Session.LastAFCntDown = activation.AFCntDown
 			dev.Session.LastFCntUp = activation.FCntUp

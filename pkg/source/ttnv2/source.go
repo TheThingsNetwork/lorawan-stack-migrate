@@ -87,21 +87,21 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		return nil, err
 	}
 
-	v3dev.LoRaWANVersion = ttnpb.MAC_V1_0_2
-	v3dev.LoRaWANPHYVersion = ttnpb.PHY_V1_0_2_REV_B
-	v3dev.FrequencyPlanID = s.config.frequencyPlanID
+	v3dev.LorawanVersion = ttnpb.MAC_V1_0_2
+	v3dev.LorawanPhyVersion = ttnpb.RP001_V1_0_2_REV_B
+	v3dev.FrequencyPlanId = s.config.frequencyPlanID
 
-	v3dev.MACSettings = &ttnpb.MACSettings{
+	v3dev.MacSettings = &ttnpb.MACSettings{
 		StatusTimePeriodicity:  func(t time.Duration) *time.Duration { return &t }(0),
 		StatusCountPeriodicity: &pbtypes.UInt32Value{Value: 0},
 	}
 	if dev.Uses32BitFCnt {
-		v3dev.MACSettings.Supports32BitFCnt = &ttnpb.BoolValue{
+		v3dev.MacSettings.Supports_32BitFCnt = &ttnpb.BoolValue{
 			Value: dev.Uses32BitFCnt,
 		}
 	}
 	if dev.DisableFCntCheck {
-		v3dev.MACSettings.ResetsFCnt = &ttnpb.BoolValue{
+		v3dev.MacSettings.ResetsFCnt = &ttnpb.BoolValue{
 			Value: dev.DisableFCntCheck,
 		}
 	}
@@ -142,7 +142,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 			StartedAt:     time.Now(),
 		}
 		if deviceSupportsJoin {
-			v3dev.Session.SessionKeyID = generateBytes(16)
+			v3dev.Session.SessionKeyId = generateBytes(16)
 		}
 		if err := v3dev.Session.DevAddr.Unmarshal(dev.DevAddr.Bytes()); err != nil {
 			return nil, err
@@ -154,14 +154,14 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 			return nil, err
 		}
 
-		if v3dev.MACState, err = mac.NewState(v3dev, s.config.fpStore, ttnpb.MACSettings{}); err != nil {
+		if v3dev.MacState, err = mac.NewState(v3dev, s.config.fpStore, ttnpb.MACSettings{}); err != nil {
 			return nil, err
 		}
 		// Ensure MAC state matches v2 configuration.
-		v3dev.MACState.CurrentParameters = v3dev.MACState.DesiredParameters
-		v3dev.MACState.DeviceClass = ttnpb.CLASS_A
-		v3dev.MACState.LoRaWANVersion = ttnpb.MAC_V1_0_2
-		v3dev.MACState.CurrentParameters.Rx1Delay = ttnpb.RX_DELAY_1
+		v3dev.MacState.CurrentParameters = v3dev.MacState.DesiredParameters
+		v3dev.MacState.DeviceClass = ttnpb.CLASS_A
+		v3dev.MacState.LorawanVersion = ttnpb.MAC_V1_0_2
+		v3dev.MacState.CurrentParameters.Rx1Delay = ttnpb.RX_DELAY_1
 	}
 
 	log.FromContext(s.ctx).WithFields(log.Fields(
@@ -182,7 +182,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 
 	// For OTAA devices with a session, set current parameters instead of MAC settings.
 	if !deviceSupportsJoin {
-		v3dev.MACSettings.Rx1Delay = &ttnpb.RxDelayValue{Value: ttnpb.RX_DELAY_1}
+		v3dev.MacSettings.Rx1Delay = &ttnpb.RxDelayValue{Value: ttnpb.RX_DELAY_1}
 
 		if s.config.resetsToFrequencyPlan {
 			macState, err := mac.NewState(v3dev, s.config.fpStore, ttnpb.MACSettings{})
@@ -197,7 +197,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 				}
 			}
 
-			v3dev.MACSettings.FactoryPresetFrequencies = freqs
+			v3dev.MacSettings.FactoryPresetFrequencies = freqs
 		}
 	}
 
