@@ -48,6 +48,7 @@ var (
 			ctx = log.NewContext(context.Background(), logger)
 
 			exportCfg.devIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
+			exportCfg.euiForID, _ = cmd.Flags().GetBool("set-eui-as-id")
 
 			rpclog.ReplaceGrpcLogger(logger)
 			return nil
@@ -68,5 +69,6 @@ func init() {
 	rootCmd.PersistentFlags().Bool("verbose", false, "Verbose output")
 	rootCmd.PersistentFlags().Bool("dry-run", false, "Do everything except resetting root and session keys of exported devices")
 	rootCmd.PersistentFlags().String("frequency-plans-url", "https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master", "URL for fetching frequency plans")
+	rootCmd.PersistentFlags().Bool("set-eui-as-id", false, "Use the DevEUI as ID")
 	rootCmd.PersistentFlags().String("dev-id-prefix", "", "(optional) value to be prefixed to the resulting device IDs")
 }
