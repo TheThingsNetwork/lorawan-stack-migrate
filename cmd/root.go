@@ -37,12 +37,17 @@ var (
 			if verbose, _ := cmd.Flags().GetBool("verbose"); verbose {
 				logLevel = log.DebugLevel
 			}
-			exportCfg.devIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
+			logHandler, err := log.NewZap("console")
+			if err != nil {
+				return err
+			}
 			logger = log.NewLogger(
+				logHandler,
 				log.WithLevel(logLevel),
-				log.WithHandler(log.NewCLI(os.Stderr)),
 			)
 			ctx = log.NewContext(context.Background(), logger)
+
+			exportCfg.devIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
 
 			rpclog.ReplaceGrpcLogger(logger)
 			return nil

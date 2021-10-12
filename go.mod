@@ -32,7 +32,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/valyala/fasttemplate v1.2.1 // indirect
-	go.thethings.network/lorawan-stack/v3 v3.13.0
+	go.thethings.network/lorawan-stack/v3 v3.15.2-0.20211011141738-8c3891a18b9f
 	google.golang.org/grpc v1.37.0
 	gopkg.in/ini.v1 v1.60.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
