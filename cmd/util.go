@@ -127,6 +127,12 @@ func (l *listIterator) Next() (string, error) {
 	return "", io.EOF
 }
 
+// NewEmptyIterator returns a new iterator that has only one dummy element.
+// This is valid only for TTNV2 application migration.
+func NewEmptyIterator() Iterator {
+	return &listIterator{items: []string{"dummy"}}
+}
+
 // NewReaderIterator returns a new iterator from a reader.
 func NewReaderIterator(rd io.Reader, sep byte) Iterator {
 	return &readerIterator{rd: bufio.NewReader(rd), sep: sep}

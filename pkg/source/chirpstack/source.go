@@ -23,6 +23,7 @@ import (
 	csapi "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
@@ -42,6 +43,8 @@ function Decoder(bytes, fport) {
 	return Decode(fport, bytes, null);
 }`
 )
+
+var errNoAppID = errors.DefineInvalidArgument("no_app_id", "no Application ID")
 
 // Source implements the Source interface.
 type Source struct {
@@ -90,6 +93,9 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 
 // RangeDevices implements the Source interface.
 func (p *Source) RangeDevices(id string, f func(source.Source, string) error) error {
+	if id == "" || id == "dummy" {
+		return errNoAppID.New()
+	}
 	app, err := p.getApplication(id)
 	if err != nil {
 		return err

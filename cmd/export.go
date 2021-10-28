@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"io"
-	"os"
 
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
@@ -26,7 +25,7 @@ func exportCommand(cmd *cobra.Command, args []string, f func(s source.Source, it
 	var iter Iterator
 	switch len(args) {
 	case 0:
-		iter = NewReaderIterator(os.Stdin, '\n')
+		iter = NewEmptyIterator()
 	default:
 		iter = NewListIterator(args)
 	}

@@ -38,7 +38,13 @@ type Source struct {
 	config config
 	mgr    ttnsdk.DeviceManager
 	client ttnsdk.Client
+	appID  string
 }
+
+var (
+	errNoDeviceID = errors.DefineInvalidArgument("no_device_id", "no device ID")
+	errWrongAppID = errors.DefineInvalidArgument("wrong_app_id", "wrong app ID `{id}`")
+)
 
 // NewSource creates a new TTNv2 Source.
 func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error) {
@@ -51,6 +57,7 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 		ctx:    ctx,
 		config: config,
 		client: config.sdkConfig.NewClient(config.appID, config.appAccessKey),
+		appID:  config.appID,
 	}
 	mgr, err := s.client.ManageDevices()
 	if err != nil {
@@ -62,6 +69,9 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 
 // ExportDevice implements the source.Source interface.
 func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
+	if devID == "" || devID == "dummy" {
+		return nil, errNoDeviceID.New()
+	}
 	dev, err := s.mgr.Get(devID)
 	if err != nil {
 		if err, ok := errors.From(err); ok {
@@ -205,7 +215,10 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 }
 
 // RangeDevices implements the source.Source interface.
-func (s *Source) RangeDevices(_ string, f func(source.Source, string) error) error {
+func (s *Source) RangeDevices(appID string, f func(source.Source, string) error) error {
+	if appID != "dummy" && appID != s.appID {
+		return errWrongAppID.WithAttributes("id", appID)
+	}
 	devices, err := s.mgr.List(0, 0)
 	if err != nil {
 		if err, ok := errors.From(err); ok {
