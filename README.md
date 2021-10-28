@@ -67,6 +67,8 @@ $ export TTNV2_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
 
 To export a single device using its Device ID (e.g. `mydevice`):
 
+:warning: Always do a dry run and copy the output as a backup before executing the migration.
+
 ```bash
 # dry run first, verify that no errors occur
 $ ttn-lw-migrate device --source ttnv2 "mydevice" --dry-run --verbose > devices.json
