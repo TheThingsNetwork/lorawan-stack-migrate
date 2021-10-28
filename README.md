@@ -98,10 +98,11 @@ $ ttn-lw-migrate devices --source ttnv2 < device_ids.txt > devices.json
 Similarly, to export all devices of application `my-app-id`:
 
 ```bash
+$ export TTNV2_APP_ID="my-app-id"                     # TTN App ID
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate application --source ttnv2 "my-app-id" --dry-run --verbose > devices.json
+$ ttn-lw-migrate application --source ttnv2 --dry-run --verbose > devices.json
 # export devices
-$ ttn-lw-migrate application --source ttnv2 "my-app-id" > devices.json
+$ ttn-lw-migrate application --source ttnv2 > devices.json
 ```
 
 ## ChirpStack

@@ -17,7 +17,10 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 )
+
+var errUnexpectedArguments = errors.DefineInvalidArgument("unexpected_arguments", "no arguments expected for this command")
 
 var (
 	applicationsCmd = &cobra.Command{
@@ -25,6 +28,12 @@ var (
 		Aliases: []string{"applications", "app"},
 		Short:   "Export all devices of an application",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				return errUnexpectedArguments.New()
+			}
+			// Add an dummy element so that the iterator runs.
+			// The args are never used since the exporter gets the APP ID from config.
+			args = append(args, "dummy")
 			return exportCommand(cmd, args, func(s source.Source, item string) error {
 				return s.RangeDevices(item, exportCfg.exportDev)
 			})
