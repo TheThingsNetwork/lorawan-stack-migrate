@@ -41,7 +41,6 @@ $ ttn-lw-cli end-devices create --application-id test-app < devices.json
 Configure with environment variables, or command-line arguments. See `--help` for more details:
 
 ```bash
-$ export TTNV2_APP_ID="my-ttn-app"                    # TTN App ID
 $ export TTNV2_APP_ACCESS_KEY="ttn-account-v2.a..."   # TTN App Access Key (needs `devices` permissions)
 $ export FREQUENCY_PLAN_ID="EU_863_870_TTN"           # Frequency Plan for exported devices
 ```
@@ -65,16 +64,16 @@ $ export TTNV2_DISCOVERY_SERVER_ADDRESS="discovery.thethings.network:1900"
 
 ### Export Devices
 
-To export a single device using its Device ID (e.g. `mydevice`):
+To export a single device of application `my-ttn-app` using its Device ID (e.g. `mydevice`):
 
 ```bash
-# dry run first, verify that no errors occur
-$ ttn-lw-migrate device --source ttnv2 "mydevice" --dry-run --verbose > devices.json
+# dry run first, verify that no errors occur. Store the output of this command as a backup.
+$ ttn-lw-migrate device --source ttnv2 "my-ttn-app" "mydevice" --dry-run --verbose > devices.json
 # export device
-$ ttn-lw-migrate device --source ttnv2 "mydevice" > devices.json
+$ ttn-lw-migrate device --source ttnv2 "my-ttn-app" "mydevice" > devices.json
 ```
 
-In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
+In order to export a large number of devices of application `my-ttn-app`, create a file named `device_ids.txt` with one device ID per line:
 
 ```
 mydevice
@@ -87,22 +86,23 @@ device5
 And then export with:
 
 ```bash
-# dry run first, verify that no errors occur
-$ ttn-lw-migrate devices --source ttnv2 "mydevice" --dry-run --verbose < device_ids.txt > devices.json
+# dry run first, verify that no errors occur. Store the output of this command as a backup.
+$ ttn-lw-migrate devices --source ttnv2 "my-ttn-app" --dry-run --verbose < device_ids.txt > devices.json
 # export devices
-$ ttn-lw-migrate devices --source ttnv2 < device_ids.txt > devices.json
+$ ttn-lw-migrate devices --source ttnv2 "my-ttn-app" < device_ids.txt > devices.json
 ```
 
-### Export Applications
-
-Similarly, to export all devices of application `my-app-id`:
+To export all devices of application `my-ttn-app`, leave out the Device ID argument(s).
 
 ```bash
-# dry run first, verify that no errors occur
-$ ttn-lw-migrate application --source ttnv2 "my-app-id" --dry-run --verbose > devices.json
+# dry run first, verify that no errors occur. Store the output of this command as a backup.
+$ ttn-lw-migrate devices --source ttnv2 "my-ttn-app" --dry-run --verbose > devices.json
 # export devices
-$ ttn-lw-migrate application --source ttnv2 "my-app-id" > devices.json
+$ ttn-lw-migrate devices --source ttnv2 "my-ttn-app" > devices.json
 ```
+
+> Note: ttnv2 has one TTNV2_APP_ACCESS_KEY per application, and as a result, it's not easy to migrate all applications of a user in a single command.
+> For multiple applications, you can write a script loop through the different Application IDs while setting the correct access key for each application.
 
 ## ChirpStack
 
