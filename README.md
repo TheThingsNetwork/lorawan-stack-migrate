@@ -68,9 +68,9 @@ To export a single device of application `my-ttn-app` using its Device ID (e.g. 
 
 ```bash
 # dry run first, verify that no errors occur. Store the output of this command as a backup.
-$ ttn-lw-migrate device --source ttnv2 "my-ttn-app" "mydevice" --dry-run --verbose > devices.json
+$ ttn-lw-migrate devices --source ttnv2 "my-ttn-app" "mydevice" --dry-run --verbose > devices.json
 # export device
-$ ttn-lw-migrate device --source ttnv2 "my-ttn-app" "mydevice" > devices.json
+$ ttn-lw-migrate devices --source ttnv2 "my-ttn-app" "mydevice" > devices.json
 ```
 
 In order to export a large number of devices of application `my-ttn-app`, create a file named `device_ids.txt` with one device ID per line:
@@ -92,7 +92,7 @@ $ ttn-lw-migrate devices --source ttnv2 "my-ttn-app" --dry-run --verbose < devic
 $ ttn-lw-migrate devices --source ttnv2 "my-ttn-app" < device_ids.txt > devices.json
 ```
 
-To export all devices of application `my-ttn-app`, leave out the Device ID argument(s).
+To export all devices of application `my-ttn-app`, only specify the application ID and leave the device ID(s) blank.
 
 ```bash
 # dry run first, verify that no errors occur. Store the output of this command as a backup.
@@ -129,13 +129,13 @@ See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for 
 
 ### Export Devices
 
-To export a single device using its DevEUI (e.g. `0102030405060708`):
+To export a single device of application "chirpstack-app-1" using its DevEUI (e.g. `0102030405060708`):
 
 ```
-$ ttn-lw-migrate device --source chirpstack "0102030405060708" > devices.json
+$ ttn-lw-migrate devices --source chirpstack "chirpstack-app-1" "0102030405060708" > devices.json
 ```
 
-In order to export a large number of devices, create a file named `device_euis.txt` with one DevEUI per line:
+In order to export a large number of selected devices of application "chirpstack-app-1", create a file named `device_euis.txt` with one DevEUI per line:
 
 ```
 0102030405060701
@@ -149,16 +149,16 @@ In order to export a large number of devices, create a file named `device_euis.t
 And then export with:
 
 ```bash
-$ ttn-lw-migrate device --source chirpstack < device_euis.txt > devices.json
+$ ttn-lw-migrate devices --source chirpstack "chirpstack-app-1" < device_euis.txt > devices.json
+```
+
+Similarly, to export all devices of application `chirpstack-app-1`, only specify the application ID and leave the device ID(s) blank.
+
+```bash
+$ ttn-lw-migrate devices --source chirpstack "chirpstack-app-1" > devices.json
 ```
 
 ### Export Applications
-
-Similarly, to export all devices of application `chirpstack-app-1`:
-
-```bash
-$ ttn-lw-migrate application --source chirpstack "chirpstack-app-1" > devices.json
-```
 
 In order to export multiple applications, create a file named `application_names.txt` with one Application name per line:
 
@@ -171,7 +171,7 @@ chirpstack-app-3
 And export with:
 
 ```bash
-$ ttn-lw-migrate application --source chirpstack < application_names.txt > devices.json
+$ ttn-lw-migrate applications --source chirpstack < application_names.txt > devices.json
 ```
 
 ## Development Environment
