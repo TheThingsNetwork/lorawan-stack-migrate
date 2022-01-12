@@ -210,7 +210,7 @@ It is also possible to use `go build`.
 Releases are created using [`goreleaser`](https://github.com/goreleaser/goreleaser). First, install GoReleaser:
 
 ```bash
-$ go install github.com/goreleaser/goreleaser@v0.161.1
+$ go install github.com/goreleaser/goreleaser@v1.2.5
 ```
 
 The command to build a release snapshot from your branch is:

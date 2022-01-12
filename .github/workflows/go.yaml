@@ -14,7 +14,7 @@ on:
 jobs:
   quality:
     name: Go Code Quality
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - name: Check out Code
       uses: actions/checkout@v2
@@ -42,7 +42,7 @@ jobs:
 
   test:
     name: Go Tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - name: Check out Code
       uses: actions/checkout@v2

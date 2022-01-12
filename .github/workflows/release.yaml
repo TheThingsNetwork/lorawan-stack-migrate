@@ -9,7 +9,7 @@ on:
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - name: Check out code
       uses: actions/checkout@v2
@@ -42,7 +42,7 @@ jobs:
     - name: Run Goreleaser
       uses: goreleaser/goreleaser-action@v2
       with:
-        version: 'v0.161.1'
+        version: 'v1.2.5'
         args: release --release-notes /tmp/release-notes.md
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
