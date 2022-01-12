@@ -8,8 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- `--set-eui-as-id` flag to re-map the ID of end devices. Using this flag will set the device ID to the DevEUI (if it has a DevEUI). When combined with the `--dev-id-prefix` flag, the ID will consist of the prefix and the DevEUI.
-
 ### Changed
 
 ### Fixed
@@ -17,6 +15,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Removed
 
 ### Security
+
+## [v0.8.1] (2021-10-12)
+
+### Added
+
+- Apple Silicon builds.
+
+## [v0.8.0] (2021-10-12)
+
+### Added
+
+- `--set-eui-as-id` flag to re-map the ID of end devices. Using this flag will set the device ID to the DevEUI (if it has a DevEUI). When combined with the `--dev-id-prefix` flag, the ID will consist of the prefix and the DevEUI.
 
 ## [v0.7.0] (2021-09-27)
 
