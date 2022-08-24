@@ -16,7 +16,6 @@ package ttnv2
 
 import (
 	"context"
-	"time"
 
 	ttnsdk "github.com/TheThingsNetwork/go-app-sdk"
 	ttntypes "github.com/TheThingsNetwork/ttn/core/types"
@@ -70,29 +69,33 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		return nil, err
 	}
 
-	v3dev := &ttnpb.EndDevice{}
-	v3dev.DeviceId = dev.DevID
-	v3dev.ApplicationId = s.config.appID
+	v3dev := &ttnpb.EndDevice{
+		Ids: &ttnpb.EndDeviceIdentifiers{
+			ApplicationIds: &ttnpb.ApplicationIdentifiers{},
+		},
+	}
+	v3dev.Ids.DeviceId = dev.DevID
+	v3dev.Ids.ApplicationIds.ApplicationId = s.config.appID
 
 	v3dev.Name = dev.DevID
 	v3dev.Description = dev.Description
 	v3dev.Attributes = dev.Attributes
 
-	v3dev.JoinEui = &types.EUI64{}
-	if err := v3dev.JoinEui.Unmarshal(dev.AppEUI.Bytes()); err != nil {
+	v3dev.Ids.JoinEui = &types.EUI64{}
+	if err := v3dev.Ids.JoinEui.Unmarshal(dev.AppEUI.Bytes()); err != nil {
 		return nil, err
 	}
-	v3dev.DevEui = &types.EUI64{}
-	if err := v3dev.DevEui.Unmarshal(dev.DevEUI.Bytes()); err != nil {
+	v3dev.Ids.DevEui = &types.EUI64{}
+	if err := v3dev.Ids.DevEui.Unmarshal(dev.DevEUI.Bytes()); err != nil {
 		return nil, err
 	}
 
-	v3dev.LorawanVersion = ttnpb.MAC_V1_0_2
-	v3dev.LorawanPhyVersion = ttnpb.RP001_V1_0_2_REV_B
+	v3dev.LorawanVersion = ttnpb.MACVersion_MAC_V1_0_2
+	v3dev.LorawanPhyVersion = ttnpb.PHYVersion_RP001_V1_0_2_REV_B
 	v3dev.FrequencyPlanId = s.config.frequencyPlanID
 
 	v3dev.MacSettings = &ttnpb.MACSettings{
-		StatusTimePeriodicity:  func(t time.Duration) *time.Duration { return &t }(0),
+		StatusTimePeriodicity:  pbtypes.DurationProto(0),
 		StatusCountPeriodicity: &pbtypes.UInt32Value{Value: 0},
 	}
 	if dev.Uses32BitFCnt {
@@ -126,42 +129,44 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 				Latitude:  float64(dev.Latitude),
 				Longitude: float64(dev.Longitude),
 				Altitude:  dev.Altitude,
-				Source:    ttnpb.SOURCE_REGISTRY,
+				Source:    ttnpb.LocationSource_SOURCE_REGISTRY,
 			},
 		}
 	}
 
 	if s.config.withSession && deviceHasSession || !deviceSupportsJoin {
 		v3dev.Session = &ttnpb.Session{
-			SessionKeys: ttnpb.SessionKeys{
+			Keys: &ttnpb.SessionKeys{
 				AppSKey:     &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
 				FNwkSIntKey: &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
 			},
 			LastFCntUp:    dev.FCntUp,
 			LastNFCntDown: dev.FCntDown,
-			StartedAt:     time.Now(),
+			StartedAt:     pbtypes.TimestampNow(),
 		}
 		if deviceSupportsJoin {
-			v3dev.Session.SessionKeyId = generateBytes(16)
+			v3dev.Session.Keys.SessionKeyId = generateBytes(16)
 		}
-		if err := v3dev.Session.DevAddr.Unmarshal(dev.DevAddr.Bytes()); err != nil {
+		var devAddr types.DevAddr
+		if err := devAddr.Unmarshal(dev.DevAddr.Bytes()); err != nil {
 			return nil, err
 		}
-		if err := v3dev.Session.SessionKeys.AppSKey.Key.Unmarshal(dev.AppSKey.Bytes()); err != nil {
+		v3dev.Session.DevAddr = devAddr.Bytes()
+		if err := v3dev.Session.Keys.AppSKey.Key.Unmarshal(dev.AppSKey.Bytes()); err != nil {
 			return nil, err
 		}
-		if err := v3dev.Session.SessionKeys.FNwkSIntKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
+		if err := v3dev.Session.Keys.FNwkSIntKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
 			return nil, err
 		}
 
-		if v3dev.MacState, err = mac.NewState(v3dev, s.config.fpStore, ttnpb.MACSettings{}); err != nil {
+		if v3dev.MacState, err = mac.NewState(v3dev, s.config.fpStore, &ttnpb.MACSettings{}); err != nil {
 			return nil, err
 		}
 		// Ensure MAC state matches v2 configuration.
 		v3dev.MacState.CurrentParameters = v3dev.MacState.DesiredParameters
-		v3dev.MacState.DeviceClass = ttnpb.CLASS_A
-		v3dev.MacState.LorawanVersion = ttnpb.MAC_V1_0_2
-		v3dev.MacState.CurrentParameters.Rx1Delay = ttnpb.RX_DELAY_1
+		v3dev.MacState.DeviceClass = ttnpb.Class_CLASS_A
+		v3dev.MacState.LorawanVersion = ttnpb.MACVersion_MAC_V1_0_2
+		v3dev.MacState.CurrentParameters.Rx1Delay = ttnpb.RxDelay_RX_DELAY_1
 	}
 
 	log.FromContext(s.ctx).WithFields(log.Fields(
@@ -182,10 +187,10 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 
 	// For OTAA devices with a session, set current parameters instead of MAC settings.
 	if !deviceSupportsJoin {
-		v3dev.MacSettings.Rx1Delay = &ttnpb.RxDelayValue{Value: ttnpb.RX_DELAY_1}
+		v3dev.MacSettings.Rx1Delay = &ttnpb.RxDelayValue{Value: ttnpb.RxDelay_RX_DELAY_1}
 
 		if s.config.resetsToFrequencyPlan {
-			macState, err := mac.NewState(v3dev, s.config.fpStore, ttnpb.MACSettings{})
+			macState, err := mac.NewState(v3dev, s.config.fpStore, &ttnpb.MACSettings{})
 			if err != nil {
 				return nil, err
 			}
@@ -231,7 +236,5 @@ func (s *Source) Close() error {
 }
 
 func generateBytes(length int) []byte {
-	b := make([]byte, length)
-	random.Read(b)
-	return b
+	return random.Bytes(length)
 }
