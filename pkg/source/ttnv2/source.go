@@ -27,7 +27,6 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/networkserver/mac"
 	"go.thethings.network/lorawan-stack/v3/pkg/random"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
-	"go.thethings.network/lorawan-stack/v3/pkg/types"
 )
 
 // Source implements the Source interface.
@@ -75,20 +74,13 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		},
 	}
 	v3dev.Ids.DeviceId = dev.DevID
+	v3dev.Ids.JoinEui = dev.AppEUI.Bytes()
+	v3dev.Ids.DevEui = dev.DevEUI.Bytes()
 	v3dev.Ids.ApplicationIds.ApplicationId = s.config.appID
 
 	v3dev.Name = dev.DevID
 	v3dev.Description = dev.Description
 	v3dev.Attributes = dev.Attributes
-
-	v3dev.Ids.JoinEui = &types.EUI64{}
-	if err := v3dev.Ids.JoinEui.Unmarshal(dev.AppEUI.Bytes()); err != nil {
-		return nil, err
-	}
-	v3dev.Ids.DevEui = &types.EUI64{}
-	if err := v3dev.Ids.DevEui.Unmarshal(dev.DevEUI.Bytes()); err != nil {
-		return nil, err
-	}
 
 	v3dev.LorawanVersion = ttnpb.MACVersion_MAC_V1_0_2
 	v3dev.LorawanPhyVersion = ttnpb.PHYVersion_RP001_V1_0_2_REV_B
@@ -114,12 +106,10 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if deviceSupportsJoin {
 		// OTAA devices
 		v3dev.SupportsJoin = true
-		v3dev.RootKeys = &ttnpb.RootKeys{}
-		v3dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{
-			Key: &types.AES128Key{},
-		}
-		if err := v3dev.RootKeys.AppKey.Key.Unmarshal(dev.AppKey.Bytes()); err != nil {
-			return nil, err
+		v3dev.RootKeys = &ttnpb.RootKeys{
+			AppKey: &ttnpb.KeyEnvelope{
+				Key: dev.AppKey.Bytes(),
+			},
 		}
 	}
 
@@ -137,8 +127,8 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if s.config.withSession && deviceHasSession || !deviceSupportsJoin {
 		v3dev.Session = &ttnpb.Session{
 			Keys: &ttnpb.SessionKeys{
-				AppSKey:     &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
-				FNwkSIntKey: &ttnpb.KeyEnvelope{Key: &types.AES128Key{}},
+				AppSKey:     &ttnpb.KeyEnvelope{},
+				FNwkSIntKey: &ttnpb.KeyEnvelope{},
 			},
 			LastFCntUp:    dev.FCntUp,
 			LastNFCntDown: dev.FCntDown,
@@ -147,17 +137,9 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		if deviceSupportsJoin {
 			v3dev.Session.Keys.SessionKeyId = generateBytes(16)
 		}
-		var devAddr types.DevAddr
-		if err := devAddr.Unmarshal(dev.DevAddr.Bytes()); err != nil {
-			return nil, err
-		}
-		v3dev.Session.DevAddr = devAddr.Bytes()
-		if err := v3dev.Session.Keys.AppSKey.Key.Unmarshal(dev.AppSKey.Bytes()); err != nil {
-			return nil, err
-		}
-		if err := v3dev.Session.Keys.FNwkSIntKey.Key.Unmarshal(dev.NwkSKey.Bytes()); err != nil {
-			return nil, err
-		}
+		v3dev.Session.DevAddr = dev.DevAddr.Bytes()
+		v3dev.Session.Keys.AppSKey.Key = dev.AppSKey.Bytes()
+		v3dev.Session.Keys.FNwkSIntKey.Key = dev.NwkSKey.Bytes()
 
 		if v3dev.MacState, err = mac.NewState(v3dev, s.config.fpStore, &ttnpb.MACSettings{}); err != nil {
 			return nil, err

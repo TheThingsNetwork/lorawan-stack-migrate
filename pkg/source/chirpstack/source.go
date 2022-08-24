@@ -123,13 +123,12 @@ func (p *Source) RangeDevices(id string, f func(source.Source, string) error) er
 func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	// Allocate
 	dev := &ttnpb.EndDevice{}
-	dev.Ids.DevEui = &types.EUI64{}
-	dev.Ids.JoinEui = &types.EUI64{}
 	dev.Attributes = make(map[string]string)
+	dev.Formatters = &ttnpb.MessagePayloadFormatters{}
+	dev.Ids = &ttnpb.EndDeviceIdentifiers{}
 	dev.MacSettings = &ttnpb.MACSettings{}
 	dev.MacState = &ttnpb.MACState{}
 	dev.RootKeys = &ttnpb.RootKeys{}
-	dev.Formatters = &ttnpb.MessagePayloadFormatters{}
 
 	csdev, err := p.getDevice(devEui)
 	if err != nil {
@@ -149,10 +148,11 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	}
 
 	// Identifiers
-	if err := dev.Ids.DevEui.UnmarshalText([]byte(devEui)); err != nil {
+	dev.Ids.DevEui, err = unmarshalTextToBytes(&types.EUI64{}, devEui)
+	if err != nil {
 		return nil, errInvalidDevEUI.WithAttributes("dev_eui", devEui).WithCause(err)
 	}
-	dev.Ids.JoinEui = p.joinEUI
+	dev.Ids.JoinEui = p.joinEUI.Bytes()
 	dev.Ids.ApplicationIds.ApplicationId = fmt.Sprintf("chirpstack-%d", csdev.ApplicationId)
 	dev.Ids.DeviceId = "eui-" + devEui
 
@@ -285,24 +285,21 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if err == nil {
 		switch dev.LorawanVersion {
 		case ttnpb.MACVersion_MAC_V1_1:
-			dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{
-				Key: &types.AES128Key{},
-			}
-			if err := dev.RootKeys.AppKey.Key.UnmarshalText([]byte(rootKeys.AppKey)); err != nil {
+			dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{}
+			dev.RootKeys.AppKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, rootKeys.AppKey)
+			if err != nil {
 				return nil, errInvalidKey.WithAttributes(rootKeys.AppKey).WithCause(err)
 			}
-			dev.RootKeys.NwkKey = &ttnpb.KeyEnvelope{
-				Key: &types.AES128Key{},
-			}
-			if err := dev.RootKeys.NwkKey.Key.UnmarshalText([]byte(rootKeys.NwkKey)); err != nil {
+			dev.RootKeys.NwkKey = &ttnpb.KeyEnvelope{}
+			dev.RootKeys.NwkKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, rootKeys.NwkKey)
+			if err != nil {
 				return nil, errInvalidKey.WithAttributes(rootKeys.NwkKey).WithCause(err)
 			}
 		case ttnpb.MACVersion_MAC_V1_0, ttnpb.MACVersion_MAC_V1_0_1, ttnpb.MACVersion_MAC_V1_0_2, ttnpb.MACVersion_MAC_V1_0_3, ttnpb.MACVersion_MAC_V1_0_4:
 			// For LoRaWAN v1.0.x, ChirpStack stores AppKey as NwkKey
-			dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{
-				Key: &types.AES128Key{},
-			}
-			if err := dev.RootKeys.AppKey.Key.UnmarshalText([]byte(rootKeys.NwkKey)); err != nil {
+			dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{}
+			dev.RootKeys.AppKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, rootKeys.NwkKey)
+			if err != nil {
 				return nil, errInvalidKey.WithAttributes(rootKeys.NwkKey).WithCause(err)
 			}
 		}
@@ -346,30 +343,26 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 			// This cannot be empty
 			dev.Session.StartedAt = pbtypes.TimestampNow()
 
-			dev.Session.Keys.AppSKey = &ttnpb.KeyEnvelope{
-				Key: &types.AES128Key{},
-			}
-			if err := dev.Session.Keys.AppSKey.Key.UnmarshalText([]byte(activation.AppSKey)); err != nil {
+			dev.Session.Keys.AppSKey = &ttnpb.KeyEnvelope{}
+			dev.Session.Keys.AppSKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, activation.AppSKey)
+			if err != nil {
 				return nil, errInvalidKey.WithAttributes(activation.AppSKey).WithCause(err)
 			}
-			dev.Session.Keys.FNwkSIntKey = &ttnpb.KeyEnvelope{
-				Key: &types.AES128Key{},
-			}
-			if err := dev.Session.Keys.FNwkSIntKey.Key.UnmarshalText([]byte(activation.FNwkSIntKey)); err != nil {
+			dev.Session.Keys.FNwkSIntKey = &ttnpb.KeyEnvelope{}
+			dev.Session.Keys.FNwkSIntKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, activation.FNwkSIntKey)
+			if err != nil {
 				return nil, errInvalidKey.WithAttributes(activation.FNwkSIntKey).WithCause(err)
 			}
 			switch dev.LorawanVersion {
 			case ttnpb.MACVersion_MAC_V1_1:
-				dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{
-					Key: &types.AES128Key{},
-				}
-				if err := dev.Session.Keys.NwkSEncKey.Key.UnmarshalText([]byte(activation.NwkSEncKey)); err != nil {
+				dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
+				dev.Session.Keys.NwkSEncKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, activation.NwkSEncKey)
+				if err != nil {
 					return nil, errInvalidKey.WithAttributes(activation.NwkSEncKey).WithCause(err)
 				}
-				dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{
-					Key: &types.AES128Key{},
-				}
-				if err := dev.Session.Keys.SNwkSIntKey.Key.UnmarshalText([]byte(activation.SNwkSIntKey)); err != nil {
+				dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
+				dev.Session.Keys.SNwkSIntKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, activation.SNwkSIntKey)
+				if err != nil {
 					return nil, errInvalidKey.WithAttributes(activation.SNwkSIntKey).WithCause(err)
 				}
 			default:

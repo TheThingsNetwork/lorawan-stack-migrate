@@ -58,7 +58,7 @@ func (cfg exportConfig) exportDev(s source.Source, devID string) error {
 	oldID := dev.Ids.DeviceId
 
 	if eui := dev.Ids.DevEui; cfg.euiForID && eui != nil {
-		dev.Ids.DeviceId = strings.ToLower(eui.String())
+		dev.Ids.DeviceId = strings.ToLower(string(eui))
 	}
 	if cfg.devIDPrefix != "" {
 		dev.Ids.DeviceId = fmt.Sprintf("%s-%s", cfg.devIDPrefix, dev.Ids.DeviceId)
