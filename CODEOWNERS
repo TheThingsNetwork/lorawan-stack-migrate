@@ -1,17 +1,17 @@
 # Root
-/ @johanstokking @neoaggelos
-/CODEOWNERS @johanstokking @neoaggelos
+/ @johanstokking @adriansmares
+/CODEOWNERS @johanstokking @adriansmares
 /LICENSE @johanstokking
 
 # Dependencies
-/go.mod @johanstokking @rvolosatovs @neoaggelos
-/go.sum @johanstokking @rvolosatovs @neoaggelos
+/go.mod @johanstokking @adriansmares
+/go.sum @johanstokking @adriansmares
 
 # Build pipeline and tooling
-/Makefile @htdvisser @rvolosatovs @neoaggelos
-/.dev @htdvisser @rvolosatovs @neoaggelos
-/.github/workflows @htdvisser @rvolosatovs @neoaggelos
+/Makefile @adriansmares @happyRip
+/.dev @adriansmares @happyRip
+/.github/workflows @adriansmares @happyRip
 
 # Commands
-/cmd @neoaggelos @htdvisser @johanstokking
-/pkg @neoaggelos @johanstokking
+/cmd @happyRip @adriansmares @johanstokking
+/pkg @happyRip @johanstokking
