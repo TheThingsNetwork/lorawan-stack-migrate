@@ -70,25 +70,23 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 
 	v3dev := &ttnpb.EndDevice{
 		Ids: &ttnpb.EndDeviceIdentifiers{
-			ApplicationIds: &ttnpb.ApplicationIdentifiers{},
+			ApplicationIds: &ttnpb.ApplicationIdentifiers{
+				ApplicationId: s.config.appID,
+			},
+			DeviceId: dev.DevID,
+			DevEui:   dev.DevEUI.Bytes(),
+			JoinEui:  dev.AppEUI.Bytes(),
 		},
-	}
-	v3dev.Ids.DeviceId = dev.DevID
-	v3dev.Ids.JoinEui = dev.AppEUI.Bytes()
-	v3dev.Ids.DevEui = dev.DevEUI.Bytes()
-	v3dev.Ids.ApplicationIds.ApplicationId = s.config.appID
-
-	v3dev.Name = dev.DevID
-	v3dev.Description = dev.Description
-	v3dev.Attributes = dev.Attributes
-
-	v3dev.LorawanVersion = ttnpb.MACVersion_MAC_V1_0_2
-	v3dev.LorawanPhyVersion = ttnpb.PHYVersion_RP001_V1_0_2_REV_B
-	v3dev.FrequencyPlanId = s.config.frequencyPlanID
-
-	v3dev.MacSettings = &ttnpb.MACSettings{
-		StatusTimePeriodicity:  pbtypes.DurationProto(0),
-		StatusCountPeriodicity: &pbtypes.UInt32Value{Value: 0},
+		MacSettings: &ttnpb.MACSettings{
+			StatusTimePeriodicity:  pbtypes.DurationProto(0),
+			StatusCountPeriodicity: &pbtypes.UInt32Value{Value: 0},
+		},
+		Name:              dev.DevID,
+		Description:       dev.Description,
+		Attributes:        dev.Attributes,
+		LorawanVersion:    ttnpb.MACVersion_MAC_V1_0_2,
+		LorawanPhyVersion: ttnpb.PHYVersion_RP001_V1_0_2_REV_B,
+		FrequencyPlanId:   s.config.frequencyPlanID,
 	}
 	if dev.Uses32BitFCnt {
 		v3dev.MacSettings.Supports_32BitFCnt = &ttnpb.BoolValue{
@@ -107,9 +105,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		// OTAA devices
 		v3dev.SupportsJoin = true
 		v3dev.RootKeys = &ttnpb.RootKeys{
-			AppKey: &ttnpb.KeyEnvelope{
-				Key: dev.AppKey.Bytes(),
-			},
+			AppKey: &ttnpb.KeyEnvelope{Key: dev.AppKey.Bytes()},
 		}
 	}
 
@@ -127,9 +123,10 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if s.config.withSession && deviceHasSession || !deviceSupportsJoin {
 		v3dev.Session = &ttnpb.Session{
 			Keys: &ttnpb.SessionKeys{
-				AppSKey:     &ttnpb.KeyEnvelope{},
-				FNwkSIntKey: &ttnpb.KeyEnvelope{},
+				AppSKey:     &ttnpb.KeyEnvelope{Key: dev.AppSKey.Bytes()},
+				FNwkSIntKey: &ttnpb.KeyEnvelope{Key: dev.NwkSKey.Bytes()},
 			},
+			DevAddr:       dev.DevAddr.Bytes(),
 			LastFCntUp:    dev.FCntUp,
 			LastNFCntDown: dev.FCntDown,
 			StartedAt:     pbtypes.TimestampNow(),
@@ -137,10 +134,6 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		if deviceSupportsJoin {
 			v3dev.Session.Keys.SessionKeyId = generateBytes(16)
 		}
-		v3dev.Session.DevAddr = dev.DevAddr.Bytes()
-		v3dev.Session.Keys.AppSKey.Key = dev.AppSKey.Bytes()
-		v3dev.Session.Keys.FNwkSIntKey.Key = dev.NwkSKey.Bytes()
-
 		if v3dev.MacState, err = mac.NewState(v3dev, s.config.fpStore, &ttnpb.MACSettings{}); err != nil {
 			return nil, err
 		}
