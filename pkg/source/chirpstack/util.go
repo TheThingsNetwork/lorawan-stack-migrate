@@ -28,9 +28,7 @@ import (
 const limit = int64(100)
 
 func generateBytes(length int) []byte {
-	b := make([]byte, length)
-	random.Read(b)
-	return b
+	return random.Bytes(length)
 }
 
 func (p *Source) getDeviceProfile(id string) (*csapi.DeviceProfile, error) {
@@ -164,4 +162,15 @@ func (p *Source) getActivation(devEui string) (*csapi.DeviceActivation, error) {
 		return nil, err
 	}
 	return resp.DeviceActivation, err
+}
+
+func unmarshalTextToBytes(
+	unmarshaller interface {
+		UnmarshalText([]byte) error
+		Bytes() []byte
+	},
+	source string,
+) ([]byte, error) {
+	err := unmarshaller.UnmarshalText([]byte(source))
+	return unmarshaller.Bytes(), err
 }

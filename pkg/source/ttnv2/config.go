@@ -136,7 +136,7 @@ func getConfig(flags *pflag.FlagSet) (config, error) {
 	})
 	ttnlog.Set(logger)
 
-	fpFetcher, err := fetch.FromHTTP(nil, stringFlag("frequency-plans-url"), true)
+	fpFetcher, err := fetch.FromHTTP(nil, stringFlag("frequency-plans-url"))
 	if err != nil {
 		return config{}, err
 	}
