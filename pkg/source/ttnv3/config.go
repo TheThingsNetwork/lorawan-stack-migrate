@@ -21,6 +21,8 @@ type config struct {
 	joinServerGRPCAddress        string
 	applicationServerGRPCAddress string
 	networkServerGRPCAddress     string
+
+	dryRun bool
 }
 
 func flagSet() *pflag.FlagSet {
@@ -85,6 +87,8 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 		joinServerGRPCAddress:        joinServerGRPCAddress,
 		applicationServerGRPCAddress: applicationServerGRPCAddress,
 		networkServerGRPCAddress:     networkServerGRPCAddress,
+
+		dryRun: boolFlag("dry-run"),
 	}, nil
 }
 

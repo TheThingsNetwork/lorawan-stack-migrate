@@ -69,6 +69,20 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if err := dev.SetFields(res, paths...); err != nil {
 		return nil, err
 	}
+	// Clear all "{server}_address" fields from exported device
+	if err := dev.SetFields(nil, "application_server_address", "join_server_address", "network_server_address"); err != nil {
+		return nil, err
+	}
+
+	if !s.config.dryRun {
+		d := &ttnpb.EndDevice{
+			Ids:         dev.GetIds(),
+			MacSettings: &ttnpb.MACSettings{ScheduleDownlinks: &ttnpb.BoolValue{Value: false}},
+		}
+		nsPaths := []string{"mac_settings.schedule_downlinks.value"}
+		s.setEndDevice(d, nil, nsPaths, nil, nil, nil)
+	}
+
 	updateDeviceTimestamps(dev, res)
 	return dev, nil
 }
@@ -200,6 +214,109 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 					updateDeviceTimestamps(&res, nsRes)
 				}
 			}
+		}
+	}
+	return &res, nil
+}
+
+func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths, jsPaths, unsetPaths []string) (*ttnpb.EndDevice, error) {
+	var res ttnpb.EndDevice
+	if err := res.SetFields(device, "ids", "created_at", "updated_at"); err != nil {
+		return nil, err
+	}
+	if len(isPaths) > 0 {
+		is, err := api.Dial(s.ctx, s.config.identityServerGRPCAddress)
+		if err != nil {
+			return nil, err
+		}
+		isDevice := &ttnpb.EndDevice{}
+		logger.WithField("paths", isPaths).Debug("Set end device on Identity Server")
+		isDevice.SetFields(device, ttnpb.AddFields(ttnpb.ExcludeFields(isPaths, unsetPaths...), "ids")...)
+		isRes, err := ttnpb.NewEndDeviceRegistryClient(is).Update(s.ctx, &ttnpb.UpdateEndDeviceRequest{
+			EndDevice: isDevice,
+			FieldMask: ttnpb.FieldMask(isPaths...),
+		})
+		if err != nil {
+			return nil, err
+		}
+		if err := res.SetFields(isRes, isPaths...); err != nil {
+			return nil, err
+		}
+		updateDeviceTimestamps(&res, isRes)
+	}
+	if len(jsPaths) > 0 {
+		if s.config.joinServerGRPCAddress == "" {
+			logger.WithField("paths", jsPaths).Warn("Join Server disabled but fields specified to set")
+		} else {
+			js, err := api.Dial(s.ctx, s.config.joinServerGRPCAddress)
+			if err != nil {
+				return nil, err
+			}
+			jsDevice := &ttnpb.EndDevice{}
+			logger.WithField("paths", jsPaths).Debug("Set end device on Join Server")
+			if err := jsDevice.SetFields(device, ttnpb.AddFields(ttnpb.ExcludeFields(jsPaths, unsetPaths...), "ids")...); err != nil {
+				return nil, err
+			}
+			jsRes, err := ttnpb.NewJsEndDeviceRegistryClient(js).Set(s.ctx, &ttnpb.SetEndDeviceRequest{
+				EndDevice: jsDevice,
+				FieldMask: ttnpb.FieldMask(jsPaths...),
+			})
+			if err != nil {
+				return nil, err
+			}
+			if err := res.SetFields(jsDevice, jsPaths...); err != nil {
+				return nil, err
+			}
+			updateDeviceTimestamps(&res, jsRes)
+		}
+	}
+	if len(nsPaths) > 0 {
+		if s.config.networkServerGRPCAddress == "" {
+			logger.WithField("paths", nsPaths).Warn("Network Server disabled but fields specified to set")
+		} else {
+			ns, err := api.Dial(s.ctx, s.config.networkServerGRPCAddress)
+			if err != nil {
+				return nil, err
+			}
+			nsDevice := &ttnpb.EndDevice{}
+			logger.WithField("paths", nsPaths).Debug("Set end device on Network Server")
+			if err := nsDevice.SetFields(device, ttnpb.AddFields(ttnpb.ExcludeFields(nsPaths, unsetPaths...), "ids")...); err != nil {
+				return nil, err
+			}
+			nsRes, err := ttnpb.NewNsEndDeviceRegistryClient(ns).Set(s.ctx, &ttnpb.SetEndDeviceRequest{
+				EndDevice: nsDevice,
+				FieldMask: ttnpb.FieldMask(nsPaths...),
+			})
+			if err != nil {
+				return nil, err
+			}
+			if err := res.SetFields(nsRes, nsPaths...); err != nil {
+				return nil, err
+			}
+			updateDeviceTimestamps(&res, nsRes)
+		}
+	}
+	if len(asPaths) > 0 {
+		if s.config.applicationServerGRPCAddress == "" {
+			logger.WithField("paths", asPaths).Warn("Application Server disabled but fields specified to set")
+		} else {
+			as, err := api.Dial(s.ctx, s.config.applicationServerGRPCAddress)
+			if err != nil {
+				return nil, err
+			}
+			asDevice := &ttnpb.EndDevice{}
+			logger.WithField("paths", asPaths).Debug("Set end device on Application Server")
+			if err := asDevice.SetFields(device, ttnpb.AddFields(ttnpb.ExcludeFields(asPaths, unsetPaths...), "ids")...); err != nil {
+				return nil, err
+			}
+			asRes, err := ttnpb.NewAsEndDeviceRegistryClient(as).Set(s.ctx, &ttnpb.SetEndDeviceRequest{
+				EndDevice: asDevice,
+				FieldMask: ttnpb.FieldMask(asPaths...),
+			})
+			if err != nil {
+				return nil, err
+			}
+			updateDeviceTimestamps(&res, asRes)
 		}
 	}
 	return &res, nil
