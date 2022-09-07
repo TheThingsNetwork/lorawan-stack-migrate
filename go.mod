@@ -14,6 +14,9 @@ replace github.com/grpc-ecosystem/grpc-gateway => github.com/TheThingsIndustries
 // Dependency of lorawan-stack.
 replace github.com/grpc-ecosystem/grpc-gateway/v2 => github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.3
 
+// Dependency of lorawan-stack.
+replace google.golang.org/grpc => google.golang.org/grpc v1.33.1
+
 require (
 	github.com/TheThingsNetwork/go-app-sdk v0.0.0-20191121100818-5bae20ae2b27
 	github.com/TheThingsNetwork/go-utils v0.0.0-20190516083235-bdd4967fab4e
@@ -86,6 +89,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onsi/ginkgo v1.14.2 // indirect
 	github.com/onsi/gomega v1.10.3 // indirect
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
