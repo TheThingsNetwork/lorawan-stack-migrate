@@ -1,9 +1,12 @@
 package ttnv3
 
 import (
+	"strconv"
 	"strings"
 
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -50,4 +53,19 @@ func updateDeviceTimestamps(dev, src *ttnpb.EndDevice) {
 	if dev.UpdatedAt == nil || (src.UpdatedAt != nil && ttnpb.StdTime(src.UpdatedAt).After(*ttnpb.StdTime(dev.UpdatedAt))) {
 		dev.UpdatedAt = src.UpdatedAt
 	}
+}
+
+func withPagination() (limit, page uint32, opt grpc.CallOption, getTotal func() uint64) {
+	limit = 50
+	page = 1
+	responseHeaders := metadata.MD{}
+	opt = grpc.Header(&responseHeaders)
+	getTotal = func() (total uint64) {
+		totalHeader := responseHeaders.Get("x-total-count")
+		if len(totalHeader) > 0 {
+			total, _ = strconv.ParseUint(totalHeader[len(totalHeader)-1], 10, 64)
+		}
+		return total
+	}
+	return
 }

@@ -74,7 +74,34 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 }
 
 // RangeDevices implements the source.Source interface.
-func (s Source) RangeDevices(appID string, f func(source.Source, string) error) error { return nil }
+func (s Source) RangeDevices(appID string, f func(source.Source, string) error) error {
+	is, err := api.Dial(s.ctx, s.config.identityServerGRPCAddress)
+	if err != nil {
+		return err
+	}
+	limit, page, opt, getTotal := withPagination()
+	for {
+		res, err := ttnpb.NewEndDeviceRegistryClient(is).List(s.ctx, &ttnpb.ListEndDevicesRequest{
+			ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: appID},
+			FieldMask:      ttnpb.FieldMask("ids.device_id"),
+			Limit:          limit,
+			Page:           page,
+		}, opt)
+		if err != nil {
+			return err
+		}
+		for _, d := range res.EndDevices {
+			if err := f(s, d.Ids.DeviceId); err != nil {
+				return err
+			}
+		}
+		if total := getTotal(); uint64(page)*uint64(limit) >= total {
+			break
+		}
+		page++
+	}
+	return nil
+}
 
 // Close implements the Source interface.
 func (s Source) Close() error {
