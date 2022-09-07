@@ -1,7 +1,10 @@
 package ttnv3
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/TheThingsNetwork/go-utils/handlers/cli"
@@ -9,13 +12,14 @@ import (
 	ttnapex "github.com/TheThingsNetwork/go-utils/log/apex"
 	apex "github.com/apex/log"
 	"github.com/spf13/pflag"
+
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv3/api"
 )
 
 var logger *apex.Logger
 
 type config struct {
-	appAccessKey string
-	appID        string
+	appID string
 
 	identityServerGRPCAddress    string
 	joinServerGRPCAddress        string
@@ -28,11 +32,13 @@ type config struct {
 func flagSet() *pflag.FlagSet {
 	flags := &pflag.FlagSet{}
 	flags.String(flagWithPrefix("app-id"), os.Getenv("TTNV3_APP_ID"), "TTS Application ID")
-	flags.String(flagWithPrefix("app-access-key"), os.Getenv("TTNV3_APP_ACCESS_KEY"), "TTS Application Access Key (with 'devices' permissions)")
+	flags.String(flagWithPrefix("app-api-key"), os.Getenv("TTNV3_APP_API_KEY"), "TTS Application Access Key (with 'devices' permissions)")
+	flags.String(flagWithPrefix("ca-file"), os.Getenv("TTNV3_CA_FILE"), "TTS Path to a CA file (optional)")
 	flags.String(flagWithPrefix("identity-server-grpc-address"), os.Getenv("TTNV3_IDENTITY_SERVER_GRPC_ADDRESS"), "TTS Identity Server GRPC Address")
 	flags.String(flagWithPrefix("join-server-grpc-address"), os.Getenv("TTNV3_JOIN_SERVER_GRPC_ADDRESS"), "TTS Join Server GRPC Address")
 	flags.String(flagWithPrefix("application-server-grpc-address"), os.Getenv("TTNV3_APPLICATION_SERVER_GRPC_ADDRESS"), "TTS Application Server GRPC Address")
 	flags.String(flagWithPrefix("network-server-grpc-address"), os.Getenv("TTNV3_NETWORK_SERVER_GRPC_ADDRESS"), "TTS Network Server GRPC Address")
+	flags.Bool(flagWithPrefix("insecure"), false, "TTS allow TCP connection")
 	return flags
 }
 
@@ -46,14 +52,43 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 		return b
 	}
 
-	appAccessKey := stringFlag(flagWithPrefix("app-access-key"))
-	if appAccessKey == "" {
-		return nil, errNoAppAccessKey
-	}
 	appID := stringFlag(flagWithPrefix("app-id"))
 	if appID == "" {
 		return nil, errNoAppID
 	}
+
+	apiKey := stringFlag(flagWithPrefix("app-api-key"))
+	if apiKey == "" {
+		return nil, errNoAppAPIKey
+	}
+	api.SetAuth("bearer", apiKey)
+
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{}
+	if insecure := boolFlag(flagWithPrefix("insecure")); insecure {
+		api.SetInsecure(true)
+		logger.Warn("Using insecure connection to API")
+	} else {
+		caPath := stringFlag(flagWithPrefix("ca-file"))
+		if caPath == "" {
+			return nil, errNoCA
+		}
+		pemBytes, err := os.ReadFile(caPath)
+		if err != nil {
+			return nil, err
+		}
+		rootCAs := http.DefaultTransport.(*http.Transport).TLSClientConfig.RootCAs
+		if rootCAs == nil {
+			if rootCAs, err = x509.SystemCertPool(); err != nil {
+				rootCAs = x509.NewCertPool()
+			}
+		}
+		rootCAs.AppendCertsFromPEM(pemBytes)
+		http.DefaultTransport.(*http.Transport).TLSClientConfig.RootCAs = rootCAs
+		if err = api.AddCA(pemBytes); err != nil {
+			return nil, err
+		}
+	}
+
 	identityServerGRPCAddress := stringFlag(flagWithPrefix("identity-server-grpc-address"))
 	if identityServerGRPCAddress == "" {
 		return nil, errNoIdentityServerGRPCAddress
@@ -62,11 +97,11 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 	if joinServerGRPCAddress == "" {
 		return nil, errNoJoinServerGRPCAddress
 	}
-	applicationServerGRPCAddress := stringFlag(flagWithPrefix("network-server-grpc-address"))
+	applicationServerGRPCAddress := stringFlag(flagWithPrefix("application-server-grpc-address"))
 	if applicationServerGRPCAddress == "" {
 		return nil, errNoApplicationServerGRPCAddress
 	}
-	networkServerGRPCAddress := stringFlag(flagWithPrefix("join-server-grpc-address"))
+	networkServerGRPCAddress := stringFlag(flagWithPrefix("network-server-grpc-address"))
 	if networkServerGRPCAddress == "" {
 		return nil, errNoNetworkServerGRPCAddress
 	}
@@ -80,8 +115,7 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 	}
 	ttnlog.Set(ttnapex.Wrap(logger))
 	return &config{
-		appAccessKey: appAccessKey,
-		appID:        appID,
+		appID: appID,
 
 		identityServerGRPCAddress:    identityServerGRPCAddress,
 		joinServerGRPCAddress:        joinServerGRPCAddress,

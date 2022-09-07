@@ -119,9 +119,7 @@ func (s Source) RangeDevices(appID string, f func(source.Source, string) error) 
 
 // Close implements the Source interface.
 func (s Source) Close() error {
-	if err := api.CloseConnections(); err != nil {
-		return err
-	}
+	api.CloseAll()
 	return nil
 }
 
