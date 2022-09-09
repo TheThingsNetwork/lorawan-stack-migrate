@@ -9,11 +9,23 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
-type Source struct{}
+type Source struct {
+	ctx context.Context
+
+	config *config
+}
 
 // NewSource creates a ner Firefly source
 func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error) {
-	return Source{}, nil
+	config, err := getConfig(flags)
+	if err != nil {
+		return Source{}, err
+	}
+	return Source{
+		ctx: ctx,
+
+		config: config,
+	}, nil
 }
 
 // ExportDevice implements the source.Source interface.
