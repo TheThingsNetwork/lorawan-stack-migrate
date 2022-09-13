@@ -12,6 +12,8 @@ Binaries are available on [GitHub](https://github.com/TheThingsNetwork/lorawan-s
 
 - [X] The Things Network Stack V2
 - [X] [ChirpStack Network Server](https://www.chirpstack.io/)
+- [X] [The Things Stack](https://www.github.com/TheThingsNetwork/lorawan-stack/)
+- [ ] [Firefly](https://fireflyiot.com/)
 - [ ] [LORIOT Network Server](https://www.loriot.io/)
 
 Support for different sources is done by creating Source plugins. List available sources with:
@@ -172,6 +174,68 @@ And export with:
 
 ```bash
 $ ttn-lw-migrate application --source chirpstack < application_names.txt > devices.json
+```
+
+## The Things Stack
+
+### Configuration
+
+Configure with environment variables, or command-line arguments. See `--help` for more details:
+
+```bash
+$ export TTNV3_APP_ID="my-tts-app"                                                  # TTS App ID
+$ export TTNV3_APP_API_KEY="NNSXS.U..."                                             # TTS App API Key (needs `device` permissions)
+$ export TTNV3_APPLICATION_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"   # TTS Application Server URL Address
+$ export TTNV3_IDENTITY_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"      # TTS Identity Server URL Address
+$ export TTNV3_JOIN_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"          # TTS Join Server URL Address
+$ export TTNV3_NETWORK_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"       # TTS Network Server URL Address
+$ export TTNV3_CA_FILE="/path/to/ca.file"                                           # Path to a CA file (optional)
+```
+
+### Notes
+
+- The export process will halt if any error occurs.
+- Execute commands with the `--dry-run` flag to verify whether the outcome will be as expected.
+
+### Export Device
+
+To export a single device using its Device ID (e.g. `mydevice`):
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate device --source ttnv3 "mydevice" --dry-run --verbose > devices.json
+# export device
+$ ttn-lw-migrate device --source ttnv3 "mydevice" > devices.json
+```
+
+In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
+
+```
+mydevice
+otherdevice
+device3
+device4
+device5
+```
+
+And then export with:
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate devices --source ttnv3 "mydevice" --dry-run --verbose < device_ids.txt > devices.json
+# export devices
+$ ttn-lw-migrate devices --source ttnv3 < device_ids.txt > devices.json
+```
+
+### Export Applications
+
+Similarly, to export all devices of application `my-app-id`:
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate application --source ttnv3 "my-app-id" --dry-run --verbose > devices.json
+# export devices
+$ ttn-lw-migrate application --source ttnv3 "my-app-id" > devices.json
 ```
 
 ## Development Environment
