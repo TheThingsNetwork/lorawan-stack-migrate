@@ -1,0 +1,153 @@
+package api
+
+import (
+	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"sync"
+	"time"
+
+	"go.thethings.network/lorawan-stack/v3/pkg/log"
+	"go.thethings.network/lorawan-stack/v3/pkg/rpcclient"
+	"go.thethings.network/lorawan-stack/v3/pkg/rpcmetadata"
+	"go.thethings.network/lorawan-stack/v3/pkg/rpcmiddleware/rpclog"
+	"go.thethings.network/lorawan-stack/v3/pkg/rpcmiddleware/rpcretry"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/credentials"
+)
+
+var (
+	withInsecure        bool
+	tlsConfig           *tls.Config
+	auth                *rpcmetadata.MD
+	retryMax            uint
+	retryDefaultTimeout time.Duration
+	retryEnableMetadata bool
+	retryJitter         float64
+)
+
+// SetLogger sets the default API logger
+func SetLogger(logger log.Interface) {
+	rpclog.ReplaceGrpcLogger(logger)
+}
+
+// SetInsecure configures the API to use insecure connections.
+func SetInsecure(insecure bool) {
+	withInsecure = insecure
+}
+
+// SetRetryMax configures the amount of time the client will retry the request.
+func SetRetryMax(rm uint) {
+	retryMax = rm
+}
+
+// SetRetryDefaultTimeout configures the default timeout before making a retry in a failed request.
+func SetRetryDefaultTimeout(t time.Duration) {
+	retryDefaultTimeout = t
+}
+
+// SetRetryEnableMetadata configures if the retry procedure will read the request's metadata or not.
+func SetRetryEnableMetadata(b bool) {
+	retryEnableMetadata = b
+}
+
+// SetRetryJitter configures the fraction to be used in the deviation procedure of the rpcretry timeout.
+func SetRetryJitter(f float64) {
+	retryJitter = f
+}
+
+// GetDialOptions gets the dial options for a gRPC connection.
+func GetDialOptions() (opts []grpc.DialOption) {
+	opts = append(opts, grpc.FailOnNonTempDialError(true), grpc.WithBlock())
+	if withInsecure {
+		opts = append(opts, grpc.WithInsecure())
+		if auth != nil {
+			md := *auth
+			md.AllowInsecure = true
+			opts = append(opts, grpc.WithPerRPCCredentials(md))
+		}
+	} else {
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
+		if auth != nil {
+			md := *auth
+			opts = append(opts, grpc.WithPerRPCCredentials(md))
+		}
+	}
+
+	opts = append(opts, grpc.WithChainUnaryInterceptor(rpcretry.UnaryClientInterceptor(
+		rpcretry.WithMax(retryMax),
+		rpcretry.WithDefaultTimeout(retryDefaultTimeout),
+		rpcretry.UseMetadata(retryEnableMetadata),
+		rpcretry.WithJitter(retryJitter),
+	)))
+	return
+}
+
+// AddCA adds the CA certificate file.
+func AddCA(pemBytes []byte) (err error) {
+	if tlsConfig == nil {
+		tlsConfig = &tls.Config{}
+	}
+	rootCAs := tlsConfig.RootCAs
+	if rootCAs == nil {
+		if rootCAs, err = x509.SystemCertPool(); err != nil {
+			rootCAs = x509.NewCertPool()
+		}
+	}
+	rootCAs.AppendCertsFromPEM(pemBytes)
+	tlsConfig.RootCAs = rootCAs
+	return nil
+}
+
+// SetAuth sets the authentication information.
+func SetAuth(authType, authValue string) {
+	auth = &rpcmetadata.MD{
+		AuthType:  authType,
+		AuthValue: authValue,
+	}
+}
+
+var (
+	connMu sync.Mutex
+	conns  = make(map[string]*grpc.ClientConn)
+)
+
+func Dial(ctx context.Context, target string) (*grpc.ClientConn, error) {
+	connMu.Lock()
+	defer connMu.Unlock()
+	logger := log.FromContext(ctx).WithField("target", target)
+	if conn, ok := conns[target]; ok {
+		logger.Debug("Using existing gRPC connection")
+		return conn, nil
+	}
+	logger.Debug("Connecting to gRPC server...")
+	startTime := time.Now()
+	conn, err := dialContext(ctx, target, grpc.WithBlock())
+	if err != nil {
+		return nil, err
+	}
+	logger.WithField(
+		"duration", time.Since(startTime).Round(time.Microsecond*100),
+	).Debug("Connected to gRPC server")
+	conns[target] = conn
+	return conn, nil
+}
+
+func dialContext(ctx context.Context, target string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	opts = append(append(rpcclient.DefaultDialOptions(ctx), GetDialOptions()...), opts...)
+	return grpc.DialContext(ctx, target, opts...)
+}
+
+// CloseAll closes all remaining gRPC connections.
+func CloseAll() {
+	connMu.Lock()
+	defer connMu.Unlock()
+	for target, conn := range conns {
+		delete(conns, target)
+		if conn == nil || conn.GetState() == connectivity.Shutdown {
+			continue
+		}
+		conn.Close()
+	}
+}
