@@ -64,11 +64,7 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 	if insecure := boolFlag(flagWithPrefix("insecure")); insecure {
 		api.SetInsecure(true)
 		logger.Warn("Using insecure connection to API")
-	} else {
-		caPath := stringFlag(flagWithPrefix("ca-file"))
-		if caPath == "" {
-			return nil, errNoCA
-		}
+	} else if caPath := stringFlag(flagWithPrefix("ca-file")); caPath != "" {
 		pemBytes, err := os.ReadFile(caPath)
 		if err != nil {
 			return nil, err
