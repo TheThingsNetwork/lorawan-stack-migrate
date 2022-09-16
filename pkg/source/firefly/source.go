@@ -6,7 +6,6 @@ import (
 
 	pbtypes "github.com/gogo/protobuf/types"
 	"github.com/spf13/pflag"
-	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 
@@ -100,10 +99,10 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 	}
 
 	if !s.config.dryRun {
-		log.FromContext(s.ctx).WithFields(log.Fields(
+		logger.With(
 			"device_id", ffdev.Name,
 			"device_eui", ffdev.EUI,
-		)).Info("Clearing device keys")
+		).Info("Clearing device keys")
 		r, err := api.PutDeviceUpdate(devEUI, map[string]string{
 			"address": "", "application_key": "", "application_session_key": "",
 		})
@@ -123,7 +122,7 @@ func (s Source) RangeDevices(appID string, f func(source.Source, string) error) 
 		devs []devices.Device
 		err  error
 	)
-	logger.WithField("app-id", appID).Debug("App ID")
+	logger.With("app-id", appID).Debug("App ID")
 	switch {
 	case appID != "":
 		devs, err = devices.GetDeviceListByAppID(appID)
@@ -136,7 +135,7 @@ func (s Source) RangeDevices(appID string, f func(source.Source, string) error) 
 			return err
 		}
 	}
-	logger.WithField("devices", devs).Debug("Devices List")
+	logger.With("devices", devs).Debug("Devices List")
 	for _, d := range devs {
 		if err := f(s, d.EUI); err != nil {
 			return err
