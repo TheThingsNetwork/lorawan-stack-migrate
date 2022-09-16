@@ -7,16 +7,13 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/TheThingsNetwork/go-utils/handlers/cli"
-	ttnlog "github.com/TheThingsNetwork/go-utils/log"
-	ttnapex "github.com/TheThingsNetwork/go-utils/log/apex"
-	apex "github.com/apex/log"
 	"github.com/spf13/pflag"
+	"go.uber.org/zap"
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv3/api"
 )
 
-var logger *apex.Logger
+var logger *zap.SugaredLogger
 
 type config struct {
 	appID string
@@ -67,11 +64,7 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 	if insecure := boolFlag(flagWithPrefix("insecure")); insecure {
 		api.SetInsecure(true)
 		logger.Warn("Using insecure connection to API")
-	} else {
-		caPath := stringFlag(flagWithPrefix("ca-file"))
-		if caPath == "" {
-			return nil, errNoCA
-		}
+	} else if caPath := stringFlag(flagWithPrefix("ca-file")); caPath != "" {
 		pemBytes, err := os.ReadFile(caPath)
 		if err != nil {
 			return nil, err
@@ -105,15 +98,15 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 	if networkServerGRPCAddress == "" {
 		return nil, errNoNetworkServerGRPCAddress
 	}
-	logLevel := ttnapex.InfoLevel
+	cfg := zap.NewProductionConfig()
 	if boolFlag("verbose") {
-		logLevel = ttnapex.DebugLevel
+		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	}
-	logger = &apex.Logger{
-		Level:   logLevel,
-		Handler: cli.New(os.Stderr),
+	zapLogger, err := cfg.Build()
+	if err != nil {
+		return nil, err
 	}
-	ttnlog.Set(ttnapex.Wrap(logger))
+	logger = zapLogger.Sugar()
 	return &config{
 		appID: appID,
 
