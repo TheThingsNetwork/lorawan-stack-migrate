@@ -1,6 +1,9 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -8,7 +11,7 @@ import (
 )
 
 var (
-	logger *log.Logger
+	logger = &log.Logger{}
 
 	urlPrefix = "http://"
 	apiURL    string
@@ -41,20 +44,48 @@ func UseTLS(b bool) {
 	urlPrefix = "http://"
 }
 
-func urlWithAuth(content string) string {
+func urlWithAuth(content string, fields ...string) string {
 	url := urlPrefix + apiURL + strings.TrimSuffix(content, "/") + "?auth=" + auth
+	for _, f := range fields {
+		url += "&" + f
+	}
 	logger.WithField("url", url).Debug("Generate URL")
 	return url
 }
 
-func RequestDeviceByEUI(eui string) (*http.Response, error) {
+func GetDeviceByEUI(eui string) (*http.Response, error) {
 	return http.Get(urlWithAuth("devices/eui/" + eui))
 }
 
-func RequestDevicesList() (*http.Response, error) {
+func GetDeviceList() (*http.Response, error) {
 	return http.Get(urlWithAuth("devices"))
 }
 
-func RequestDevicesListByAppID(appID string) (*http.Response, error) {
+func GetDeviceListByAppID(appID string) (*http.Response, error) {
 	return http.Get(urlWithAuth("application/" + appID + "/euis"))
+}
+
+func GetPacketList() (*http.Response, error) {
+	return http.Get(urlWithAuth("packets"))
+}
+
+func GetLastPacket() (*http.Response, error) {
+	return http.Get(urlWithAuth("packets", "limit_to_last=1"))
+}
+
+func PutDeviceUpdate(eui string, fields map[string]string) (*http.Response, error) {
+	d := struct {
+		Device map[string]string `json:"device"`
+	}{Device: fields}
+	b, err := json.Marshal(d)
+	if err != nil {
+		return nil, err
+	}
+	logger.WithField("json", b).Debug("Update fields of device")
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("devices/eui/%s", eui), bytes.NewBuffer(b))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	return http.DefaultClient.Do(req)
 }
