@@ -6,11 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/TheThingsNetwork/go-utils/handlers/cli"
-	ttnlog "github.com/TheThingsNetwork/go-utils/log"
-	ttnapex "github.com/TheThingsNetwork/go-utils/log/apex"
-	apex "github.com/apex/log"
 	"github.com/spf13/pflag"
+	"go.uber.org/zap"
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/api"
 )
@@ -28,7 +25,7 @@ type config struct {
 	withSession bool
 }
 
-var logger *apex.Logger
+var logger *zap.SugaredLogger
 
 func flagSet() *pflag.FlagSet {
 	flags := &pflag.FlagSet{}
@@ -50,16 +47,16 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 		return f
 	}
 
-	logLevel := ttnapex.InfoLevel
+	cfg := zap.NewProductionConfig()
 	if boolFlag("verbose") {
-		logLevel = ttnapex.DebugLevel
+		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	}
-	logger = &apex.Logger{
-		Level:   logLevel,
-		Handler: cli.New(os.Stderr),
+	zapLogger, err := cfg.Build()
+	if err != nil {
+		return nil, err
 	}
+	logger = zapLogger.Sugar()
 	api.SetLogger(logger)
-	ttnlog.Set(ttnapex.Wrap(logger))
 	appID := stringFlag(flagWithPrefix("app-id"))
 	if appID == "" {
 		return nil, errNoAppID

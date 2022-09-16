@@ -7,18 +7,18 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/apex/log"
+	"go.uber.org/zap"
 )
 
 var (
-	logger = &log.Logger{}
+	logger = &zap.SugaredLogger{}
 
 	urlPrefix = "http://"
 	apiURL    string
 	auth      string
 )
 
-func SetLogger(l *log.Logger) {
+func SetLogger(l *zap.SugaredLogger) {
 	logger = l
 }
 
@@ -28,12 +28,12 @@ func SetApiURL(s string) {
 	}
 	s = strings.TrimPrefix(strings.TrimPrefix(s, "http://"), "https://")
 	apiURL = s
-	logger.WithField("apiURL", apiURL).Debug("Set API URL")
+	logger.With("apiURL", apiURL).Debug("Set API URL")
 }
 
 func SetAuth(s string) {
 	auth = s
-	logger.WithField("auth", auth).Debug("Set auth")
+	logger.With("auth", auth).Debug("Set auth")
 }
 
 func UseTLS(b bool) {
@@ -49,7 +49,7 @@ func urlWithAuth(content string, fields ...string) string {
 	for _, f := range fields {
 		url += "&" + f
 	}
-	logger.WithField("url", url).Debug("Generate URL")
+	logger.With("url", url).Debug("Generate URL")
 	return url
 }
 
@@ -81,7 +81,7 @@ func PutDeviceUpdate(eui string, fields map[string]string) (*http.Response, erro
 	if err != nil {
 		return nil, err
 	}
-	logger.WithField("json", b).Debug("Update fields of device")
+	logger.With("json", b).Debug("Update fields of device")
 	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("devices/eui/%s", eui), bytes.NewBuffer(b))
 	if err != nil {
 		return nil, err
