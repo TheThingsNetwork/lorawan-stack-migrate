@@ -27,17 +27,21 @@ type Device struct {
 	UpdatedAt             string `json:"updated_at"`
 }
 
-func (d Device) DeviceClass() (*DeviceClass, error) {
-	return nil, nil
+// func (d Device) DeviceClass() (*DeviceClass, error) {
+// 	return nil, nil
+// }
+
+func (d Device) Packets() {
 }
 
 type JSONDevice struct {
 	Device Device
 }
 
-func deviceFromRequestBody(readCloser io.ReadCloser) (*Device, error) {
+func deviceFromRequestBody(r io.ReadCloser) (*Device, error) {
+	defer r.Close()
 	var device JSONDevice
-	decoder := json.NewDecoder(readCloser)
+	decoder := json.NewDecoder(r)
 	if err := decoder.Decode(&device); err != nil {
 		return nil, err
 	}
@@ -45,38 +49,39 @@ func deviceFromRequestBody(readCloser io.ReadCloser) (*Device, error) {
 }
 
 func GetDevice(eui string) (*Device, error) {
-	req, err := api.RequestDeviceByEUI(eui)
+	resp, err := api.GetDeviceByEUI(eui)
 	if err != nil {
 		return nil, err
 	}
-	return deviceFromRequestBody(req.Body)
+	return deviceFromRequestBody(resp.Body)
 }
 
-func devicesListFromRequestBody(readCloser io.ReadCloser) ([]*Device, error) {
+func devicesListFromRequestBody(r io.ReadCloser) ([]Device, error) {
+	defer r.Close()
 	var devices JSONDevices
-	decoder := json.NewDecoder(readCloser)
+	decoder := json.NewDecoder(r)
 	if err := decoder.Decode(&devices); err != nil {
 		return nil, err
 	}
 	return devices.Devices, nil
 }
 
-func GetAllDevices() ([]*Device, error) {
-	req, err := api.RequestDevicesList()
+func GetAllDevices() ([]Device, error) {
+	resp, err := api.GetDeviceList()
 	if err != nil {
 		return nil, err
 	}
-	return devicesListFromRequestBody(req.Body)
+	return devicesListFromRequestBody(resp.Body)
 }
 
-func GetDeviceListByAppID(appID string) ([]*Device, error) {
-	req, err := api.RequestDevicesListByAppID(appID)
+func GetDeviceListByAppID(appID string) ([]Device, error) {
+	resp, err := api.GetDeviceListByAppID(appID)
 	if err != nil {
 		return nil, err
 	}
-	return devicesListFromRequestBody(req.Body)
+	return devicesListFromRequestBody(resp.Body)
 }
 
 type JSONDevices struct {
-	Devices []*Device
+	Devices []Device
 }
