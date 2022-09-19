@@ -8,30 +8,28 @@ import (
 )
 
 type Device struct {
-	Address               string `json:"address"`
-	ApplicationKey        string `json:"application_key"`
-	ApplicationSessionKey string `json:"application_session_key"`
-	ClassC                bool   `json:"class_c"`
-	Deduplicate           bool   `json:"deduplicate"`
-	Description           string `json:"description"`
-	DeviceClassID         int    `json:"device_class_id"`
-	EUI                   string `json:"eui"`
-	FrameCounter          int    `json:"frame_counter"`
-	InsertedAt            string `json:"inserted_at"`
-	Name                  string `json:"name"`
-	NetworkSessionKey     string `json:"network_session_key"`
-	OTAA                  bool   `json:"otaa"`
-	OrganizationID        int    `json:"organization_id"`
-	Region                string `json:"region"`
-	Rx2DataRate           int    `json:"rx2_data_rate"`
-	UpdatedAt             string `json:"updated_at"`
-}
-
-// func (d Device) DeviceClass() (*DeviceClass, error) {
-// 	return nil, nil
-// }
-
-func (d Device) Packets() {
+	Address               string    `json:"address"`
+	AdrLimit              int       `json:"adr_limit"`
+	ApplicationKey        string    `json:"application_key"`
+	ApplicationSessionKey string    `json:"application_session_key"`
+	ClassC                bool      `json:"class_c"`
+	Deduplicate           bool      `json:"deduplicate"`
+	Description           string    `json:"description"`
+	DeviceClassID         int       `json:"device_class_id"`
+	EUI                   string    `json:"eui"`
+	FrameCounter          int       `json:"frame_counter"`
+	InsertedAt            string    `json:"inserted_at"`
+	Location              *Location `json:"location"`
+	Name                  string    `json:"name"`
+	NetworkSessionKey     string    `json:"network_session_key"`
+	OTAA                  bool      `json:"otaa"`
+	OrganizationID        int       `json:"organization_id"`
+	OverrideLocation      bool      `json:"override_location"`
+	Region                string    `json:"region"`
+	Rx2DataRate           int       `json:"rx2_data_rate"`
+	SkipFCntCheck         bool      `json:"skip_fcnt_check"`
+	Tags                  []string  `json:"tags"`
+	UpdatedAt             string    `json:"updated_at"`
 }
 
 type JSONDevice struct {
@@ -54,6 +52,10 @@ func GetDevice(eui string) (*Device, error) {
 		return nil, err
 	}
 	return deviceFromRequestBody(resp.Body)
+}
+
+type JSONDevices struct {
+	Devices []Device
 }
 
 func devicesListFromRequestBody(r io.ReadCloser) ([]Device, error) {
@@ -82,6 +84,7 @@ func GetDeviceListByAppID(appID string) ([]Device, error) {
 	return devicesListFromRequestBody(resp.Body)
 }
 
-type JSONDevices struct {
-	Devices []Device
+type Location struct {
+	Lattitude float64 `json:"lat"`
+	Longitude float64 `json:"lon"`
 }
