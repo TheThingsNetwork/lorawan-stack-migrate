@@ -1,6 +1,7 @@
 package firefly
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"net/http"
@@ -75,6 +76,7 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 	if joinEUI == "" {
 		return nil, errNoJoinEUI
 	}
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{}
 	if caPath := stringFlag(flagWithPrefix("ca-file")); caPath != "" {
 		pemBytes, err := os.ReadFile(caPath)
 		if err != nil {
@@ -88,6 +90,7 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 		}
 		rootCAs.AppendCertsFromPEM(pemBytes)
 		http.DefaultTransport.(*http.Transport).TLSClientConfig.RootCAs = rootCAs
+		api.UseTLS(true)
 	}
 	return &config{
 		apiKey: apiKey,

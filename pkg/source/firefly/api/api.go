@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -11,7 +10,7 @@ import (
 )
 
 var (
-	logger = &zap.SugaredLogger{}
+	logger *zap.SugaredLogger
 
 	urlPrefix = "http://"
 	apiURL    string
@@ -81,8 +80,8 @@ func PutDeviceUpdate(eui string, fields map[string]string) (*http.Response, erro
 	if err != nil {
 		return nil, err
 	}
-	logger.With("json", b).Debug("Update fields of device")
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("devices/eui/%s", eui), bytes.NewBuffer(b))
+	logger.With("dev_eui", eui, "fields", fields).Debug("Update fields of device")
+	req, err := http.NewRequest(http.MethodPut, urlWithAuth("devices/eui/"+eui), bytes.NewBuffer(b))
 	if err != nil {
 		return nil, err
 	}
