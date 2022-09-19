@@ -49,16 +49,25 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 			DeviceId:       "eui-" + strings.ToLower(ffdev.EUI),
 		},
 		MacSettings: &ttnpb.MACSettings{
-			Rx2DataRateIndex:       &ttnpb.DataRateIndexValue{Value: ttnpb.DataRateIndex(ffdev.Rx2DataRate)},
-			StatusCountPeriodicity: &pbtypes.UInt32Value{Value: 0},
-			StatusTimePeriodicity:  pbtypes.DurationProto(0),
+			DesiredAdrAckLimitExponent: &ttnpb.ADRAckLimitExponentValue{Value: ttnpb.ADRAckLimitExponent(ffdev.AdrLimit)},
+			Rx2DataRateIndex:           &ttnpb.DataRateIndexValue{Value: ttnpb.DataRateIndex(ffdev.Rx2DataRate)},
+			StatusCountPeriodicity:     &pbtypes.UInt32Value{Value: 0},
+			StatusTimePeriodicity:      pbtypes.DurationProto(0),
 		},
-		// MacState:       &ttnpb.MACState{},
-		RootKeys:       &ttnpb.RootKeys{},
 		SupportsClassC: ffdev.ClassC,
 		SupportsJoin:   ffdev.ApplicationKey != "",
 	}
-	v3dev.Attributes = make(map[string]string)
+
+	if ffdev.Location != nil {
+		v3dev.Locations = map[string]*ttnpb.Location{
+			"user": {
+				Latitude:  ffdev.Location.Lattitude,
+				Longitude: ffdev.Location.Longitude,
+				Source:    ttnpb.LocationSource_SOURCE_REGISTRY,
+			},
+		}
+		logger.Debugw("Set location", "location", v3dev.Locations)
+	}
 	v3dev.Ids.DevEui, err = unmarshalTextToBytes(&types.EUI64{}, ffdev.EUI)
 	if err != nil {
 		return nil, err
@@ -68,7 +77,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		return nil, err
 	}
 	if v3dev.SupportsJoin {
-		v3dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{}
+		v3dev.RootKeys = &ttnpb.RootKeys{AppKey: &ttnpb.KeyEnvelope{}}
 		v3dev.RootKeys.AppKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationKey)
 		if err != nil {
 			return nil, err
@@ -99,10 +108,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 	}
 
 	if !s.config.dryRun {
-		logger.With(
-			"device_id", ffdev.Name,
-			"device_eui", ffdev.EUI,
-		).Info("Clearing device keys")
+		logger.Debugw("Clearing device keys", "device_id", ffdev.Name, "device_eui", ffdev.EUI)
 		r, err := api.PutDeviceUpdate(devEUI, map[string]string{
 			"address": "", "application_key": "", "application_session_key": "",
 		})
