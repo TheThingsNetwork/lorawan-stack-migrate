@@ -13,7 +13,7 @@ Binaries are available on [GitHub](https://github.com/TheThingsNetwork/lorawan-s
 - [x] The Things Network Stack V2
 - [x] [ChirpStack Network Server](https://www.chirpstack.io/)
 - [x] [The Things Stack](https://www.github.com/TheThingsNetwork/lorawan-stack/)
-- [ ] [Firefly](https://fireflyiot.com/)
+- [x] [Firefly](https://fireflyiot.com/)
 - [ ] [LORIOT Network Server](https://www.loriot.io/)
 
 Support for different sources is done by creating Source plugins. List available sources with:
@@ -236,6 +236,65 @@ Similarly, to export all devices of application `my-app-id`:
 $ ttn-lw-migrate tts application 'my-app-id' --dry-run --verbose > devices.json
 # export devices
 $ ttn-lw-migrate tts application 'my-app-id' > devices.json
+```
+
+## Firefly
+
+### Configuration
+
+Configure with environment variables, or command-line arguments. See `--help` for more details:
+
+```bash
+$ export FIREFLY_API_URL="api.fireflyiot.com/api/v1"  # Firefly API URL
+$ export FIREFLY_API_KEY="3f55..."                    # Firefly API Key
+$ export FIREFLY_APP_ID="1"
+$ export FIREFLY_CA_FILE="/path/to/ca.file"           # Path to CA file (optional)
+```
+
+### Notes
+
+- The export process will halt if any error occurs.
+- Execute commands with the `--dry-run` flag to verify whether the outcome will be as expected.
+
+### Export Devices
+
+To export a single device using its Device ID (e.g. `mydevice`):
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate device --source firefly "mydevice" --dry-run --verbose > devices.json
+# export device
+$ ttn-lw-migrate device --source firefly "mydevice" > devices.json
+```
+
+In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
+
+```
+mydevice
+otherdevice
+device3
+device4
+device5
+```
+
+And then export with:
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate devices --source firefly "mydevice" --dry-run --verbose < device_ids.txt > devices.json
+# export devices
+$ ttn-lw-migrate devices --source firefly < device_ids.txt > devices.json
+```
+
+### Export Applications
+
+Similarly, to export all devices of application `my-app-id`:
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate application --source firefly "my-app-id" --dry-run --verbose > devices.json
+# export devices
+$ ttn-lw-migrate application --source firefly "my-app-id" > devices.json
 ```
 
 ## Development Environment
