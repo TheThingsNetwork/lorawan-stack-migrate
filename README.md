@@ -10,10 +10,10 @@ Binaries are available on [GitHub](https://github.com/TheThingsNetwork/lorawan-s
 
 ## Support
 
-- [X] The Things Network Stack V2
-- [X] [ChirpStack Network Server](https://www.chirpstack.io/)
-- [X] [The Things Stack](https://www.github.com/TheThingsNetwork/lorawan-stack/)
-- [ ] [Firefly](https://fireflyiot.com/)
+- [x] The Things Network Stack V2
+- [x] [ChirpStack Network Server](https://www.chirpstack.io/)
+- [x] [The Things Stack](https://www.github.com/TheThingsNetwork/lorawan-stack/)
+- [x] [Firefly](https://fireflyiot.com/)
 - [ ] [LORIOT Network Server](https://www.loriot.io/)
 
 Support for different sources is done by creating Source plugins. List available sources with:
@@ -121,7 +121,7 @@ $ export FREQUENCY_PLAN_ID="EU_863_870"         # Frequency Plan for exported de
 
 See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for the list of frequency plans available on The Things Stack. For example, to use `United States 902-928 MHz, FSB 1`, you need to specify the `US_902_928_FSB_1` frequency plan ID.
 
-> *NOTE*: `JoinEUI` and `FrequencyPlanID` are required because ChirpStack does not store these fields.
+> _NOTE_: `JoinEUI` and `FrequencyPlanID` are required because ChirpStack does not store these fields.
 
 ### Notes
 
@@ -238,6 +238,65 @@ $ ttn-lw-migrate application --source ttnv3 "my-app-id" --dry-run --verbose > de
 $ ttn-lw-migrate application --source ttnv3 "my-app-id" > devices.json
 ```
 
+## Firefly
+
+### Configuration
+
+Configure with environment variables, or command-line arguments. See `--help` for more details:
+
+```bash
+$ export FIREFLY_API_URL="api.fireflyiot.com/api/v1"  # Firefly API URL
+$ export FIREFLY_API_KEY="3f55..."                    # Firefly API Key
+$ export FIREFLY_APP_ID="1"
+$ export FIREFLY_CA_FILE="/path/to/ca.file"           # Path to CA file (optional)
+```
+
+### Notes
+
+- The export process will halt if any error occurs.
+- Execute commands with the `--dry-run` flag to verify whether the outcome will be as expected.
+
+### Export Devices
+
+To export a single device using its Device ID (e.g. `mydevice`):
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate device --source firefly "mydevice" --dry-run --verbose > devices.json
+# export device
+$ ttn-lw-migrate device --source firefly "mydevice" > devices.json
+```
+
+In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
+
+```
+mydevice
+otherdevice
+device3
+device4
+device5
+```
+
+And then export with:
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate devices --source firefly "mydevice" --dry-run --verbose < device_ids.txt > devices.json
+# export devices
+$ ttn-lw-migrate devices --source firefly < device_ids.txt > devices.json
+```
+
+### Export Applications
+
+Similarly, to export all devices of application `my-app-id`:
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate application --source firefly "my-app-id" --dry-run --verbose > devices.json
+# export devices
+$ ttn-lw-migrate application --source firefly "my-app-id" > devices.json
+```
+
 ## Development Environment
 
 Requires Go version 1.16 or higher. [Download Go](https://golang.org/dl/).
@@ -293,16 +352,21 @@ This will compile binaries for all supported platforms, `deb`, `rpm`, Snapcraft 
 ### Release from master
 
 1. Create a `release/${version}` branch off the `master` branch.
+
 ```bash
 $ git checkout master
 $ git checkout -b release/${version}
 ```
+
 2. Update the `CHANGELOG.md` file as explained below:
+
 - Change the **Unreleased** section to the new version and add date obtained via `date +%Y-%m-%d` (e.g. `## [1.0.0] - 2020-10-18`)
+
   - Check if we didn't forget anything important
   - Remove empty subsections
   - Update the list of links in the bottom of the file
   - Add new **Unreleased** section:
+
     ```md
     ## [Unreleased]
 
@@ -318,12 +382,15 @@ $ git checkout -b release/${version}
 
     ### Security
     ```
+
 4. Create a pull request targeting `master`.
 5. Once this PR is approved and merged, checkout the latest `master` branch locally.
 6. Create a version tag, and push to GitHub:
+
 ```bash
 $ git tag -s -a "v${version}" -m "ttn-lw-migrate v${version}"
 $ git push origin "v${version}"
 ```
+
 7. CI will automatically start building and pushing to package managers. When this is done, you'll find a new release on the [releases page](https://github.com/TheThingsNetwork/lorawan-stack-migrate/releases).
 8. Edit the release notes on the GitHub releases page, typically copied from `CHANGELOG.md`.
