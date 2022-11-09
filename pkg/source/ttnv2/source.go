@@ -60,6 +60,10 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 
 // ExportDevice implements the source.Source interface.
 func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
+	if s.config.appID == "" {
+		return nil, errNoAppID.New()
+	}
+
 	dev, err := s.mgr.Get(devID)
 	if err != nil {
 		if err, ok := errors.From(err); ok {

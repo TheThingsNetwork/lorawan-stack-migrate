@@ -32,6 +32,10 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error)
 
 // ExportDevice implements the source.Source interface.
 func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
+	if s.config.appID == "" {
+		return nil, errNoAppID.New()
+	}
+
 	isPaths, nsPaths, asPaths, jsPaths := splitEndDeviceGetPaths(ttnpb.BottomLevelFields(ttnpb.EndDeviceFieldPathsNested)...)
 	if len(nsPaths) > 0 {
 		isPaths = ttnpb.AddFields(isPaths, "network_server_address")
