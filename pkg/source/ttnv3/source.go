@@ -101,6 +101,8 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 
 // RangeDevices implements the source.Source interface.
 func (s Source) RangeDevices(appID string, f func(source.Source, string) error) error {
+	s.config.appID = appID
+
 	is, err := api.Dial(s.ctx, s.config.identityServerGRPCAddress)
 	if err != nil {
 		return err
