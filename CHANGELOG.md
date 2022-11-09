@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Added `--ttnv3.no-session` and `--ttnv3.delete-source-device` flags
+
 ### Changed
 
 ### Fixed
