@@ -18,12 +18,14 @@ var logger *zap.SugaredLogger
 type config struct {
 	appID string
 
-	identityServerGRPCAddress    string
-	joinServerGRPCAddress        string
-	applicationServerGRPCAddress string
-	networkServerGRPCAddress     string
+	identityServerGRPCAddress,
+	joinServerGRPCAddress,
+	applicationServerGRPCAddress,
+	networkServerGRPCAddress string
 
-	dryRun bool
+	deleteSourceDevice,
+	dryRun,
+	noSession bool
 }
 
 func flagSet() *pflag.FlagSet {
@@ -36,6 +38,8 @@ func flagSet() *pflag.FlagSet {
 	flags.String(flagWithPrefix("application-server-grpc-address"), os.Getenv("TTNV3_APPLICATION_SERVER_GRPC_ADDRESS"), "TTS Application Server GRPC Address")
 	flags.String(flagWithPrefix("network-server-grpc-address"), os.Getenv("TTNV3_NETWORK_SERVER_GRPC_ADDRESS"), "TTS Network Server GRPC Address")
 	flags.Bool(flagWithPrefix("insecure"), false, "TTS allow TCP connection")
+	flags.Bool(flagWithPrefix("no-session"), false, "TTS export devices without session")
+	flags.Bool(flagWithPrefix("delete-source-device"), false, "TTS delete exported devices")
 	return flags
 }
 
@@ -107,6 +111,16 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 		return nil, err
 	}
 	logger = zapLogger.Sugar()
+
+	dryRun := boolFlag("dry-run")
+	deleteSourceDevice := boolFlag(flagWithPrefix("delete-source-device"))
+	// deleteSourceDevice not allowed when dryRun
+	if dryRun && deleteSourceDevice {
+		logger.Warn("Cannot delete source device during a dry run.")
+		deleteSourceDevice = false
+	}
+	noSession := boolFlag(flagWithPrefix("no-session"))
+
 	return &config{
 		appID: appID,
 
@@ -115,7 +129,9 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 		applicationServerGRPCAddress: applicationServerGRPCAddress,
 		networkServerGRPCAddress:     networkServerGRPCAddress,
 
-		dryRun: boolFlag("dry-run"),
+		deleteSourceDevice: deleteSourceDevice,
+		dryRun:             dryRun,
+		noSession:          noSession,
 	}, nil
 }
 

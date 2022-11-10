@@ -55,6 +55,10 @@ func updateDeviceTimestamps(dev, src *ttnpb.EndDevice) {
 	}
 }
 
+func clearDeviceSession(dev *ttnpb.EndDevice) error {
+	return dev.SetFields(nil, "session", "pending_session", "mac_state", "pending_mac_state")
+}
+
 func withPagination() (limit, page uint32, opt grpc.CallOption, getTotal func() uint64) {
 	limit = 50
 	page = 1

@@ -74,13 +74,25 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		return nil, err
 	}
 
-	if !s.config.dryRun {
+	if s.config.noSession {
+		if err := clearDeviceSession(dev); err != nil {
+			return nil, err
+		}
+	}
+	switch {
+	case s.config.deleteSourceDevice:
+		if err := s.deleteEndDevice(dev.GetIds()); err != nil {
+			return nil, err
+		}
+	case !s.config.dryRun:
 		d := &ttnpb.EndDevice{
 			Ids:         dev.GetIds(),
 			MacSettings: &ttnpb.MACSettings{ScheduleDownlinks: &ttnpb.BoolValue{Value: false}},
 		}
 		nsPaths := []string{"mac_settings.schedule_downlinks.value"}
-		s.setEndDevice(d, nil, nsPaths, nil, nil, nil)
+		if _, err := s.setEndDevice(d, nil, nsPaths, nil, nil, nil); err != nil {
+			return nil, err
+		}
 	}
 
 	updateDeviceTimestamps(dev, res)
@@ -295,4 +307,45 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 		}
 	}
 	return &res, nil
+}
+
+func (s Source) deleteEndDevice(ids *ttnpb.EndDeviceIdentifiers) error {
+	if address := s.config.applicationServerGRPCAddress; address != "" {
+		as, err := api.Dial(s.ctx, address)
+		if err != nil {
+			return err
+		}
+		if _, err = ttnpb.NewAsEndDeviceRegistryClient(as).Delete(s.ctx, ids); err != nil {
+			return err
+		}
+	}
+	if address := s.config.networkServerGRPCAddress; address != "" {
+		ns, err := api.Dial(s.ctx, address)
+		if err != nil {
+			return err
+		}
+		if _, err = ttnpb.NewNsEndDeviceRegistryClient(ns).Delete(s.ctx, ids); err != nil {
+			return err
+		}
+	}
+	if address := s.config.joinServerGRPCAddress; address != "" {
+		js, err := api.Dial(s.ctx, address)
+		if err != nil {
+			return err
+		}
+		if _, err = ttnpb.NewJsEndDeviceRegistryClient(js).Delete(s.ctx, ids); err != nil {
+			return err
+		}
+	}
+	if address := s.config.identityServerGRPCAddress; address != "" {
+		is, err := api.Dial(s.ctx, address)
+		if err != nil {
+			return err
+		}
+		if _, err = ttnpb.NewEndDeviceRegistryClient(is).Delete(s.ctx, ids); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
