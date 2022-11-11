@@ -125,7 +125,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	dev := &ttnpb.EndDevice{}
 	dev.Attributes = make(map[string]string)
 	dev.Formatters = &ttnpb.MessagePayloadFormatters{}
-	dev.Ids = &ttnpb.EndDeviceIdentifiers{}
+	dev.Ids = &ttnpb.EndDeviceIdentifiers{ApplicationIds: &ttnpb.ApplicationIdentifiers{}}
 	dev.MacSettings = &ttnpb.MACSettings{}
 	dev.MacState = &ttnpb.MACState{}
 	dev.RootKeys = &ttnpb.RootKeys{}
