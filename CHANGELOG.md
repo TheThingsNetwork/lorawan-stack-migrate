@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- `app-id` flag/variable is no longer needed when calling `application` command with `ttnv2` and `ttnv3` sources
+- `application` command no longer panics when called with a different `app-id` argument than set with flag/variable
+
 ### Removed
 
 ### Security

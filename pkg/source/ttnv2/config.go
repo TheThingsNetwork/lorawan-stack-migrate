@@ -117,10 +117,6 @@ func getConfig(flags *pflag.FlagSet) (config, error) {
 	if appAccessKey == "" {
 		return config{}, errNoAppAccessKey.New()
 	}
-	appID := stringFlag("ttnv2.app-id")
-	if appID == "" {
-		return config{}, errNoAppID.New()
-	}
 	frequencyPlanID := stringFlag("ttnv2.frequency-plan-id")
 	if frequencyPlanID == "" {
 		return config{}, errNoFrequencyPlanID.New()
@@ -144,7 +140,7 @@ func getConfig(flags *pflag.FlagSet) (config, error) {
 	return config{
 		sdkConfig: cfg,
 
-		appID:           appID,
+		appID:           stringFlag("ttnv2.app-id"),
 		appAccessKey:    appAccessKey,
 		frequencyPlanID: frequencyPlanID,
 

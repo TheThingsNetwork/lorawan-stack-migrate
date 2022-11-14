@@ -53,14 +53,9 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 		return b
 	}
 
-	appID := stringFlag(flagWithPrefix("app-id"))
-	if appID == "" {
-		return nil, errNoAppID
-	}
-
 	apiKey := stringFlag(flagWithPrefix("app-api-key"))
 	if apiKey == "" {
-		return nil, errNoAppAPIKey
+		return nil, errNoAppAPIKey.New()
 	}
 	api.SetAuth("bearer", apiKey)
 
@@ -88,19 +83,19 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 
 	identityServerGRPCAddress := stringFlag(flagWithPrefix("identity-server-grpc-address"))
 	if identityServerGRPCAddress == "" {
-		return nil, errNoIdentityServerGRPCAddress
+		return nil, errNoIdentityServerGRPCAddress.New()
 	}
 	joinServerGRPCAddress := stringFlag(flagWithPrefix("join-server-grpc-address"))
 	if joinServerGRPCAddress == "" {
-		return nil, errNoJoinServerGRPCAddress
+		return nil, errNoJoinServerGRPCAddress.New()
 	}
 	applicationServerGRPCAddress := stringFlag(flagWithPrefix("application-server-grpc-address"))
 	if applicationServerGRPCAddress == "" {
-		return nil, errNoApplicationServerGRPCAddress
+		return nil, errNoApplicationServerGRPCAddress.New()
 	}
 	networkServerGRPCAddress := stringFlag(flagWithPrefix("network-server-grpc-address"))
 	if networkServerGRPCAddress == "" {
-		return nil, errNoNetworkServerGRPCAddress
+		return nil, errNoNetworkServerGRPCAddress.New()
 	}
 	cfg := zap.NewProductionConfig()
 	if boolFlag("verbose") {
@@ -122,7 +117,7 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 	noSession := boolFlag(flagWithPrefix("no-session"))
 
 	return &config{
-		appID: appID,
+		appID: stringFlag(flagWithPrefix("app-id")),
 
 		identityServerGRPCAddress:    identityServerGRPCAddress,
 		joinServerGRPCAddress:        joinServerGRPCAddress,
