@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Install Snapcraft
       run: sudo apt-get -yq --no-install-suggests --no-install-recommends install snapcraft
     - name: Login to Snapcraft
@@ -20,7 +20,7 @@ jobs:
         SNAPCRAFT_LOGIN: ${{ secrets.SNAPCRAFT_LOGIN }}
       run: snapcraft login --with <(printf "$SNAPCRAFT_LOGIN")
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: '~1.18'
     - name: Download Go dependencies
@@ -29,9 +29,9 @@ jobs:
       run: make git.diff
     - name: Determine date
       id: date
-      run: echo "::set-output name=value::$(date +%Y-%m-%d)"
+      run: echo "{value}={$(date +%Y-%m-%d)}" >> $GITHUB_OUTPUT
     - name: Generate CHANGELOG reference
-      uses: actions/github-script@v2
+      uses: actions/github-script@v6
       id: changelog_reference
       with:
         result-encoding: string
@@ -40,7 +40,7 @@ jobs:
           const tagParts = tag.split('.');
           require('fs').writeFileSync('/tmp/release-notes.md', `[Release notes](https://github.com/TheThingsNetwork/lorawan-stack-migrate/blob/${tag}/CHANGELOG.md#${tagParts[0]}${tagParts[1]}${tagParts[2]}---${{ steps.date.outputs.value }})`);
     - name: Run Goreleaser
-      uses: goreleaser/goreleaser-action@v2
+      uses: goreleaser/goreleaser-action@v3
       with:
         version: 'v1.2.5'
         args: release --release-notes /tmp/release-notes.md

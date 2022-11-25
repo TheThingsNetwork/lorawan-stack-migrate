@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Check out Code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Editor Config
       uses: snow-actions/eclint@v1.0.1
     - name: Check for diff
