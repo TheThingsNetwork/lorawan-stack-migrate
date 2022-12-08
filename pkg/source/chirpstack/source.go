@@ -336,7 +336,8 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		if err == nil {
 			dev.Session = &ttnpb.Session{}
 
-			var devAddr *types.DevAddr
+			// var devAddr *types.DevAddr
+			devAddr := &types.DevAddr{}
 			if err := devAddr.Unmarshal([]byte(activation.DevAddr)); err != nil {
 				return nil, errInvalidDevAddr.WithAttributes("dev_addr", activation.DevAddr).WithCause(err)
 			}
