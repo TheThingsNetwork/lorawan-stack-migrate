@@ -15,10 +15,10 @@ jobs:
       uses: actions/checkout@v3
     - name: Install Snapcraft
       run: sudo apt-get -yq --no-install-suggests --no-install-recommends install snapcraft
-    - name: Login to Snapcraft
-      env:
-        SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN }}
-      run: snapcraft login
+    - name: Create Snapcraft folders
+      run: |
+        mkdir -p $HOME/.cache/snapcraft/download
+        mkdir -p $HOME/.cache/snapcraft/stage-packages
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
@@ -46,3 +46,4 @@ jobs:
         args: release --release-notes /tmp/release-notes.md
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN }}
