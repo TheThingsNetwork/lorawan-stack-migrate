@@ -127,7 +127,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	dev.Formatters = &ttnpb.MessagePayloadFormatters{}
 	dev.Ids = &ttnpb.EndDeviceIdentifiers{ApplicationIds: &ttnpb.ApplicationIdentifiers{}}
 	dev.MacSettings = &ttnpb.MACSettings{}
-	dev.MacState = &ttnpb.MACState{}
+	// dev.MacState = &ttnpb.MACState{}
 	dev.RootKeys = &ttnpb.RootKeys{}
 
 	csdev, err := p.getDevice(devEui)
@@ -218,7 +218,9 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		return nil, errInvalidMACVersion.WithAttributes("mac_version", devProfile.MacVersion)
 	}
 	if devProfile.MaxEirp > 0 {
-		dev.MacState.DesiredParameters.MaxEirp = float32(devProfile.MaxEirp)
+		dev.MacState = &ttnpb.MACState{
+			DesiredParameters: &ttnpb.MACParameters{MaxEirp: float32(devProfile.MaxEirp)},
+		}
 	}
 
 	// Join (OTAA/ABP)
