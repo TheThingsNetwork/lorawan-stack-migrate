@@ -336,7 +336,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if p.exportSession {
 		activation, err := p.getActivation(devEui)
 		if err == nil {
-			dev.Session = &ttnpb.Session{}
+			dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{}, StartedAt: pbtypes.TimestampNow()}
 
 			// var devAddr *types.DevAddr
 			devAddr := &types.DevAddr{}
