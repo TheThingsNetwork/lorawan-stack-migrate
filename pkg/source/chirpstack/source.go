@@ -24,13 +24,12 @@ import (
 	csapi "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	pbtypes "github.com/gogo/protobuf/types"
 	"github.com/spf13/pflag"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-
-	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
 const (
@@ -332,7 +331,6 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		if err == nil {
 			dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{}, StartedAt: pbtypes.TimestampNow()}
 
-			// var devAddr *types.DevAddr
 			devAddr := &types.DevAddr{}
 			if err := devAddr.UnmarshalText([]byte(activation.DevAddr)); err != nil {
 				return nil, errInvalidDevAddr.WithAttributes("dev_addr", activation.DevAddr).WithCause(err)
