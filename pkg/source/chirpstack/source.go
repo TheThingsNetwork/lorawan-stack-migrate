@@ -18,17 +18,19 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	csapi "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	pbtypes "github.com/gogo/protobuf/types"
 	"github.com/spf13/pflag"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
 const (
@@ -154,7 +156,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	}
 	dev.Ids.JoinEui = p.joinEUI.Bytes()
 	dev.Ids.ApplicationIds.ApplicationId = fmt.Sprintf("chirpstack-%d", csdev.ApplicationId)
-	dev.Ids.DeviceId = "eui-" + devEui
+	dev.Ids.DeviceId = "eui-" + strings.ToLower(devEui)
 
 	// Information
 	dev.Name = csdev.Name
@@ -338,7 +340,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 
 			// var devAddr *types.DevAddr
 			devAddr := &types.DevAddr{}
-			if err := devAddr.Unmarshal([]byte(activation.DevAddr)); err != nil {
+			if err := devAddr.UnmarshalText([]byte(activation.DevAddr)); err != nil {
 				return nil, errInvalidDevAddr.WithAttributes("dev_addr", activation.DevAddr).WithCause(err)
 			}
 			dev.Session.DevAddr = devAddr.Bytes()
