@@ -17,8 +17,8 @@ jobs:
       run: sudo apt-get -yq --no-install-suggests --no-install-recommends install snapcraft
     - name: Login to Snapcraft
       env:
-        SNAPCRAFT_LOGIN: ${{ secrets.SNAPCRAFT_LOGIN }}
-      run: snapcraft login --with <(printf "$SNAPCRAFT_LOGIN")
+        SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN }}
+      run: snapcraft login
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
