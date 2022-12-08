@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	csapi "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
@@ -125,9 +126,8 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	dev := &ttnpb.EndDevice{}
 	dev.Attributes = make(map[string]string)
 	dev.Formatters = &ttnpb.MessagePayloadFormatters{}
-	dev.Ids = &ttnpb.EndDeviceIdentifiers{}
+	dev.Ids = &ttnpb.EndDeviceIdentifiers{ApplicationIds: &ttnpb.ApplicationIdentifiers{}}
 	dev.MacSettings = &ttnpb.MACSettings{}
-	dev.MacState = &ttnpb.MACState{}
 	dev.RootKeys = &ttnpb.RootKeys{}
 
 	csdev, err := p.getDevice(devEui)
@@ -154,7 +154,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	}
 	dev.Ids.JoinEui = p.joinEUI.Bytes()
 	dev.Ids.ApplicationIds.ApplicationId = fmt.Sprintf("chirpstack-%d", csdev.ApplicationId)
-	dev.Ids.DeviceId = "eui-" + devEui
+	dev.Ids.DeviceId = "eui-" + strings.ToLower(devEui)
 
 	// Information
 	dev.Name = csdev.Name
@@ -216,9 +216,6 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		}
 	default:
 		return nil, errInvalidMACVersion.WithAttributes("mac_version", devProfile.MacVersion)
-	}
-	if devProfile.MaxEirp > 0 {
-		dev.MacState.DesiredParameters.MaxEirp = float32(devProfile.MaxEirp)
 	}
 
 	// Join (OTAA/ABP)
@@ -332,10 +329,10 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if p.exportSession {
 		activation, err := p.getActivation(devEui)
 		if err == nil {
-			dev.Session = &ttnpb.Session{}
+			dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{}, StartedAt: pbtypes.TimestampNow()}
 
-			var devAddr *types.DevAddr
-			if err := devAddr.Unmarshal([]byte(activation.DevAddr)); err != nil {
+			devAddr := &types.DevAddr{}
+			if err := devAddr.UnmarshalText([]byte(activation.DevAddr)); err != nil {
 				return nil, errInvalidDevAddr.WithAttributes("dev_addr", activation.DevAddr).WithCause(err)
 			}
 			dev.Session.DevAddr = devAddr.Bytes()
