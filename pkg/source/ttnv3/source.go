@@ -14,7 +14,7 @@ import (
 type Source struct {
 	ctx context.Context
 
-	config *config
+	config *Config
 }
 
 // NewSource creates a new TTNv3 cource
@@ -46,7 +46,7 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if len(jsPaths) > 0 {
 		isPaths = ttnpb.AddFields(isPaths, "join_server_address")
 	}
-	is, err := api.Dial(s.ctx, s.config.identityServerGRPCAddress)
+	is, err := api.Dial(s.ctx, s.config.serverConfig.applicationServerGRPCAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 func (s Source) RangeDevices(appID string, f func(source.Source, string) error) error {
 	s.config.appID = appID
 
-	is, err := api.Dial(s.ctx, s.config.identityServerGRPCAddress)
+	is, err := api.Dial(s.ctx, s.config.serverConfig.identityServerGRPCAddress)
 	if err != nil {
 		return err
 	}
@@ -147,10 +147,10 @@ func (s Source) Close() error {
 func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, jsPaths []string) (*ttnpb.EndDevice, error) {
 	res := &ttnpb.EndDevice{}
 	if len(jsPaths) > 0 {
-		if s.config.joinServerGRPCAddress == "" {
+		if s.config.serverConfig.joinServerGRPCAddress == "" {
 			logger.With("paths", jsPaths).Warn("Join Server disabled but fields specified to get")
 		} else {
-			js, err := api.Dial(s.ctx, s.config.joinServerGRPCAddress)
+			js, err := api.Dial(s.ctx, s.config.serverConfig.joinServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -172,10 +172,10 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 		}
 	}
 	if len(asPaths) > 0 {
-		if s.config.applicationServerGRPCAddress == "" {
+		if s.config.serverConfig.applicationServerGRPCAddress == "" {
 			logger.With("paths", asPaths).Warn("Application Server disabled but fields specified to get")
 		} else {
-			as, err := api.Dial(s.ctx, s.config.applicationServerGRPCAddress)
+			as, err := api.Dial(s.ctx, s.config.serverConfig.applicationServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -196,10 +196,10 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 		}
 	}
 	if len(nsPaths) > 0 {
-		if s.config.networkServerGRPCAddress == "" {
+		if s.config.serverConfig.networkServerGRPCAddress == "" {
 			logger.With("paths", nsPaths).Warn("Network Server disabled but fields specified to get")
 		} else {
-			ns, err := api.Dial(s.ctx, s.config.networkServerGRPCAddress)
+			ns, err := api.Dial(s.ctx, s.config.serverConfig.networkServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -230,7 +230,7 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 		return nil, err
 	}
 	if len(isPaths) > 0 {
-		is, err := api.Dial(s.ctx, s.config.identityServerGRPCAddress)
+		is, err := api.Dial(s.ctx, s.config.serverConfig.identityServerGRPCAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -250,10 +250,10 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 		updateDeviceTimestamps(&res, isRes)
 	}
 	if len(jsPaths) > 0 {
-		if s.config.joinServerGRPCAddress == "" {
+		if s.config.serverConfig.joinServerGRPCAddress == "" {
 			logger.With("paths", jsPaths).Warn("Join Server disabled but fields specified to set")
 		} else {
-			js, err := api.Dial(s.ctx, s.config.joinServerGRPCAddress)
+			js, err := api.Dial(s.ctx, s.config.serverConfig.joinServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -276,10 +276,10 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 		}
 	}
 	if len(nsPaths) > 0 {
-		if s.config.networkServerGRPCAddress == "" {
+		if s.config.serverConfig.networkServerGRPCAddress == "" {
 			logger.With("paths", nsPaths).Warn("Network Server disabled but fields specified to set")
 		} else {
-			ns, err := api.Dial(s.ctx, s.config.networkServerGRPCAddress)
+			ns, err := api.Dial(s.ctx, s.config.serverConfig.networkServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -302,10 +302,10 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 		}
 	}
 	if len(asPaths) > 0 {
-		if s.config.applicationServerGRPCAddress == "" {
+		if s.config.serverConfig.applicationServerGRPCAddress == "" {
 			logger.With("paths", asPaths).Warn("Application Server disabled but fields specified to set")
 		} else {
-			as, err := api.Dial(s.ctx, s.config.applicationServerGRPCAddress)
+			as, err := api.Dial(s.ctx, s.config.serverConfig.applicationServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -328,7 +328,7 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 }
 
 func (s Source) deleteEndDevice(ids *ttnpb.EndDeviceIdentifiers) error {
-	if address := s.config.applicationServerGRPCAddress; address != "" {
+	if address := s.config.serverConfig.applicationServerGRPCAddress; address != "" {
 		as, err := api.Dial(s.ctx, address)
 		if err != nil {
 			return err
@@ -337,7 +337,7 @@ func (s Source) deleteEndDevice(ids *ttnpb.EndDeviceIdentifiers) error {
 			return err
 		}
 	}
-	if address := s.config.networkServerGRPCAddress; address != "" {
+	if address := s.config.serverConfig.networkServerGRPCAddress; address != "" {
 		ns, err := api.Dial(s.ctx, address)
 		if err != nil {
 			return err
@@ -346,7 +346,7 @@ func (s Source) deleteEndDevice(ids *ttnpb.EndDeviceIdentifiers) error {
 			return err
 		}
 	}
-	if address := s.config.joinServerGRPCAddress; address != "" {
+	if address := s.config.serverConfig.joinServerGRPCAddress; address != "" {
 		js, err := api.Dial(s.ctx, address)
 		if err != nil {
 			return err
@@ -355,7 +355,7 @@ func (s Source) deleteEndDevice(ids *ttnpb.EndDeviceIdentifiers) error {
 			return err
 		}
 	}
-	if address := s.config.identityServerGRPCAddress; address != "" {
+	if address := s.config.serverConfig.identityServerGRPCAddress; address != "" {
 		is, err := api.Dial(s.ctx, address)
 		if err != nil {
 			return err
