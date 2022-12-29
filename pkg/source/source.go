@@ -52,6 +52,7 @@ var (
 	errNoSource          = errors.DefineInvalidArgument("no_source", "no source")
 
 	registeredSources map[string]Registration
+	ActiveSource      string
 )
 
 // RegisterSource registers a new Source.
@@ -65,27 +66,34 @@ func RegisterSource(r Registration) error {
 
 // NewSource creates a new Source from parsed flags.
 func NewSource(ctx context.Context, flags *pflag.FlagSet) (Source, error) {
-	sourceName, _ := flags.GetString("source")
-	if sourceName == "" {
+	if ActiveSource == "" {
 		return nil, errNoSource.New()
 	}
-	if registration, ok := registeredSources[sourceName]; ok {
+	if registration, ok := registeredSources[ActiveSource]; ok {
 		return registration.Create(ctx, flags)
 	}
-	return nil, errNotRegistered.WithAttributes("source", sourceName)
+	return nil, errNotRegistered.WithAttributes("source", ActiveSource)
 }
 
 // FlagSet returns flags for all configured sources.
 func FlagSet() *pflag.FlagSet {
 	flags := &pflag.FlagSet{}
-	names := []string{}
-	for _, r := range registeredSources {
-		if r.FlagSet != nil {
-			flags.AddFlagSet(r.FlagSet)
-			names = append(names, r.Name)
+
+	switch ActiveSource {
+	case "":
+		for _, r := range registeredSources {
+			if r.FlagSet != nil {
+				flags.AddFlagSet(r.FlagSet)
+			}
 		}
+		flags.StringVar(&ActiveSource, "source", "", fmt.Sprintf("source (%s)", strings.Join(Names(), "|")))
+		flags.MarkDeprecated("source", "Flag source is deprecated")
+
+	default:
+		r := registeredSources[ActiveSource]
+		flags.AddFlagSet(r.FlagSet)
 	}
-	flags.String("source", "", fmt.Sprintf("source (%s)", strings.Join(names, "|")))
+
 	return flags
 }
 
@@ -96,6 +104,15 @@ func Sources() map[string]string {
 		sources[registration.Name] = registration.Description
 	}
 	return sources
+}
+
+// Names returns a slice of registered Sources names.
+func Names() []string {
+	var names []string
+	for k := range registeredSources {
+		names = append(names, k)
+	}
+	return names
 }
 
 func init() {
