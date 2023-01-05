@@ -33,6 +33,6 @@ var (
 )
 
 func init() {
-	applicationsCmd.Flags().AddFlagSet(source.FlagSet())
+	applicationsCmd.Flags().AddFlagSet(source.ApplicationFlagSet())
 	rootCmd.AddCommand(applicationsCmd)
 }

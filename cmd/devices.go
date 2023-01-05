@@ -31,6 +31,6 @@ var (
 )
 
 func init() {
-	devicesCmd.Flags().AddFlagSet(source.FlagSet())
+	devicesCmd.Flags().AddFlagSet(source.DevicesFlagSet())
 	rootCmd.AddCommand(devicesCmd)
 }

@@ -42,8 +42,10 @@ type Registration struct {
 	Name,
 	Description string
 
-	Create  CreateSource
-	FlagSet *pflag.FlagSet
+	Create CreateSource
+	FlagSet,
+	ApplicationFlagSet,
+	DevicesFlagSet *pflag.FlagSet
 }
 
 var (
@@ -75,16 +77,15 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (Source, error) {
 	return nil, errNotRegistered.WithAttributes("source", ActiveSource)
 }
 
-// FlagSet returns flags for all configured sources.
+// FlagSet returns common flags for ActiveSource.
+// If there is no active source returns flags for all configured sources.
 func FlagSet() *pflag.FlagSet {
 	flags := &pflag.FlagSet{}
 
 	switch ActiveSource {
 	case "":
 		for _, r := range registeredSources {
-			if r.FlagSet != nil {
-				flags.AddFlagSet(r.FlagSet)
-			}
+			flags.AddFlagSet(r.FlagSet)
 		}
 		flags.StringVar(&ActiveSource, "source", "", fmt.Sprintf("source (%s)", strings.Join(Names(), "|")))
 		flags.MarkDeprecated("source", "Flag source is deprecated")
@@ -92,6 +93,44 @@ func FlagSet() *pflag.FlagSet {
 	default:
 		r := registeredSources[ActiveSource]
 		flags.AddFlagSet(r.FlagSet)
+	}
+
+	return flags
+}
+
+// ApplicationFlagSet returns `application` command flags for ActiveSource.
+// If there is no active source returns flags for all configured sources.
+func ApplicationFlagSet() *pflag.FlagSet {
+	flags := FlagSet()
+
+	switch ActiveSource {
+	case "":
+		for _, r := range registeredSources {
+			flags.AddFlagSet(r.ApplicationFlagSet)
+		}
+
+	default:
+		r := registeredSources[ActiveSource]
+		flags.AddFlagSet(r.ApplicationFlagSet)
+	}
+
+	return flags
+}
+
+// DevicesFlagSet returns `devices` command flags for ActiveSource.
+// If there is no active source returns flags for all configured sources.
+func DevicesFlagSet() *pflag.FlagSet {
+	flags := FlagSet()
+
+	switch ActiveSource {
+	case "":
+		for _, r := range registeredSources {
+			flags.AddFlagSet(r.DevicesFlagSet)
+		}
+
+	default:
+		r := registeredSources[ActiveSource]
+		flags.AddFlagSet(r.DevicesFlagSet)
 	}
 
 	return flags
