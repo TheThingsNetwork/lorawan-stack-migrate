@@ -1,4 +1,4 @@
-package arg
+package cmd
 
 import (
 	"os"
@@ -8,11 +8,11 @@ import (
 )
 
 func init() {
-	if len(os.Args) <= 1 {
+	if len(os.Args) < 2 {
 		return
 	}
 	if s := os.Args[1]; slices.Contains(source.Names(), s) {
 		source.ActiveSource = s
-		os.Args = append(os.Args[:1], os.Args[2:]...)
+		rootCmd.SetArgs(os.Args[2:])
 	}
 }
