@@ -77,6 +77,17 @@ func NewSource(ctx context.Context, flags *pflag.FlagSet) (Source, error) {
 	return nil, errNotRegistered.WithAttributes("source", ActiveSource)
 }
 
+func addPrefix(name, prefix string) string {
+	if prefix == "" {
+		return name
+	}
+	// Append separator
+	prefix += "."
+	// Remove prefix if already present
+	name = strings.TrimPrefix(name, prefix)
+	return prefix + name
+}
+
 // FlagSet returns common flags for ActiveSource.
 // If there is no active source returns flags for all configured sources.
 func FlagSet() *pflag.FlagSet {
@@ -85,10 +96,20 @@ func FlagSet() *pflag.FlagSet {
 	switch ActiveSource {
 	case "":
 		for _, r := range registeredSources {
-			flags.AddFlagSet(r.FlagSet)
+			fs := &pflag.FlagSet{}
+			// Append source names to flag names to prevent duplicate names
+			r.FlagSet.VisitAll(func(f *pflag.Flag) {
+				f.Name = addPrefix(f.Name, strings.ToLower(r.Name))
+				fs.AddFlag(f)
+			})
+			flags.AddFlagSet(fs)
 		}
 		flags.StringVar(&ActiveSource, "source", "", fmt.Sprintf("source (%s)", strings.Join(Names(), "|")))
-		flags.MarkDeprecated("source", "Flag source is deprecated")
+		flags.MarkDeprecated("source",
+			fmt.Sprintf("use positional `source` argument instead `ttn-lw-migrate (%s) [command] ... [flags]`",
+				strings.Join(Names(), "|"),
+			),
+		)
 
 	default:
 		r := registeredSources[ActiveSource]
@@ -106,7 +127,16 @@ func ApplicationFlagSet() *pflag.FlagSet {
 	switch ActiveSource {
 	case "":
 		for _, r := range registeredSources {
-			flags.AddFlagSet(r.ApplicationFlagSet)
+			if r.ApplicationFlagSet == nil {
+				continue
+			}
+			fs := &pflag.FlagSet{}
+			// Append source names to flag names to prevent duplicate names
+			r.ApplicationFlagSet.VisitAll(func(f *pflag.Flag) {
+				f.Name = addPrefix(f.Name, strings.ToLower(r.Name))
+				fs.AddFlag(f)
+			})
+			flags.AddFlagSet(fs)
 		}
 
 	default:
@@ -125,7 +155,16 @@ func DevicesFlagSet() *pflag.FlagSet {
 	switch ActiveSource {
 	case "":
 		for _, r := range registeredSources {
-			flags.AddFlagSet(r.DevicesFlagSet)
+			if r.DevicesFlagSet == nil {
+				continue
+			}
+			fs := &pflag.FlagSet{}
+			// Append source names to flag names to prevent duplicate names
+			r.DevicesFlagSet.VisitAll(func(f *pflag.Flag) {
+				f.Name = addPrefix(f.Name, strings.ToLower(r.Name))
+				fs.AddFlag(f)
+			})
+			flags.AddFlagSet(fs)
 		}
 
 	default:
