@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/rpcmiddleware/rpclog"
 )
@@ -58,6 +59,19 @@ var (
 
 // Execute runs the root command and returns the exit code.
 func Execute() int {
+	if len(os.Args) >= 2 && source.SetActiveSource(os.Args[1]) {
+		rootCmd.SetArgs(os.Args[2:])
+	}
+
+	// NOTE: The flag set contents depend on the active source.
+	// As such, they should be initialized after the active source has
+	// been determined.
+	applicationsCmd.Flags().AddFlagSet(source.ApplicationFlagSet())
+	devicesCmd.Flags().AddFlagSet(source.DevicesFlagSet())
+
+	rootCmd.AddCommand(applicationsCmd)
+	rootCmd.AddCommand(devicesCmd)
+
 	if err := rootCmd.Execute(); err != nil {
 		printStack(os.Stderr, err)
 		return 1

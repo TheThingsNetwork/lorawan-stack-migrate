@@ -21,8 +21,6 @@ import (
 	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv2"      // TTNv2 source
 	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv3"      // TTS source
 
-	// _ "go.thethings.network/lorawan-stack-migrate/pkg/arg" // Init after initializing sources
-
 	"go.thethings.network/lorawan-stack-migrate/cmd"
 )
 

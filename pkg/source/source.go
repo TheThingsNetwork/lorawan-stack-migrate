@@ -54,8 +54,17 @@ var (
 	errNoSource          = errors.DefineInvalidArgument("no_source", "no source")
 
 	registeredSources map[string]Registration
-	ActiveSource      string
+	activeSource      string
 )
+
+// SetActiveSource changes the active source to s, if it exists.
+func SetActiveSource(s string) bool {
+	if _, found := registeredSources[s]; found {
+		activeSource = s
+		return true
+	}
+	return false
+}
 
 // RegisterSource registers a new Source.
 func RegisterSource(r Registration) error {
@@ -68,13 +77,13 @@ func RegisterSource(r Registration) error {
 
 // NewSource creates a new Source from parsed flags.
 func NewSource(ctx context.Context, flags *pflag.FlagSet) (Source, error) {
-	if ActiveSource == "" {
+	if activeSource == "" {
 		return nil, errNoSource.New()
 	}
-	if registration, ok := registeredSources[ActiveSource]; ok {
+	if registration, ok := registeredSources[activeSource]; ok {
 		return registration.Create(ctx, flags)
 	}
-	return nil, errNotRegistered.WithAttributes("source", ActiveSource)
+	return nil, errNotRegistered.WithAttributes("source", activeSource)
 }
 
 func addPrefix(name, prefix string) string {
@@ -93,7 +102,7 @@ func addPrefix(name, prefix string) string {
 func FlagSet() *pflag.FlagSet {
 	flags := &pflag.FlagSet{}
 
-	switch ActiveSource {
+	switch activeSource {
 	case "":
 		for _, r := range registeredSources {
 			fs := &pflag.FlagSet{}
@@ -104,7 +113,7 @@ func FlagSet() *pflag.FlagSet {
 			})
 			flags.AddFlagSet(fs)
 		}
-		flags.StringVar(&ActiveSource, "source", "", fmt.Sprintf("source (%s)", strings.Join(Names(), "|")))
+		flags.StringVar(&activeSource, "source", "", fmt.Sprintf("source (%s)", strings.Join(Names(), "|")))
 		flags.MarkDeprecated("source",
 			fmt.Sprintf("use positional `source` argument instead `ttn-lw-migrate (%s) [command] ... [flags]`",
 				strings.Join(Names(), "|"),
@@ -112,7 +121,7 @@ func FlagSet() *pflag.FlagSet {
 		)
 
 	default:
-		r := registeredSources[ActiveSource]
+		r := registeredSources[activeSource]
 		flags.AddFlagSet(r.FlagSet)
 	}
 
@@ -124,7 +133,7 @@ func FlagSet() *pflag.FlagSet {
 func ApplicationFlagSet() *pflag.FlagSet {
 	flags := FlagSet()
 
-	switch ActiveSource {
+	switch activeSource {
 	case "":
 		for _, r := range registeredSources {
 			if r.ApplicationFlagSet == nil {
@@ -140,7 +149,7 @@ func ApplicationFlagSet() *pflag.FlagSet {
 		}
 
 	default:
-		r := registeredSources[ActiveSource]
+		r := registeredSources[activeSource]
 		flags.AddFlagSet(r.ApplicationFlagSet)
 	}
 
@@ -152,7 +161,7 @@ func ApplicationFlagSet() *pflag.FlagSet {
 func DevicesFlagSet() *pflag.FlagSet {
 	flags := FlagSet()
 
-	switch ActiveSource {
+	switch activeSource {
 	case "":
 		for _, r := range registeredSources {
 			if r.DevicesFlagSet == nil {
@@ -168,7 +177,7 @@ func DevicesFlagSet() *pflag.FlagSet {
 		}
 
 	default:
-		r := registeredSources[ActiveSource]
+		r := registeredSources[activeSource]
 		flags.AddFlagSet(r.DevicesFlagSet)
 	}
 

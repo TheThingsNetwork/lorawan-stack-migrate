@@ -16,21 +16,13 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
-var (
-	devicesCmd = &cobra.Command{
-		Use:     "device [dev-id] ...",
-		Short:   "Export devices by DevEUI",
-		Aliases: []string{"end-devices", "end-device", "devices", "dev"},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return exportCommand(cmd, args, exportCfg.exportDev)
-		},
-	}
-)
-
-func init() {
-	devicesCmd.Flags().AddFlagSet(source.DevicesFlagSet())
-	rootCmd.AddCommand(devicesCmd)
+var devicesCmd = &cobra.Command{
+	Use:     "device [dev-id] ...",
+	Short:   "Export devices by DevEUI",
+	Aliases: []string{"end-devices", "end-device", "devices", "dev"},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return exportCommand(cmd, args, exportCfg.exportDev)
+	},
 }

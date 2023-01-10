@@ -19,20 +19,13 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
-var (
-	applicationsCmd = &cobra.Command{
-		Use:     "application [app-id] ...",
-		Aliases: []string{"applications", "app"},
-		Short:   "Export all devices of an application",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return exportCommand(cmd, args, func(s source.Source, item string) error {
-				return s.RangeDevices(item, exportCfg.exportDev)
-			})
-		},
-	}
-)
-
-func init() {
-	applicationsCmd.Flags().AddFlagSet(source.ApplicationFlagSet())
-	rootCmd.AddCommand(applicationsCmd)
+var applicationsCmd = &cobra.Command{
+	Use:     "application [app-id] ...",
+	Aliases: []string{"applications", "app"},
+	Short:   "Export all devices of an application",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return exportCommand(cmd, args, func(s source.Source, item string) error {
+			return s.RangeDevices(item, exportCfg.exportDev)
+		})
+	},
 }
