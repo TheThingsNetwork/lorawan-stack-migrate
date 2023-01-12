@@ -1,0 +1,197 @@
+package config
+
+import (
+	"crypto/tls"
+	"crypto/x509"
+	"net/http"
+	"os"
+
+	"github.com/spf13/pflag"
+	"go.uber.org/zap"
+
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv3/api"
+)
+
+var logger *zap.SugaredLogger
+
+type serverConfig struct {
+	defaultGRPCAddress,
+	ApplicationServerGRPCAddress,
+	IdentityServerGRPCAddress,
+	JoinServerGRPCAddress,
+	NetworkServerGRPCAddress string
+}
+
+func (c *serverConfig) ApplyDefaults() {
+	applyDefault := func(adresses ...*string) {
+		for _, a := range adresses {
+			if *a == "" {
+				*a = c.defaultGRPCAddress
+			}
+		}
+	}
+
+	applyDefault(
+		&c.ApplicationServerGRPCAddress,
+		&c.IdentityServerGRPCAddress,
+		&c.JoinServerGRPCAddress,
+		&c.NetworkServerGRPCAddress,
+	)
+}
+
+func (c *serverConfig) AnyFieldEmpty() error {
+	if c.ApplicationServerGRPCAddress == "" {
+		return errNoApplicationServerGRPCAddress.New()
+	}
+	if c.IdentityServerGRPCAddress == "" {
+		return errNoIdentityServerGRPCAddress.New()
+	}
+	if c.JoinServerGRPCAddress == "" {
+		return errNoJoinServerGRPCAddress.New()
+	}
+	if c.NetworkServerGRPCAddress == "" {
+		return errNoNetworkServerGRPCAddress.New()
+	}
+	return nil
+}
+
+type Config struct {
+	source.RootConfig
+
+	ServerConfig serverConfig
+
+	caPath, appAPIKey,
+	AppID string
+
+	insecure,
+	DeleteSourceDevice,
+	DryRun, NoSession bool
+}
+
+func (c *Config) Initialize(rootConfig source.RootConfig) error {
+	c.RootConfig = rootConfig
+
+	var err error
+	logger, err = NewLogger(c.Verbose)
+	if err != nil {
+		return err
+	}
+
+	if c.appAPIKey == "" {
+		return errNoAppAPIKey.New()
+	}
+	api.SetAuth("bearer", c.appAPIKey)
+
+	switch {
+	case c.insecure:
+		api.SetInsecure(true)
+		logger.Warn("Using insecure connection to API")
+
+	default:
+		if c.caPath != "" {
+			setCustomCA(c.caPath)
+		}
+	}
+
+	c.ServerConfig.ApplyDefaults()
+	if err := c.ServerConfig.AnyFieldEmpty(); err != nil {
+		return err
+	}
+
+	// deleteSourceDevice not allowed when dryRun
+	if c.DryRun && c.DeleteSourceDevice {
+		logger.Warn("Cannot delete source devices during a dry run.")
+		c.DeleteSourceDevice = false
+	}
+
+	return nil
+}
+
+func New() (*Config, *pflag.FlagSet) {
+	var (
+		config = &Config{}
+		flags  = &pflag.FlagSet{}
+	)
+
+	flags.StringVar(&config.AppID,
+		"app-id",
+		os.Getenv("TTNV3_APP_ID"),
+		"TTS Application ID")
+	flags.String(
+		"app-api-key",
+		os.Getenv("TTNV3_APP_API_KEY"),
+		"TTS Application Access Key (with 'devices' permissions)")
+
+	flags.StringVar(&config.caPath,
+		"ca-file",
+		os.Getenv("TTNV3_CA_FILE"),
+		"TTS Path to a CA file (optional)")
+	flags.BoolVar(&config.insecure,
+		"insecure",
+		false,
+		"TTS allow TCP connection")
+
+	flags.StringVar(&config.ServerConfig.defaultGRPCAddress,
+		"default-grpc-address",
+		os.Getenv("TTNV3_DEFAULT_GRPC_ADDRESS"),
+		"TTS default GRPC Address (optional)")
+	flags.StringVar(&config.ServerConfig.ApplicationServerGRPCAddress,
+		"appplication-server-grpc-address",
+		os.Getenv("TTNV3_APPLICATION_SERVER_GRPC_ADDRESS"),
+		"TTS Application Server GRPC Address")
+	flags.StringVar(&config.ServerConfig.IdentityServerGRPCAddress,
+		"identity-server-grpc-address",
+		os.Getenv("TTNV3_IDENTITY_SERVER_GRPC_ADDRESS"),
+		"TTS Identity Server GRPC Address")
+	flags.StringVar(&config.ServerConfig.JoinServerGRPCAddress,
+		"join-server-grpc-address",
+		os.Getenv("TTNV3_JOIN_SERVER_GRPC_ADDRESS"),
+		"TTS Join Server GRPC Address")
+	flags.StringVar(&config.ServerConfig.NetworkServerGRPCAddress,
+		"network-server-grpc-address",
+		os.Getenv("TTNV3_NETWORK_SERVER_GRPC_ADDRESS"),
+		"TTS Network Server GRPC Address")
+
+	flags.BoolVar(&config.NoSession,
+		"no-session",
+		false,
+		"TTS export devices without session")
+	flags.BoolVar(&config.DeleteSourceDevice,
+		"delete-source-device",
+		false,
+		"TTS delete exported devices")
+
+	return config, flags
+}
+
+func NewLogger(verbose bool) (*zap.SugaredLogger, error) {
+	cfg := zap.NewProductionConfig()
+	if verbose {
+		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	}
+	logger, err := cfg.Build()
+	if err != nil {
+		return nil, err
+	}
+	return logger.Sugar(), nil
+}
+
+func setCustomCA(path string) error {
+	pemBytes, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	rootCAs := http.DefaultTransport.(*http.Transport).TLSClientConfig.RootCAs
+	if rootCAs == nil {
+		if rootCAs, err = x509.SystemCertPool(); err != nil {
+			rootCAs = x509.NewCertPool()
+		}
+	}
+	rootCAs.AppendCertsFromPEM(pemBytes)
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{RootCAs: rootCAs}
+	if err = api.AddCA(pemBytes); err != nil {
+		return err
+	}
+	return nil
+}

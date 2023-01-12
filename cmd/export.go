@@ -31,7 +31,7 @@ func exportCommand(cmd *cobra.Command, args []string, f func(s source.Source, it
 		iter = NewListIterator(args)
 	}
 
-	s, err := source.NewSource(ctx, cmd.Flags())
+	s, err := source.NewSource(ctx)
 	if err != nil {
 		return err
 	}

@@ -24,6 +24,15 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 )
 
+type RootConfig struct {
+	DryRun, Verbose   bool
+	FrequencyPlansURL string
+}
+
+var rootConfig RootConfig
+
+func Config() *RootConfig { return &rootConfig }
+
 // Source is a source for end devices.
 type Source interface {
 	// ExportDevice retrieves an end device from the source and returns it as a ttnpb.EndDevice.
@@ -35,7 +44,7 @@ type Source interface {
 }
 
 // CreateSource is a function that constructs a new Source.
-type CreateSource func(ctx context.Context, flags *pflag.FlagSet) (Source, error)
+type CreateSource func(ctx context.Context, rootCfg RootConfig) (Source, error)
 
 // Registration contains information for a registered Source.
 type Registration struct {
@@ -76,12 +85,12 @@ func RegisterSource(r Registration) error {
 }
 
 // NewSource creates a new Source from parsed flags.
-func NewSource(ctx context.Context, flags *pflag.FlagSet) (Source, error) {
+func NewSource(ctx context.Context) (Source, error) {
 	if activeSource == "" {
 		return nil, errNoSource.New()
 	}
 	if registration, ok := registeredSources[activeSource]; ok {
-		return registration.Create(ctx, flags)
+		return registration.Create(ctx, rootConfig)
 	}
 	return nil, errNotRegistered.WithAttributes("source", activeSource)
 }

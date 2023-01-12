@@ -27,6 +27,7 @@ import (
 var (
 	logger    *log.Logger
 	ctx       context.Context
+	rootCfg   = source.Config()
 	exportCfg = exportConfig{}
 	rootCmd   = &cobra.Command{
 		Use:   "ttn-lw-migrate",
@@ -35,7 +36,7 @@ var (
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			logLevel := log.InfoLevel
-			if verbose, _ := cmd.Flags().GetBool("verbose"); verbose {
+			if rootCfg.Verbose {
 				logLevel = log.DebugLevel
 			}
 			logHandler, err := log.NewZap("console")
@@ -47,9 +48,6 @@ var (
 				log.WithLevel(logLevel),
 			)
 			ctx = log.NewContext(context.Background(), logger)
-
-			exportCfg.devIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
-			exportCfg.euiForID, _ = cmd.Flags().GetBool("set-eui-as-id")
 
 			rpclog.ReplaceGrpcLogger(logger)
 			return nil
@@ -80,9 +78,16 @@ func Execute() int {
 }
 
 func init() {
-	rootCmd.PersistentFlags().Bool("verbose", false, "Verbose output")
-	rootCmd.PersistentFlags().Bool("dry-run", false, "Do everything except resetting root and session keys of exported devices")
-	rootCmd.PersistentFlags().String("frequency-plans-url", "https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master", "URL for fetching frequency plans")
-	rootCmd.PersistentFlags().Bool("set-eui-as-id", false, "Use the DevEUI as ID")
-	rootCmd.PersistentFlags().String("dev-id-prefix", "", "(optional) value to be prefixed to the resulting device IDs")
+	rootCmd.PersistentFlags().BoolVar(&rootCfg.DryRun,
+		"dry-run",
+		false,
+		"Do everything except resetting root and session keys of exported devices")
+	rootCmd.PersistentFlags().BoolVar(&rootCfg.Verbose,
+		"verbose",
+		false,
+		"Verbose output")
+	rootCmd.PersistentFlags().StringVar(&rootCfg.FrequencyPlansURL,
+		"frequency-plans-url",
+		"https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master",
+		"URL for fetching frequency plans")
 }
