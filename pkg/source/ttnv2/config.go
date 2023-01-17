@@ -26,6 +26,7 @@ import (
 	ttnapex "github.com/TheThingsNetwork/go-utils/log/apex"
 	apex "github.com/apex/log"
 	"github.com/spf13/pflag"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/fetch"
 	"go.thethings.network/lorawan-stack/v3/pkg/frequencyplans"
 )
@@ -34,9 +35,68 @@ const (
 	clientName = "ttn-lw-migrate"
 )
 
-type config struct {
+func New() (*Config, *pflag.FlagSet) {
+	var (
+		config = &Config{sdkConfig: ttnsdk.NewCommunityConfig(clientName)}
+		flags  = &pflag.FlagSet{}
+	)
+
+	flags.StringVar(&config.frequencyPlanID,
+		"frequency-plan-id",
+		os.Getenv("FREQUENCY_PLAN_ID"),
+		"Frequency Plan ID of exported devices")
+	flags.StringVar(&config.appID,
+		"app-id",
+		os.Getenv("TTNV2_APP_ID"),
+		"TTN Application ID")
+	flags.StringVar(&config.appAccessKey,
+		"app-access-key",
+		os.Getenv("TTNV2_APP_ACCESS_KEY"),
+		"TTN Application Access Key (with 'devices' permissions")
+	flags.StringVar(&config.caCert,
+		"ca-cert",
+		os.Getenv("TTNV2_CA_CERT"),
+		"(only for private networks)")
+	flags.StringVar(&config.sdkConfig.HandlerAddress,
+		"handler-address",
+		os.Getenv("TTNV2_HANDLER_ADDRESS"),
+		"(only for private networks) Address for the Handler")
+	flags.StringVar(&config.sdkConfig.AccountServerAddress,
+		"account-server-address",
+		os.Getenv("TTNV2_ACCOUNT_SERVER_ADDRESS"),
+		"(only for private networks) Address for the Account Server")
+	flags.StringVar(&config.sdkConfig.AccountServerClientID,
+		"account-server-client-id",
+		os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_ID"),
+		"(only for private networks) Client ID for the Account Server")
+	flags.StringVar(&config.sdkConfig.AccountServerClientSecret,
+		"account-server-client-secret",
+		os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_SECRET"),
+		"(only for private networks) Client secret for the Account Server")
+	flags.StringVar(&config.sdkConfig.DiscoveryServerAddress,
+		"discovery-server-address",
+		os.Getenv("TTNV2_DISCOVERY_SERVER_ADDRESS"),
+		"(only for private networks) Address for the Discovery Server")
+	flags.BoolVar(&config.sdkConfig.DiscoveryServerInsecure,
+		"discovery-server-insecure",
+		false,
+		"(only for private networks) Not recommended")
+	flags.BoolVar(&config.withSession,
+		"with-session",
+		true,
+		"Export device session keys and frame counters")
+	flags.BoolVar(&config.resetsToFrequencyPlan,
+		"resets-to-frequency-plan",
+		false,
+		"Configure preset frequencies for ABP devices so that they match the used Frequency Plan")
+
+	return config, flags
+}
+
+type Config struct {
 	sdkConfig ttnsdk.ClientConfig
 
+	caCert       string
 	appAccessKey string
 	appID        string
 
@@ -49,81 +109,34 @@ type config struct {
 	fpStore *frequencyplans.Store
 }
 
-func flagSet() *pflag.FlagSet {
-	flags := &pflag.FlagSet{}
-	flags.String("ttnv2.frequency-plan-id", os.Getenv("FREQUENCY_PLAN_ID"), "Frequency Plan ID of exported devices")
-	flags.String("ttnv2.app-id", os.Getenv("TTNV2_APP_ID"), "TTN Application ID")
-	flags.String("ttnv2.app-access-key", os.Getenv("TTNV2_APP_ACCESS_KEY"), "TTN Application Access Key (with 'devices' permissions)")
-	flags.String("ttnv2.ca-cert", os.Getenv("TTNV2_CA_CERT"), "(only for private networks) CA for TLS")
-	flags.String("ttnv2.handler-address", os.Getenv("TTNV2_HANDLER_ADDRESS"), "(only for private networks) Address for the Handler")
-	flags.String("ttnv2.account-server-address", os.Getenv("TTNV2_ACCOUNT_SERVER_ADDRESS"), "(only for private networks) Address for the Account Server")
-	flags.String("ttnv2.account-server-client-id", os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_ID"), "(only for private networks) Client ID for the Account Server")
-	flags.String("ttnv2.account-server-client-secret", os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_SECRET"), "(only for private networks) Client secret for the Account Server")
-	flags.String("ttnv2.discovery-server-address", os.Getenv("TTNV2_DISCOVERY_SERVER_ADDRESS"), "(only for private networks) Address for the Discovery Server")
-	flags.Bool("ttnv2.discovery-server-insecure", false, "(only for private networks) Not recommended")
-	flags.Bool("ttnv2.with-session", true, "Export device session keys and frame counters")
-	flags.Bool("ttnv2.resets-to-frequency-plan", false, "Configure preset frequencies for ABP devices so that they match the used Frequency Plan")
-
-	return flags
-}
-
-func getConfig(flags *pflag.FlagSet) (config, error) {
-	stringFlag := func(f string) string {
-		s, _ := flags.GetString(f)
-		return s
-	}
-	boolFlag := func(f string) bool {
-		s, _ := flags.GetBool(f)
-		return s
-	}
-
-	cfg := ttnsdk.NewCommunityConfig(clientName)
-	if f := stringFlag("ttnv2.account-server-address"); f != "" {
-		cfg.AccountServerAddress = f
-	}
-	if f := stringFlag("ttnv2.account-server-client-id"); f != "" {
-		cfg.AccountServerClientID = f
-	}
-	if f := stringFlag("ttnv2.account-server-client-secret"); f != "" {
-		cfg.AccountServerClientSecret = f
-	}
-	if f := stringFlag("ttnv2.handler-address"); f != "" {
-		cfg.HandlerAddress = f
-	}
-	if f := stringFlag("ttnv2.discovery-server-address"); f != "" {
-		cfg.DiscoveryServerAddress = f
-	}
-	cfg.DiscoveryServerInsecure = boolFlag("ttnv2.discovery-server-insecure")
-
-	if ca := stringFlag("ttnv2.ca-cert"); ca != "" {
-		if cfg.TLSConfig == nil {
-			cfg.TLSConfig = &tls.Config{}
+func (c *Config) Initialize(rootConfig source.RootConfig) error {
+	if c.caCert != "" {
+		if c.sdkConfig.TLSConfig == nil {
+			c.sdkConfig.TLSConfig = new(tls.Config)
 		}
-		rootCAs := cfg.TLSConfig.RootCAs
+		rootCAs := c.sdkConfig.TLSConfig.RootCAs
 		if rootCAs == nil {
 			var err error
 			if rootCAs, err = x509.SystemCertPool(); err != nil {
 				rootCAs = x509.NewCertPool()
 			}
 		}
-		pemBytes, err := ioutil.ReadFile(ca)
+		pemBytes, err := ioutil.ReadFile(c.caCert)
 		if err != nil {
-			return config{}, errRead.WithAttributes("file", ca)
+			return err
 		}
 		rootCAs.AppendCertsFromPEM(pemBytes)
 	}
 
-	appAccessKey := stringFlag("ttnv2.app-access-key")
-	if appAccessKey == "" {
-		return config{}, errNoAppAccessKey.New()
+	if c.appAccessKey == "" {
+		return errNoAppAccessKey.New()
 	}
-	frequencyPlanID := stringFlag("ttnv2.frequency-plan-id")
-	if frequencyPlanID == "" {
-		return config{}, errNoFrequencyPlanID.New()
+	if c.frequencyPlanID == "" {
+		return errNoFrequencyPlanID.New()
 	}
 
 	logLevel := ttnapex.InfoLevel
-	if boolFlag("verbose") {
+	if rootConfig.Verbose {
 		logLevel = ttnapex.DebugLevel
 	}
 	logger := ttnapex.Wrap(&apex.Logger{
@@ -132,22 +145,13 @@ func getConfig(flags *pflag.FlagSet) (config, error) {
 	})
 	ttnlog.Set(logger)
 
-	fpFetcher, err := fetch.FromHTTP(nil, stringFlag("frequency-plans-url"))
+	fpFetcher, err := fetch.FromHTTP(nil, rootConfig.FrequencyPlansURL)
 	if err != nil {
-		return config{}, err
+		return err
 	}
+	c.fpStore = frequencyplans.NewStore(fpFetcher)
 
-	return config{
-		sdkConfig: cfg,
+	c.dryRun = rootConfig.DryRun
 
-		appID:           stringFlag("ttnv2.app-id"),
-		appAccessKey:    appAccessKey,
-		frequencyPlanID: frequencyPlanID,
-
-		withSession:           boolFlag("ttnv2.with-session"),
-		resetsToFrequencyPlan: boolFlag("ttnv2.resets-to-frequency-plan"),
-
-		dryRun:  boolFlag("dry-run"),
-		fpStore: frequencyplans.NewStore(fpFetcher),
-	}, nil
+	return nil
 }

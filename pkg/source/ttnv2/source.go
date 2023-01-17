@@ -20,7 +20,6 @@ import (
 	ttnsdk "github.com/TheThingsNetwork/go-app-sdk"
 	ttntypes "github.com/TheThingsNetwork/ttn/core/types"
 	pbtypes "github.com/gogo/protobuf/types"
-	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
@@ -33,29 +32,30 @@ import (
 type Source struct {
 	ctx context.Context
 
-	config config
+	config Config
 	mgr    ttnsdk.DeviceManager
 	client ttnsdk.Client
 }
 
-// NewSource creates a new TTNv2 Source.
-func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error) {
-	config, err := getConfig(flags)
-	if err != nil {
-		return nil, err
+func createNewSource(cfg Config) source.CreateSource {
+	return func(ctx context.Context, rootCfg source.RootConfig) (source.Source, error) {
+		return NewSource(ctx, cfg, rootCfg)
 	}
+}
 
+// NewSource creates a new TTNv2 Source.
+func NewSource(ctx context.Context, cfg Config, rootCfg source.RootConfig) (source.Source, error) {
 	s := &Source{
 		ctx:    ctx,
-		config: config,
-		client: config.sdkConfig.NewClient(config.appID, config.appAccessKey),
+		config: cfg,
+		client: cfg.sdkConfig.NewClient(cfg.appID, cfg.appAccessKey),
 	}
 	mgr, err := s.client.ManageDevices()
 	if err != nil {
 		return nil, err
 	}
 	s.mgr = newDeviceManager(ctx, mgr)
-	return s, nil
+	return s, cfg.Initialize(rootCfg)
 }
 
 // ExportDevice implements the source.Source interface.
