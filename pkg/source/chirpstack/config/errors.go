@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package chirpstack
+package config
 
-import (
-	"context"
-	"fmt"
+import "go.thethings.network/lorawan-stack/v3/pkg/errors"
+
+var (
+	errNoAPIToken      = errors.DefineInvalidArgument("no_api_token", "no API token")
+	errNoAPIURL        = errors.DefineInvalidArgument("no_api_url", "no API URL")
+	errNoFrequencyPlan = errors.DefineInvalidArgument("no_frequency_plan", "no Frequency Plan")
+
+	errInvalidJoinEUI = errors.DefineInvalidArgument("invalid_join_eui", "invalid JoinEUI `{join_eui}`")
 )
-
-type token string
-
-// GetRequestMetadata implements PerRPCCredentials.
-func (a token) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
-	return map[string]string{
-		"authorization": fmt.Sprintf("Bearer %s", a),
-	}, nil
-}
-
-// RequireTransportSecurity implements PerRPCCredentials.
-func (a token) RequireTransportSecurity() bool {
-	return false
-}

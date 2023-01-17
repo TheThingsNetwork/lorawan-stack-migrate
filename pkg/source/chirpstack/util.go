@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ func (p *Source) getDeviceProfile(id string) (*csapi.DeviceProfile, error) {
 		return profile, nil
 	}
 
-	client := csapi.NewDeviceProfileServiceClient(p.cc)
+	client := csapi.NewDeviceProfileServiceClient(p.ClientConn)
 	resp, err := client.Get(p.ctx, &csapi.GetDeviceProfileRequest{
 		Id: id,
 	})
@@ -52,7 +52,7 @@ func (p *Source) getServiceProfile(id string) (*csapi.ServiceProfile, error) {
 		return profile, nil
 	}
 
-	client := csapi.NewServiceProfileServiceClient(p.cc)
+	client := csapi.NewServiceProfileServiceClient(p.ClientConn)
 	resp, err := client.Get(p.ctx, &csapi.GetServiceProfileRequest{
 		Id: id,
 	})
@@ -64,7 +64,7 @@ func (p *Source) getServiceProfile(id string) (*csapi.ServiceProfile, error) {
 }
 
 func (p *Source) getDevice(devEui string) (*csapi.Device, error) {
-	client := csapi.NewDeviceServiceClient(p.cc)
+	client := csapi.NewDeviceServiceClient(p.ClientConn)
 
 	resp, err := client.Get(p.ctx, &csapi.GetDeviceRequest{
 		DevEui: devEui,
@@ -104,7 +104,7 @@ func (p *Source) getApplicationByID(id int64) (*csapi.Application, error) {
 		return app, nil
 	}
 
-	client := csapi.NewApplicationServiceClient(p.cc)
+	client := csapi.NewApplicationServiceClient(p.ClientConn)
 	resp, err := client.Get(p.ctx, &csapi.GetApplicationRequest{
 		Id: id,
 	})
@@ -117,7 +117,7 @@ func (p *Source) getApplicationByID(id int64) (*csapi.Application, error) {
 }
 
 func (p *Source) getApplicationIDByName(name string) (int64, error) {
-	client := csapi.NewApplicationServiceClient(p.cc)
+	client := csapi.NewApplicationServiceClient(p.ClientConn)
 	offset := int64(0)
 	for {
 		resp, err := client.List(p.ctx, &csapi.ListApplicationRequest{
@@ -141,7 +141,7 @@ func (p *Source) getApplicationIDByName(name string) (int64, error) {
 }
 
 func (p *Source) getRootKeys(devEui string) (*csapi.DeviceKeys, error) {
-	client := csapi.NewDeviceServiceClient(p.cc)
+	client := csapi.NewDeviceServiceClient(p.ClientConn)
 	resp, err := client.GetKeys(context.Background(), &csapi.GetDeviceKeysRequest{
 		DevEui: devEui,
 	})
@@ -153,7 +153,7 @@ func (p *Source) getRootKeys(devEui string) (*csapi.DeviceKeys, error) {
 }
 
 func (p *Source) getActivation(devEui string) (*csapi.DeviceActivation, error) {
-	client := csapi.NewDeviceServiceClient(p.cc)
+	client := csapi.NewDeviceServiceClient(p.ClientConn)
 	resp, err := client.GetActivation(context.Background(), &csapi.GetDeviceActivationRequest{
 		DevEui: devEui,
 	})
