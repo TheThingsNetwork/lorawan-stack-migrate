@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@ package ttnv2
 import "go.thethings.network/lorawan-stack-migrate/pkg/source"
 
 func init() {
+	cfg, flags := New()
+
 	source.RegisterSource(source.Registration{
 		Name:        "ttnv2",
 		Description: "Migrate from The Things Network Stack V2",
-		FlagSet:     flagSet(),
-		Create:      NewSource,
+		FlagSet:     flags,
+		Create:      createNewSource(cfg),
 	})
 }
