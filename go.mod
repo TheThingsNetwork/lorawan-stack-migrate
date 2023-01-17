@@ -31,7 +31,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	go.thethings.network/lorawan-stack/v3 v3.21.2
 	go.uber.org/zap v1.23.0
-	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
 	google.golang.org/grpc v1.49.0
 )
 
@@ -100,6 +99,7 @@ require (
 	go.uber.org/multierr v1.7.0 // indirect
 	gocloud.dev v0.20.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a // indirect
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
