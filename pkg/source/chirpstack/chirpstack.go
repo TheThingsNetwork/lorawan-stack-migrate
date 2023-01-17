@@ -14,13 +14,18 @@
 
 package chirpstack
 
-import "go.thethings.network/lorawan-stack-migrate/pkg/source"
+import (
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack/config"
+)
 
 func init() {
+	cfg, flags := config.New()
+
 	source.RegisterSource(source.Registration{
 		Name:        "chirpstack",
 		Description: "Migrate from ChirpStack LoRaWAN Network Server",
-		FlagSet:     flagSet(),
-		Create:      NewSource,
+		FlagSet:     flags,
+		Create:      createNewSource(*cfg),
 	})
 }
