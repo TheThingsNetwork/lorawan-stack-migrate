@@ -23,7 +23,7 @@ type serverConfig struct {
 	NetworkServerGRPCAddress string
 }
 
-func (c *serverConfig) ApplyDefaults() {
+func (c *serverConfig) applyDefaults() {
 	applyDefault := func(adresses ...*string) {
 		for _, a := range adresses {
 			if *a == "" {
@@ -40,7 +40,7 @@ func (c *serverConfig) ApplyDefaults() {
 	)
 }
 
-func (c *serverConfig) AnyFieldEmpty() error {
+func (c *serverConfig) anyFieldEmpty() error {
 	if c.ApplicationServerGRPCAddress == "" {
 		return errNoApplicationServerGRPCAddress.New()
 	}
@@ -53,58 +53,6 @@ func (c *serverConfig) AnyFieldEmpty() error {
 	if c.NetworkServerGRPCAddress == "" {
 		return errNoNetworkServerGRPCAddress.New()
 	}
-	return nil
-}
-
-type Config struct {
-	source.RootConfig
-
-	ServerConfig serverConfig
-
-	caPath, appAPIKey,
-	AppID string
-
-	insecure,
-	DeleteSourceDevice,
-	DryRun, NoSession bool
-}
-
-func (c *Config) Initialize(rootConfig source.RootConfig) error {
-	c.RootConfig = rootConfig
-
-	var err error
-	logger, err = NewLogger(c.Verbose)
-	if err != nil {
-		return err
-	}
-
-	if c.appAPIKey == "" {
-		return errNoAppAPIKey.New()
-	}
-	api.SetAuth("bearer", c.appAPIKey)
-
-	switch {
-	case c.insecure:
-		api.SetInsecure(true)
-		logger.Warn("Using insecure connection to API")
-
-	default:
-		if c.caPath != "" {
-			setCustomCA(c.caPath)
-		}
-	}
-
-	c.ServerConfig.ApplyDefaults()
-	if err := c.ServerConfig.AnyFieldEmpty(); err != nil {
-		return err
-	}
-
-	// deleteSourceDevice not allowed when dryRun
-	if c.DryRun && c.DeleteSourceDevice {
-		logger.Warn("Cannot delete source devices during a dry run.")
-		c.DeleteSourceDevice = false
-	}
-
 	return nil
 }
 
@@ -163,6 +111,58 @@ func New() (*Config, *pflag.FlagSet) {
 		"TTS delete exported devices")
 
 	return config, flags
+}
+
+type Config struct {
+	source.RootConfig
+
+	ServerConfig serverConfig
+
+	caPath, appAPIKey,
+	AppID string
+
+	insecure,
+	DeleteSourceDevice,
+	DryRun, NoSession bool
+}
+
+func (c *Config) Initialize(rootConfig source.RootConfig) error {
+	c.RootConfig = rootConfig
+
+	var err error
+	logger, err = NewLogger(c.Verbose)
+	if err != nil {
+		return err
+	}
+
+	if c.appAPIKey == "" {
+		return errNoAppAPIKey.New()
+	}
+	api.SetAuth("bearer", c.appAPIKey)
+
+	switch {
+	case c.insecure:
+		api.SetInsecure(true)
+		logger.Warn("Using insecure connection to API")
+
+	default:
+		if c.caPath != "" {
+			setCustomCA(c.caPath)
+		}
+	}
+
+	c.ServerConfig.applyDefaults()
+	if err := c.ServerConfig.anyFieldEmpty(); err != nil {
+		return err
+	}
+
+	// deleteSourceDevice not allowed when dryRun
+	if c.DryRun && c.DeleteSourceDevice {
+		logger.Warn("Cannot delete source devices during a dry run.")
+		c.DeleteSourceDevice = false
+	}
+
+	return nil
 }
 
 func NewLogger(verbose bool) (*zap.SugaredLogger, error) {

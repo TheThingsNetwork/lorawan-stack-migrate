@@ -96,14 +96,10 @@ func New() (*Config, *pflag.FlagSet) {
 type Config struct {
 	sdkConfig ttnsdk.ClientConfig
 
-	caCert       string
-	appAccessKey string
-	appID        string
-
+	caCert, appID, appAccessKey,
 	frequencyPlanID string
 
-	withSession           bool
-	dryRun                bool
+	withSession, dryRun,
 	resetsToFrequencyPlan bool
 
 	fpStore *frequencyplans.Store
