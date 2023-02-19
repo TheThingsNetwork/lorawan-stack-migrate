@@ -187,14 +187,19 @@ func setCustomCA(path string) error {
 	if err != nil {
 		return err
 	}
-	rootCAs := http.DefaultTransport.(*http.Transport).TLSClientConfig.RootCAs
-	if rootCAs == nil {
-		if rootCAs, err = x509.SystemCertPool(); err != nil {
-			rootCAs = x509.NewCertPool()
+
+	cfg := http.DefaultTransport.(*http.Transport).TLSClientConfig
+	switch {
+	case cfg == nil:
+		cfg = new(tls.Config)
+		fallthrough
+
+	case cfg.RootCAs == nil:
+		if cfg.RootCAs, err = x509.SystemCertPool(); err != nil {
+			cfg.RootCAs = x509.NewCertPool()
 		}
 	}
-	rootCAs.AppendCertsFromPEM(pemBytes)
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{RootCAs: rootCAs}
+	cfg.RootCAs.AppendCertsFromPEM(pemBytes)
 	if err = api.AddCA(pemBytes); err != nil {
 		return err
 	}
