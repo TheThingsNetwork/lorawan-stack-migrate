@@ -56,61 +56,66 @@ func (c *serverConfig) anyFieldEmpty() error {
 	return nil
 }
 
-func New() (*Config, *pflag.FlagSet) {
+func New() (*Config, source.FlagSets) {
 	var (
-		config = &Config{}
-		flags  = &pflag.FlagSet{}
+		config  = &Config{}
+		devices = &pflag.FlagSet{}
+		shared  = &pflag.FlagSet{}
 	)
 
-	flags.StringVar(&config.AppID,
+	devices.StringVar(&config.AppID,
 		"app-id",
 		os.Getenv("TTNV3_APP_ID"),
 		"TTS Application ID")
-	flags.String(
+
+	shared.StringVar(&config.appAPIKey,
 		"app-api-key",
 		os.Getenv("TTNV3_APP_API_KEY"),
 		"TTS Application Access Key (with 'devices' permissions)")
 
-	flags.StringVar(&config.caPath,
+	shared.StringVar(&config.caPath,
 		"ca-file",
 		os.Getenv("TTNV3_CA_FILE"),
 		"TTS Path to a CA file (optional)")
-	flags.BoolVar(&config.insecure,
+	shared.BoolVar(&config.insecure,
 		"insecure",
 		false,
 		"TTS allow TCP connection")
 
-	flags.StringVar(&config.ServerConfig.defaultGRPCAddress,
+	shared.StringVar(&config.ServerConfig.defaultGRPCAddress,
 		"default-grpc-address",
 		os.Getenv("TTNV3_DEFAULT_GRPC_ADDRESS"),
 		"TTS default GRPC Address (optional)")
-	flags.StringVar(&config.ServerConfig.ApplicationServerGRPCAddress,
+	shared.StringVar(&config.ServerConfig.ApplicationServerGRPCAddress,
 		"appplication-server-grpc-address",
 		os.Getenv("TTNV3_APPLICATION_SERVER_GRPC_ADDRESS"),
 		"TTS Application Server GRPC Address")
-	flags.StringVar(&config.ServerConfig.IdentityServerGRPCAddress,
+	shared.StringVar(&config.ServerConfig.IdentityServerGRPCAddress,
 		"identity-server-grpc-address",
 		os.Getenv("TTNV3_IDENTITY_SERVER_GRPC_ADDRESS"),
 		"TTS Identity Server GRPC Address")
-	flags.StringVar(&config.ServerConfig.JoinServerGRPCAddress,
+	shared.StringVar(&config.ServerConfig.JoinServerGRPCAddress,
 		"join-server-grpc-address",
 		os.Getenv("TTNV3_JOIN_SERVER_GRPC_ADDRESS"),
 		"TTS Join Server GRPC Address")
-	flags.StringVar(&config.ServerConfig.NetworkServerGRPCAddress,
+	shared.StringVar(&config.ServerConfig.NetworkServerGRPCAddress,
 		"network-server-grpc-address",
 		os.Getenv("TTNV3_NETWORK_SERVER_GRPC_ADDRESS"),
 		"TTS Network Server GRPC Address")
 
-	flags.BoolVar(&config.NoSession,
+	shared.BoolVar(&config.NoSession,
 		"no-session",
 		false,
 		"TTS export devices without session")
-	flags.BoolVar(&config.DeleteSourceDevice,
+	shared.BoolVar(&config.DeleteSourceDevice,
 		"delete-source-device",
 		false,
 		"TTS delete exported devices")
 
-	return config, flags
+	return config, source.FlagSets{
+		Devices: devices,
+		Shared:  shared,
+	}
 }
 
 type Config struct {

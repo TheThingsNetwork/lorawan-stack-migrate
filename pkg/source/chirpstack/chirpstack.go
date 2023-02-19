@@ -25,7 +25,7 @@ func init() {
 	source.RegisterSource(source.Registration{
 		Name:        "chirpstack",
 		Description: "Migrate from ChirpStack LoRaWAN Network Server",
-		FlagSet:     flags,
+		Flags:       flags,
 		Create:      createNewSource(*cfg),
 	})
 }

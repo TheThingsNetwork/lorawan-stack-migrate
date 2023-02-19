@@ -51,10 +51,14 @@ type Registration struct {
 	Name,
 	Description string
 
+	Flags FlagSets
+
 	Create CreateSource
-	FlagSet,
-	ApplicationFlagSet,
-	DevicesFlagSet *pflag.FlagSet
+}
+
+type FlagSets struct {
+	Application, Devices,
+	Shared *pflag.FlagSet
 }
 
 var (
@@ -116,7 +120,7 @@ func FlagSet() *pflag.FlagSet {
 		for _, r := range registeredSources {
 			fs := &pflag.FlagSet{}
 			// Append source names to flag names to prevent duplicate names
-			r.FlagSet.VisitAll(func(f *pflag.Flag) {
+			r.Flags.Shared.VisitAll(func(f *pflag.Flag) {
 				f.Name = addPrefix(f.Name, strings.ToLower(r.Name))
 				fs.AddFlag(f)
 			})
@@ -131,7 +135,7 @@ func FlagSet() *pflag.FlagSet {
 
 	default:
 		r := registeredSources[activeSource]
-		flags.AddFlagSet(r.FlagSet)
+		flags.AddFlagSet(r.Flags.Shared)
 	}
 
 	return flags
@@ -145,12 +149,12 @@ func ApplicationFlagSet() *pflag.FlagSet {
 	switch activeSource {
 	case "":
 		for _, r := range registeredSources {
-			if r.ApplicationFlagSet == nil {
+			if r.Flags.Application == nil {
 				continue
 			}
 			fs := &pflag.FlagSet{}
 			// Append source names to flag names to prevent duplicate names
-			r.ApplicationFlagSet.VisitAll(func(f *pflag.Flag) {
+			r.Flags.Application.VisitAll(func(f *pflag.Flag) {
 				f.Name = addPrefix(f.Name, strings.ToLower(r.Name))
 				fs.AddFlag(f)
 			})
@@ -159,7 +163,7 @@ func ApplicationFlagSet() *pflag.FlagSet {
 
 	default:
 		r := registeredSources[activeSource]
-		flags.AddFlagSet(r.ApplicationFlagSet)
+		flags.AddFlagSet(r.Flags.Application)
 	}
 
 	return flags
@@ -173,12 +177,12 @@ func DevicesFlagSet() *pflag.FlagSet {
 	switch activeSource {
 	case "":
 		for _, r := range registeredSources {
-			if r.DevicesFlagSet == nil {
+			if r.Flags.Devices == nil {
 				continue
 			}
 			fs := &pflag.FlagSet{}
 			// Append source names to flag names to prevent duplicate names
-			r.DevicesFlagSet.VisitAll(func(f *pflag.Flag) {
+			r.Flags.Devices.VisitAll(func(f *pflag.Flag) {
 				f.Name = addPrefix(f.Name, strings.ToLower(r.Name))
 				fs.AddFlag(f)
 			})
@@ -187,7 +191,7 @@ func DevicesFlagSet() *pflag.FlagSet {
 
 	default:
 		r := registeredSources[activeSource]
-		flags.AddFlagSet(r.DevicesFlagSet)
+		flags.AddFlagSet(r.Flags.Devices)
 	}
 
 	return flags

@@ -28,46 +28,48 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
-func New() (*Config, *pflag.FlagSet) {
+func New() (*Config, source.FlagSets) {
 	var (
 		config = &Config{}
-		flags  = &pflag.FlagSet{}
+		shared = &pflag.FlagSet{}
 	)
 
-	flags.StringVar(&config.url,
+	shared.StringVar(&config.url,
 		"api-url",
 		os.Getenv("CHIRPSTACK_API_URL"),
 		"ChirpStack API URL")
-	flags.StringVar(&config.token,
+	shared.StringVar(&config.token,
 		"api-token",
 		os.Getenv("CHIRPSTACK_API_TOKEN"),
 		"ChirpStack API Token")
-	flags.StringVar(&config.caPath,
+	shared.StringVar(&config.caPath,
 		"api-ca",
 		os.Getenv("CHIRPSTACK_API_CA"),
 		"(optional) CA for TLS")
-	flags.BoolVar(&config.insecure,
+	shared.BoolVar(&config.insecure,
 		"api-insecure",
 		os.Getenv("CHIRPSTACK_API_INSECURE") == "1",
 		"Do not connect to ChirpStack over TLS")
-	flags.BoolVar(&config.ExportVars,
+	shared.BoolVar(&config.ExportVars,
 		"export-vars",
 		false,
 		"Export device variables from ChirpStack")
-	flags.BoolVar(&config.ExportSession,
+	shared.BoolVar(&config.ExportSession,
 		"export-session",
 		true,
 		"Export device session keys from ChirpStack")
-	flags.StringVar(&config.joinEUI,
+	shared.StringVar(&config.joinEUI,
 		"join-eui",
 		os.Getenv("JOIN_EUI"),
 		"JoinEUI of exported devices")
-	flags.StringVar(&config.FrequencyPlanID,
+	shared.StringVar(&config.FrequencyPlanID,
 		"frequency-plan-id",
 		os.Getenv("FREQUENCY_PLAN_ID"),
 		"Frequency Plan ID of exported devices")
 
-	return config, flags
+	return config, source.FlagSets{
+		Shared: shared,
+	}
 }
 
 type Config struct {

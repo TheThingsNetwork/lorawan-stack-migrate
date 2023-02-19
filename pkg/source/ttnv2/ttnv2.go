@@ -22,7 +22,7 @@ func init() {
 	source.RegisterSource(source.Registration{
 		Name:        "ttnv2",
 		Description: "Migrate from The Things Network Stack V2",
-		FlagSet:     flags,
+		Flags:       flags,
 		Create:      createNewSource(*cfg),
 	})
 }

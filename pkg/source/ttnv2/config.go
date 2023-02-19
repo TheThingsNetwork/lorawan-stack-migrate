@@ -35,62 +35,67 @@ const (
 	clientName = "ttn-lw-migrate"
 )
 
-func New() (*Config, *pflag.FlagSet) {
+func New() (*Config, source.FlagSets) {
 	var (
-		config = &Config{sdkConfig: ttnsdk.NewCommunityConfig(clientName)}
-		flags  = &pflag.FlagSet{}
+		config  = &Config{sdkConfig: ttnsdk.NewCommunityConfig(clientName)}
+		devices = &pflag.FlagSet{}
+		shared  = &pflag.FlagSet{}
 	)
 
-	flags.StringVar(&config.frequencyPlanID,
-		"frequency-plan-id",
-		os.Getenv("FREQUENCY_PLAN_ID"),
-		"Frequency Plan ID of exported devices")
-	flags.StringVar(&config.appID,
+	devices.StringVar(&config.appID,
 		"app-id",
 		os.Getenv("TTNV2_APP_ID"),
 		"TTN Application ID")
-	flags.StringVar(&config.appAccessKey,
+
+	shared.StringVar(&config.frequencyPlanID,
+		"frequency-plan-id",
+		os.Getenv("FREQUENCY_PLAN_ID"),
+		"Frequency Plan ID of exported devices")
+	shared.StringVar(&config.appAccessKey,
 		"app-access-key",
 		os.Getenv("TTNV2_APP_ACCESS_KEY"),
 		"TTN Application Access Key (with 'devices' permissions")
-	flags.StringVar(&config.caCert,
+	shared.StringVar(&config.caCert,
 		"ca-cert",
 		os.Getenv("TTNV2_CA_CERT"),
 		"(only for private networks)")
-	flags.StringVar(&config.sdkConfig.HandlerAddress,
+	shared.StringVar(&config.sdkConfig.HandlerAddress,
 		"handler-address",
 		os.Getenv("TTNV2_HANDLER_ADDRESS"),
 		"(only for private networks) Address for the Handler")
-	flags.StringVar(&config.sdkConfig.AccountServerAddress,
+	shared.StringVar(&config.sdkConfig.AccountServerAddress,
 		"account-server-address",
 		os.Getenv("TTNV2_ACCOUNT_SERVER_ADDRESS"),
 		"(only for private networks) Address for the Account Server")
-	flags.StringVar(&config.sdkConfig.AccountServerClientID,
+	shared.StringVar(&config.sdkConfig.AccountServerClientID,
 		"account-server-client-id",
 		os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_ID"),
 		"(only for private networks) Client ID for the Account Server")
-	flags.StringVar(&config.sdkConfig.AccountServerClientSecret,
+	shared.StringVar(&config.sdkConfig.AccountServerClientSecret,
 		"account-server-client-secret",
 		os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_SECRET"),
 		"(only for private networks) Client secret for the Account Server")
-	flags.StringVar(&config.sdkConfig.DiscoveryServerAddress,
+	shared.StringVar(&config.sdkConfig.DiscoveryServerAddress,
 		"discovery-server-address",
 		os.Getenv("TTNV2_DISCOVERY_SERVER_ADDRESS"),
 		"(only for private networks) Address for the Discovery Server")
-	flags.BoolVar(&config.sdkConfig.DiscoveryServerInsecure,
+	shared.BoolVar(&config.sdkConfig.DiscoveryServerInsecure,
 		"discovery-server-insecure",
 		false,
 		"(only for private networks) Not recommended")
-	flags.BoolVar(&config.withSession,
+	shared.BoolVar(&config.withSession,
 		"with-session",
 		true,
 		"Export device session keys and frame counters")
-	flags.BoolVar(&config.resetsToFrequencyPlan,
+	shared.BoolVar(&config.resetsToFrequencyPlan,
 		"resets-to-frequency-plan",
 		false,
 		"Configure preset frequencies for ABP devices so that they match the used Frequency Plan")
 
-	return config, flags
+	return config, source.FlagSets{
+		Devices: devices,
+		Shared:  shared,
+	}
 }
 
 type Config struct {
