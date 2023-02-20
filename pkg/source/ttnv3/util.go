@@ -59,7 +59,6 @@ func clearDeviceSession(dev *ttnpb.EndDevice) error {
 	return dev.SetFields(nil,
 		"activated_at",
 		"mac_state",
-		"last_dev_status_f_cnt_up",
 		"last_dev_status_received_at",
 		"last_seen_at",
 		"pending_mac_state",
