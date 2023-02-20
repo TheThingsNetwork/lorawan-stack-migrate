@@ -26,6 +26,6 @@ func init() {
 		Name:        "chirpstack",
 		Description: "Migrate from ChirpStack LoRaWAN Network Server",
 		Flags:       flags,
-		Create:      createNewSource(*cfg),
+		Create:      createNewSource(cfg),
 	})
 }

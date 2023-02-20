@@ -21,5 +21,7 @@ var (
 	errNoAPIURL        = errors.DefineInvalidArgument("no_api_url", "no API URL")
 	errNoFrequencyPlan = errors.DefineInvalidArgument("no_frequency_plan", "no Frequency Plan")
 
+	errRead = errors.DefinePermissionDenied("read", "failed to read `{file}`")
+
 	errInvalidJoinEUI = errors.DefineInvalidArgument("invalid_join_eui", "invalid JoinEUI `{join_eui}`")
 )

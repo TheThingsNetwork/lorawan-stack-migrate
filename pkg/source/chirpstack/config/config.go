@@ -17,6 +17,7 @@ package config
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -104,12 +105,6 @@ func (c *Config) Initialize() error {
 		return errInvalidJoinEUI.WithAttributes("join_eui", c.joinEUI)
 	}
 
-	if !c.insecure || c.caPath != "" {
-		if err := setCustomCA(c.caPath); err != nil {
-			return err
-		}
-	}
-
 	err := c.dialGRPC(
 		grpc.FailOnNonTempDialError(true),
 		grpc.WithBlock(),
@@ -122,33 +117,36 @@ func (c *Config) Initialize() error {
 	return nil
 }
 
-func (c *Config) dialGRPC(opts ...grpc.DialOption) error {
-	if c.insecure && c.caPath == "" {
+func (c *Config) dialGRPC(opts ...grpc.DialOption) (err error) {
+	switch cfg := http.DefaultTransport.(*http.Transport).TLSClientConfig; {
+
+	case c.insecure && c.caPath == "":
 		opts = append(opts, grpc.WithInsecure())
+
+	case cfg == nil:
+		cfg = new(tls.Config)
+		fallthrough
+
+	case cfg.RootCAs == nil:
+		if cfg.RootCAs, err = x509.SystemCertPool(); err != nil {
+			cfg.RootCAs = x509.NewCertPool()
+		}
+		fallthrough
+
+	default:
+		if c.caPath != "" {
+			pemBytes, err := ioutil.ReadFile(c.caPath)
+			if err != nil {
+				return errRead.WithAttributes("file", c.caPath)
+			}
+			cfg.RootCAs.AppendCertsFromPEM(pemBytes)
+		}
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(cfg)))
 	}
-	if tls := http.DefaultTransport.(*http.Transport).TLSClientConfig; tls != nil {
-		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tls)))
-	}
-	var err error
+
 	c.ClientConn, err = grpc.Dial(c.url, opts...)
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func setCustomCA(path string) error {
-	pemBytes, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	rootCAs := http.DefaultTransport.(*http.Transport).TLSClientConfig.RootCAs
-	if rootCAs == nil {
-		if rootCAs, err = x509.SystemCertPool(); err != nil {
-			rootCAs = x509.NewCertPool()
-		}
-	}
-	rootCAs.AppendCertsFromPEM(pemBytes)
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{RootCAs: rootCAs}
 	return nil
 }
