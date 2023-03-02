@@ -69,6 +69,9 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := validateDeviceIds(dev.Ids, res.Ids); err != nil {
+		return nil, err
+	}
 	paths := ttnpb.AddFields(nsPaths, ttnpb.AddFields(asPaths, ttnpb.AddFields(jsPaths, "ids.dev_addr")...)...)
 	if err := dev.SetFields(res, paths...); err != nil {
 		return nil, err
@@ -158,6 +161,9 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 			if err != nil {
 				logger.With("error", err).Warn("Could not get end device from Join Server")
 			} else {
+				if err := validateDeviceIds(res.Ids, jsRes.Ids); err != nil {
+					return nil, err
+				}
 				if err := res.SetFields(jsRes, ttnpb.AllowedReachableBottomLevelFields(jsPaths, getEndDeviceFromJS, jsRes.FieldIsZero)...); err != nil {
 					return nil, err
 				}
@@ -178,6 +184,9 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 				FieldMask:    ttnpb.FieldMask(asPaths...),
 			})
 			if err != nil {
+				return nil, err
+			}
+			if err := validateDeviceIds(res.Ids, asRes.Ids); err != nil {
 				return nil, err
 			}
 			if err := res.SetFields(asRes, ttnpb.AllowedReachableBottomLevelFields(asPaths, getEndDeviceFromAS, asRes.FieldIsZero)...); err != nil {
@@ -201,6 +210,9 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 				},
 			)
 			if err != nil {
+				return nil, err
+			}
+			if err := validateDeviceIds(res.Ids, nsRes.Ids); err != nil {
 				return nil, err
 			}
 			if err := res.SetFields(nsRes, ttnpb.AllowedReachableBottomLevelFields(nsPaths, getEndDeviceFromNS, nsRes.FieldIsZero)...); err != nil {

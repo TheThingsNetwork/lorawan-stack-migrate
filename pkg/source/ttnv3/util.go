@@ -1,6 +1,7 @@
 package ttnv3
 
 import (
+	"bytes"
 	"strconv"
 	"strings"
 
@@ -23,6 +24,40 @@ var (
 	}
 )
 
+func validateDeviceIds(a, b *ttnpb.EndDeviceIdentifiers) error {
+	if a == nil || b == nil {
+		return nil
+	}
+
+	type pair struct {
+		x, y []byte
+		name string
+	}
+	pairs := []pair{
+		{[]byte(a.DeviceId), []byte(b.DeviceId), "device_id"},
+		{a.DevEui, b.DevEui, "dev_eui"},
+		{a.JoinEui, b.JoinEui, "join_eui"},
+		{a.DevAddr, b.DevAddr, "dev_addr"},
+	}
+	if x, y := a.ApplicationIds, b.ApplicationIds; x != nil && y != nil {
+		pairs = append(pairs, pair{[]byte(x.ApplicationId), []byte(y.ApplicationId), "application_ids.application_id"})
+	}
+
+	isEmpty := func(s []byte) bool {
+		return len(s) == 0
+	}
+	for _, s := range pairs {
+		if isEmpty(s.x) || isEmpty(s.y) {
+			continue
+		}
+		if bytes.Equal(s.x, s.y) {
+			continue
+		}
+		return errDeviceIdentifiersMismatch.WithAttributes("field", s.name, "a", s.x, "b", s.y)
+	}
+	return nil
+}
+
 func nonImplicitPaths(paths ...string) []string {
 	nonImplicitPaths := make([]string, 0, len(paths))
 	for _, path := range paths {
@@ -38,11 +73,10 @@ func nonImplicitPaths(paths ...string) []string {
 }
 
 func splitEndDeviceGetPaths(paths ...string) (is, ns, as, js []string) {
-	nonImplicitPaths := nonImplicitPaths(paths...)
-	is = ttnpb.AllowedFields(nonImplicitPaths, getEndDeviceFromIS)
-	ns = ttnpb.AllowedFields(nonImplicitPaths, getEndDeviceFromNS)
-	as = ttnpb.AllowedFields(nonImplicitPaths, getEndDeviceFromAS)
-	js = ttnpb.AllowedFields(nonImplicitPaths, getEndDeviceFromJS)
+	is = ttnpb.AllowedFields(paths, getEndDeviceFromIS)
+	ns = ttnpb.AllowedFields(paths, getEndDeviceFromNS)
+	as = ttnpb.AllowedFields(paths, getEndDeviceFromAS)
+	js = ttnpb.AllowedFields(paths, getEndDeviceFromJS)
 	return
 }
 
