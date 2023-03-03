@@ -8,24 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Added `--ttnv3.no-session` and `--ttnv3.delete-source-device` flags
-
 ### Changed
 
 ### Fixed
 
-- `app-id` flag/variable is no longer needed when calling `application` command with `ttnv2` and `ttnv3` sources
-- `application` command no longer panics when called with a different `app-id` argument than set with flag/variable
+- Using `--ttnv3.no-session` flag will no longer crash.
+- End Device Identifiers are now exported from all available servers.
 
 ### Removed
 
 ### Security
 
-## [v0.9.0] (2022-09-13)
-
-- `ttnv3` source to migrate devices between TTS instances
+## [v0.9.0]
 
 ### Added
+
+- `ttnv3` source to migrate devices between TTS instances.
+- `--ttnv3.no-session` and `--ttnv3.delete-source-device` flags.
+
+### Fixed
+
+- `app-id` flag/variable is no longer needed when calling `application` command with `ttnv2` and `ttnv3` sources.
+- `application` command no longer panics when called with a different `app-id` argument than set with flag/variable.
 
 ## [v0.8.1] (2021-10-12)
 

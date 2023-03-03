@@ -5,6 +5,8 @@ import "go.thethings.network/lorawan-stack/v3/pkg/errors"
 var (
 	errRead = errors.DefinePermissionDenied("read", "failed to read `{file}`")
 
+	errDeviceIdentifiersMismatch = errors.Define("device_identifiers_mismatch", "device identifiers fields {field} do not match with values {a} and {b}")
+
 	errNoAppID                        = errors.DefineInvalidArgument("no_app_id", "no app id")
 	errNoAppAPIKey                    = errors.DefineInvalidArgument("no_app_api_key", "no app api key")
 	errNoIdentityServerGRPCAddress    = errors.DefineInvalidArgument("no_identity_server_grpc_address", "no identity server grpc address")
