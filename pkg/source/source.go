@@ -24,6 +24,14 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 )
 
+type Config struct {
+	DryRun, Verbose bool
+	FrequencyPlansURL,
+	Source string
+}
+
+var RootConfig Config
+
 // Source is a source for end devices.
 type Source interface {
 	// ExportDevice retrieves an end device from the source and returns it as a ttnpb.EndDevice.
@@ -35,7 +43,7 @@ type Source interface {
 }
 
 // CreateSource is a function that constructs a new Source.
-type CreateSource func(ctx context.Context, flags *pflag.FlagSet) (Source, error)
+type CreateSource func(ctx context.Context, rootCfg Config) (Source, error)
 
 // Registration contains information for a registered Source.
 type Registration struct {
@@ -64,15 +72,14 @@ func RegisterSource(r Registration) error {
 }
 
 // NewSource creates a new Source from parsed flags.
-func NewSource(ctx context.Context, flags *pflag.FlagSet) (Source, error) {
-	sourceName, _ := flags.GetString("source")
-	if sourceName == "" {
+func NewSource(ctx context.Context) (Source, error) {
+	if RootConfig.Source == "" {
 		return nil, errNoSource.New()
 	}
-	if registration, ok := registeredSources[sourceName]; ok {
-		return registration.Create(ctx, flags)
+	if registration, ok := registeredSources[RootConfig.Source]; ok {
+		return registration.Create(ctx, RootConfig)
 	}
-	return nil, errNotRegistered.WithAttributes("source", sourceName)
+	return nil, errNotRegistered.WithAttributes("source", RootConfig.Source)
 }
 
 // FlagSet returns flags for all configured sources.
@@ -96,6 +103,15 @@ func Sources() map[string]string {
 		sources[registration.Name] = registration.Description
 	}
 	return sources
+}
+
+// Names returns a slice of registered Sources names.
+func Names() []string {
+	var names []string
+	for k := range registeredSources {
+		names = append(names, k)
+	}
+	return names
 }
 
 func init() {
