@@ -82,12 +82,26 @@ func NewSource(ctx context.Context) (Source, error) {
 	return nil, errNotRegistered.WithAttributes("source", RootConfig.Source)
 }
 
+func addPrefix(name, prefix string) string {
+	if prefix == "" {
+		return name
+	}
+	// Append separator
+	prefix += "."
+	// Remove prefix if already present
+	name = strings.TrimPrefix(name, prefix)
+	return prefix + name
+}
+
 // FlagSet returns flags for all configured sources.
 func FlagSet() *pflag.FlagSet {
 	flags := &pflag.FlagSet{}
 	names := []string{}
 	for _, r := range registeredSources {
 		if r.FlagSet != nil {
+			r.FlagSet.VisitAll(func(f *pflag.Flag) {
+				f.Name = addPrefix(f.Name, r.Name)
+			})
 			flags.AddFlagSet(r.FlagSet)
 			names = append(names, r.Name)
 		}
