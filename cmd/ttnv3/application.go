@@ -12,30 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package ttnv3
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/spf13/cobra"
+	root "go.thethings.network/lorawan-stack-migrate/cmd"
 	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
 var applicationsCmd = &cobra.Command{
-	Use:        "application [app-id] ...",
-	Short:      "Export all devices of an application",
-	Aliases:    []string{"applications", "app"},
-	Deprecated: fmt.Sprintf("use [%s] commands instead", strings.Join(source.Names(), "|")),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return commands.Export(cmd, args, func(s source.Source, item string) error {
-			return s.RangeDevices(item, ExportCfg.ExportDev)
+	Use:     "application [app-id] ...",
+	Aliases: []string{"applications", "app"},
+	Short:   "Export all devices of an application",
+	Run: func(cmd *cobra.Command, args []string) {
+		commands.Export(cmd, args, func(s source.Source, item string) error {
+			return s.RangeDevices(item, root.ExportCfg.ExportDev)
 		})
 	},
 }
 
 func init() {
-	applicationsCmd.Flags().AddFlagSet(source.AllFlagSets())
-	RootCmd.AddCommand(applicationsCmd)
+	ttnv3Cmd.AddCommand(applicationsCmd)
+
+	fs, err := source.FlagSet(sourceName)
+	if err != nil {
+		panic(err)
+	}
+	applicationsCmd.Flags().AddFlagSet(fs)
 }

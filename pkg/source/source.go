@@ -93,24 +93,38 @@ func addPrefix(name, prefix string) string {
 	return prefix + name
 }
 
-// FlagSet returns flags for all configured sources.
-func FlagSet() *pflag.FlagSet {
-	flags := &pflag.FlagSet{}
-	names := []string{}
+// AllFlagSets returns flags for all configured sources prefixed with source names.
+func AllFlagSets() *pflag.FlagSet {
+	fs := new(pflag.FlagSet)
 	for _, r := range registeredSources {
-		if r.FlagSet != nil {
-			r.FlagSet.VisitAll(func(f *pflag.Flag) {
-				f.Name = addPrefix(f.Name, r.Name)
-			})
-			flags.AddFlagSet(r.FlagSet)
-			names = append(names, r.Name)
+		if r.FlagSet == nil {
+			continue
 		}
+		r.FlagSet.VisitAll(func(a *pflag.Flag) {
+			b := *a // Avoid modifying source flags
+			b.Name = addPrefix(b.Name, r.Name)
+			b.Annotations = make(map[string][]string)
+			for k, v := range a.Annotations {
+				b.Annotations[k] = v
+			}
+			fs.AddFlag(&b)
+		})
 	}
-	flags.StringVar(&RootConfig.Source,
+	fs.StringVar(&RootConfig.Source,
 		"source",
 		"",
-		fmt.Sprintf("source (%s)", strings.Join(Names(), "|")))
-	return flags
+		fmt.Sprintf("source (%s)", strings.Join(Names(), "|")),
+	)
+	return fs
+}
+
+// FlagSet returns a flag set for a given source.
+func FlagSet(s string) (*pflag.FlagSet, error) {
+	src, ok := registeredSources[s]
+	if !ok {
+		return nil, errNotRegistered.WithAttributes("source", s)
+	}
+	return src.FlagSet, nil
 }
 
 // Sources returns a map of registered Sources and their descriptions.

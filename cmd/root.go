@@ -29,7 +29,7 @@ var (
 	ctx       context.Context
 	rootCfg   = &source.RootConfig
 	ExportCfg = ExportConfig{}
-	rootCmd   = &cobra.Command{
+	RootCmd   = &cobra.Command{
 		Use:   "ttn-lw-migrate",
 		Short: "Migrate from other LoRaWAN network servers to The Things Stack",
 
@@ -60,7 +60,7 @@ var (
 
 // Execute runs the root command and returns the exit code.
 func Execute() int {
-	if err := rootCmd.Execute(); err != nil {
+	if err := RootCmd.Execute(); err != nil {
 		printStack(os.Stderr, err)
 		return 1
 	}
@@ -68,15 +68,15 @@ func Execute() int {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVar(&rootCfg.DryRun,
+	RootCmd.PersistentFlags().BoolVar(&rootCfg.DryRun,
 		"dry-run",
 		false,
 		"Do everything except resetting root and session keys of exported devices")
-	rootCmd.PersistentFlags().BoolVar(&rootCfg.Verbose,
+	RootCmd.PersistentFlags().BoolVar(&rootCfg.Verbose,
 		"verbose",
 		false,
 		"Verbose output")
-	rootCmd.PersistentFlags().StringVar(&rootCfg.FrequencyPlansURL,
+	RootCmd.PersistentFlags().StringVar(&rootCfg.FrequencyPlansURL,
 		"frequency-plans-url",
 		"https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master",
 		"URL for fetching frequency plans")

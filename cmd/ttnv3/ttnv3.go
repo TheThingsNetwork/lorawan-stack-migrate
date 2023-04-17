@@ -12,28 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package ttnv3
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/spf13/cobra"
-	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack-migrate/cmd"
 )
 
-var devicesCmd = &cobra.Command{
-	Use:        "device [dev-id] ...",
-	Short:      "Export devices by DevEUI",
-	Aliases:    []string{"end-devices", "end-device", "devices", "dev"},
-	Deprecated: fmt.Sprintf("use [%s] commands instead", strings.Join(source.Names(), "|")),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return commands.Export(cmd, args, ExportCfg.ExportDev)
-	},
+const sourceName = "ttnv3"
+
+// ttnv3Cmd represents the ttnv3 source.
+var ttnv3Cmd = &cobra.Command{
+	Use:          sourceName + " ...",
+	Short:        "Export devices from The Things Stack",
+	SilenceUsage: true,
 }
 
 func init() {
-	devicesCmd.Flags().AddFlagSet(source.AllFlagSets())
-	RootCmd.AddCommand(devicesCmd)
+	cmd.RootCmd.AddCommand(ttnv3Cmd)
 }

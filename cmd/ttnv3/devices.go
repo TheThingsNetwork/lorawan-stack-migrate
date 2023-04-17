@@ -12,38 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package ttnv3
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/spf13/cobra"
-	"go.thethings.network/lorawan-stack-migrate/pkg/version"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
-func printVar(k, v string) {
-	fmt.Printf("%-20s %s\n", k+":", v)
-}
-
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print version information",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Printf("%s: %s\n", cmd.Root().Short, cmd.Root().Name())
-		printVar("Version", version.Version)
-		if version.BuildDate != "" {
-			printVar("Build date", version.BuildDate)
-		}
-		if version.GitCommit != "" {
-			printVar("Git commit", version.GitCommit)
-		}
-		printVar("Go version", runtime.Version())
-		printVar("OS/Arch", runtime.GOOS+"/"+runtime.GOARCH)
-		return nil
+var devicesCmd = &cobra.Command{
+	Use:     "device [dev-id] ...",
+	Short:   "Export devices by DevEUI",
+	Aliases: []string{"end-devices", "end-device", "devices", "dev"},
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("%s called\n", cmd.Name())
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(versionCmd)
+	ttnv3Cmd.AddCommand(devicesCmd)
+
+	fs, err := source.FlagSet(sourceName)
+	if err != nil {
+		panic(err)
+	}
+	devicesCmd.Flags().AddFlagSet(fs)
 }
