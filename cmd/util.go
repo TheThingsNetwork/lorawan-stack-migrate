@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -45,23 +44,23 @@ var (
 	sanitizeID = strings.NewReplacer("_", "-")
 )
 
-type exportConfig struct {
-	euiForID    bool
-	devIDPrefix string
+type ExportConfig struct {
+	EUIForID    bool
+	DevIDPrefix string
 }
 
-func (cfg exportConfig) exportDev(s source.Source, devID string) error {
+func (cfg ExportConfig) ExportDev(s source.Source, devID string) error {
 	dev, err := s.ExportDevice(devID)
 	if err != nil {
 		return errExport.WithAttributes("device_id", devID).WithCause(err)
 	}
 	oldID := dev.Ids.DeviceId
 
-	if eui := dev.Ids.DevEui; cfg.euiForID && eui != nil {
+	if eui := dev.Ids.DevEui; cfg.EUIForID && eui != nil {
 		dev.Ids.DeviceId = strings.ToLower(string(eui))
 	}
-	if cfg.devIDPrefix != "" {
-		dev.Ids.DeviceId = fmt.Sprintf("%s-%s", cfg.devIDPrefix, dev.Ids.DeviceId)
+	if cfg.DevIDPrefix != "" {
+		dev.Ids.DeviceId = fmt.Sprintf("%s-%s", cfg.DevIDPrefix, dev.Ids.DeviceId)
 	}
 
 	dev.Ids.DeviceId = sanitizeID.Replace(dev.Ids.DeviceId)
@@ -96,48 +95,6 @@ func (cfg exportConfig) exportDev(s source.Source, devID string) error {
 	}
 	_, err = fmt.Fprintln(os.Stdout, string(b))
 	return err
-}
-
-// Iterator returns items
-type Iterator interface {
-	// Next returns the next item from the iterator. io.EOF is returned when no more items are left.
-	Next() (item string, err error)
-}
-
-type listIterator struct {
-	items []string
-	index int
-}
-
-type readerIterator struct {
-	rd  *bufio.Reader
-	sep byte
-}
-
-// NewListIterator returns a new iterator from a list of items.
-func NewListIterator(items []string) Iterator {
-	return &listIterator{items: items}
-}
-
-func (l *listIterator) Next() (string, error) {
-	if l.index < len(l.items) {
-		l.index++
-		return l.items[l.index-1], nil
-	}
-	return "", io.EOF
-}
-
-// NewReaderIterator returns a new iterator from a reader.
-func NewReaderIterator(rd io.Reader, sep byte) Iterator {
-	return &readerIterator{rd: bufio.NewReader(rd), sep: sep}
-}
-
-func (r *readerIterator) Next() (string, error) {
-	s, err := r.rd.ReadString(r.sep)
-	if err == io.EOF && s != "" {
-		return s, nil
-	}
-	return strings.TrimSpace(s), err
 }
 
 // printStack prints the error stack to w.

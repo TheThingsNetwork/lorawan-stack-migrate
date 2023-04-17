@@ -1,4 +1,4 @@
-package cmd_test
+package commands_test
 
 import (
 	"bytes"
@@ -8,11 +8,11 @@ import (
 
 	"github.com/smartystreets/assertions"
 	"github.com/smartystreets/assertions/should"
-	"go.thethings.network/lorawan-stack-migrate/cmd"
+	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
 )
 
 func TestListIterator(t *testing.T) {
-	it := cmd.NewListIterator([]string{"one", "two", "three"})
+	it := commands.NewListIterator([]string{"one", "two", "three"})
 	a := assertions.New(t)
 
 	s, err := it.Next()
@@ -36,7 +36,7 @@ func TestListIterator(t *testing.T) {
 func TestReaderIterator(t *testing.T) {
 	for _, sep := range []string{"\n", "\r\n"} {
 		buf := []byte(strings.Join([]string{"one", "two", "three"}, sep))
-		it := cmd.NewReaderIterator(bytes.NewBuffer(buf), '\n')
+		it := commands.NewReaderIterator(bytes.NewBuffer(buf), '\n')
 		a := assertions.New(t)
 
 		s, err := it.Next()

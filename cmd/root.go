@@ -28,7 +28,7 @@ var (
 	logger    *log.Logger
 	ctx       context.Context
 	rootCfg   = &source.RootConfig
-	exportCfg = exportConfig{}
+	ExportCfg = ExportConfig{}
 	rootCmd   = &cobra.Command{
 		Use:   "ttn-lw-migrate",
 		Short: "Migrate from other LoRaWAN network servers to The Things Stack",
@@ -49,8 +49,8 @@ var (
 			)
 			ctx = log.NewContext(context.Background(), logger)
 
-			exportCfg.devIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
-			exportCfg.euiForID, _ = cmd.Flags().GetBool("set-eui-as-id")
+			ExportCfg.DevIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
+			ExportCfg.EUIForID, _ = cmd.Flags().GetBool("set-eui-as-id")
 
 			rpclog.ReplaceGrpcLogger(logger)
 			return nil

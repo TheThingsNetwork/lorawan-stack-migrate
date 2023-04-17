@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
@@ -28,7 +29,7 @@ var devicesCmd = &cobra.Command{
 	Aliases:    []string{"end-devices", "end-device", "devices", "dev"},
 	Deprecated: fmt.Sprintf("use [%s] commands instead", strings.Join(source.Names(), "|")),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return exportCommand(cmd, args, exportCfg.exportDev)
+		return commands.Export(cmd, args, ExportCfg.ExportDev)
 	},
 }
 

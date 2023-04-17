@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package commands
 
 import (
 	"io"
@@ -20,9 +20,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack/v3/pkg/log"
 )
 
-func exportCommand(cmd *cobra.Command, args []string, f func(s source.Source, item string) error) error {
+func Export(cmd *cobra.Command, args []string, f func(s source.Source, item string) error) error {
 	var iter Iterator
 	switch len(args) {
 	case 0:
@@ -31,13 +32,13 @@ func exportCommand(cmd *cobra.Command, args []string, f func(s source.Source, it
 		iter = NewListIterator(args)
 	}
 
-	s, err := source.NewSource(ctx)
+	s, err := source.NewSource(cmd.Context())
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err := s.Close(); err != nil {
-			logger.WithError(err).Fatal("Failed to clean up")
+			log.FromContext(cmd.Context()).WithError(err).Fatal("Failed to clean up")
 		}
 	}()
 
