@@ -15,14 +15,18 @@
 package cmd
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
 var applicationsCmd = &cobra.Command{
-	Use:     "application [app-id] ...",
-	Aliases: []string{"applications", "app"},
-	Short:   "Export all devices of an application",
+	Use:        "application [app-id] ...",
+	Short:      "Export all devices of an application",
+	Aliases:    []string{"applications", "app"},
+	Deprecated: fmt.Sprintf("use [%s] commands instead", strings.Join(source.Names(), "|")),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return exportCommand(cmd, args, func(s source.Source, item string) error {
 			return s.RangeDevices(item, exportCfg.exportDev)
