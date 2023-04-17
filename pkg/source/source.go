@@ -106,7 +106,10 @@ func FlagSet() *pflag.FlagSet {
 			names = append(names, r.Name)
 		}
 	}
-	flags.String("source", "", fmt.Sprintf("source (%s)", strings.Join(names, "|")))
+	flags.StringVar(&RootConfig.Source,
+		"source",
+		"",
+		fmt.Sprintf("source (%s)", strings.Join(Names(), "|")))
 	return flags
 }
 

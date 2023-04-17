@@ -16,9 +16,7 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
@@ -82,8 +80,4 @@ func init() {
 		"frequency-plans-url",
 		"https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master",
 		"URL for fetching frequency plans")
-	rootCmd.PersistentFlags().StringVar(&rootCfg.Source,
-		"source",
-		"",
-		fmt.Sprintf("source (%s)", strings.Join(source.Names(), "|")))
 }
