@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,13 +14,18 @@
 
 package chirpstack
 
-import "go.thethings.network/lorawan-stack-migrate/pkg/source"
+import (
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack/config"
+)
 
 func init() {
+	cfg, flags := config.New()
+
 	source.RegisterSource(source.Registration{
 		Name:        "chirpstack",
 		Description: "Migrate from ChirpStack LoRaWAN Network Server",
-		FlagSet:     flagSet(),
-		Create:      NewSource,
+		FlagSet:     flags,
+		Create:      createNewSource(cfg),
 	})
 }

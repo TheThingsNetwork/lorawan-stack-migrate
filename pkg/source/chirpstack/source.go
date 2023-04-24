@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,13 +23,12 @@ import (
 
 	csapi "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	pbtypes "github.com/gogo/protobuf/types"
-	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack/config"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -47,47 +46,34 @@ function Decoder(bytes, fport) {
 
 // Source implements the Source interface.
 type Source struct {
-	config
+	*config.Config
 
-	cc *grpc.ClientConn
+	ctx        context.Context
+	ClientConn *grpc.ClientConn
 
 	applications map[int64]*csapi.Application
 	devProfiles  map[string]*csapi.DeviceProfile
 	svcProfiles  map[string]*csapi.ServiceProfile
 }
 
-// NewSource creates a new ChirpStack Source.
-func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error) {
-	p := &Source{}
+func createNewSource(cfg *config.Config) source.CreateSource {
+	return func(ctx context.Context, _ source.Config) (source.Source, error) {
+		s := &Source{
+			ctx:    ctx,
+			Config: cfg,
+		}
 
-	var err error
-	p.config, err = buildConfig(ctx, flags)
-	if err != nil {
-		return nil, err
-	}
+		if err := cfg.Initialize(); err != nil {
+			return nil, err
+		}
+		log.FromContext(s.ctx).WithFields(s.LogFields()).Info("Initialized ChirpStack source")
 
-	dialOpts := []grpc.DialOption{
-		grpc.FailOnNonTempDialError(true),
-		grpc.WithBlock(),
-		grpc.WithPerRPCCredentials(token(p.token)),
-	}
-	if p.insecure && p.ca == "" {
-		dialOpts = append(dialOpts, grpc.WithInsecure())
-	}
-	if p.tls != nil {
-		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(p.tls)))
-	}
-	p.cc, err = grpc.Dial(p.url, dialOpts...)
-	if err != nil {
-		return nil, err
-	}
+		s.applications = make(map[int64]*csapi.Application)
+		s.devProfiles = make(map[string]*csapi.DeviceProfile)
+		s.svcProfiles = make(map[string]*csapi.ServiceProfile)
 
-	log.FromContext(p.ctx).WithFields(p.logFields()).Info("Initialized ChirpStack source")
-
-	p.applications = make(map[int64]*csapi.Application)
-	p.devProfiles = make(map[string]*csapi.DeviceProfile)
-	p.svcProfiles = make(map[string]*csapi.ServiceProfile)
-	return p, nil
+		return s, nil
+	}
 }
 
 // RangeDevices implements the Source interface.
@@ -96,7 +82,7 @@ func (p *Source) RangeDevices(id string, f func(source.Source, string) error) er
 	if err != nil {
 		return err
 	}
-	client := csapi.NewDeviceServiceClient(p.cc)
+	client := csapi.NewDeviceServiceClient(p.ClientConn)
 	offset := int64(0)
 	for {
 		devices, err := client.List(p.ctx, &csapi.ListDeviceRequest{
@@ -152,7 +138,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if err != nil {
 		return nil, errInvalidDevEUI.WithAttributes("dev_eui", devEui).WithCause(err)
 	}
-	dev.Ids.JoinEui = p.joinEUI.Bytes()
+	dev.Ids.JoinEui = p.JoinEUI.Bytes()
 	dev.Ids.ApplicationIds.ApplicationId = fmt.Sprintf("chirpstack-%d", csdev.ApplicationId)
 	dev.Ids.DeviceId = "eui-" + strings.ToLower(devEui)
 
@@ -166,7 +152,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	for key, value := range csdev.Tags {
 		dev.Attributes[key] = value
 	}
-	if p.exportVars {
+	if p.ExportVars {
 		for key, value := range csdev.Variables {
 			dev.Attributes["var-"+key] = value
 		}
@@ -181,7 +167,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	}
 
 	// Frequency Plan
-	dev.FrequencyPlanId = p.frequencyPlanID
+	dev.FrequencyPlanId = p.FrequencyPlanID
 
 	// General
 	switch devProfile.MacVersion {
@@ -326,7 +312,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	}
 
 	// Session
-	if p.exportSession {
+	if p.ExportSession {
 		activation, err := p.getActivation(devEui)
 		if err == nil {
 			dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{}, StartedAt: pbtypes.TimestampNow()}
@@ -380,5 +366,5 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 
 // Close implements the Source interface.
 func (p *Source) Close() error {
-	return p.cc.Close()
+	return p.ClientConn.Close()
 }

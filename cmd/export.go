@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ func exportCommand(cmd *cobra.Command, args []string, f func(s source.Source, it
 		iter = NewListIterator(args)
 	}
 
-	s, err := source.NewSource(ctx, cmd.Flags())
+	s, err := source.NewSource(ctx)
 	if err != nil {
 		return err
 	}

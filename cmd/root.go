@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/rpcmiddleware/rpclog"
 )
@@ -26,6 +27,7 @@ import (
 var (
 	logger    *log.Logger
 	ctx       context.Context
+	rootCfg   = &source.RootConfig
 	exportCfg = exportConfig{}
 	rootCmd   = &cobra.Command{
 		Use:   "ttn-lw-migrate",
@@ -66,9 +68,16 @@ func Execute() int {
 }
 
 func init() {
-	rootCmd.PersistentFlags().Bool("verbose", false, "Verbose output")
-	rootCmd.PersistentFlags().Bool("dry-run", false, "Do everything except resetting root and session keys of exported devices")
-	rootCmd.PersistentFlags().String("frequency-plans-url", "https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master", "URL for fetching frequency plans")
-	rootCmd.PersistentFlags().Bool("set-eui-as-id", false, "Use the DevEUI as ID")
-	rootCmd.PersistentFlags().String("dev-id-prefix", "", "(optional) value to be prefixed to the resulting device IDs")
+	rootCmd.PersistentFlags().BoolVar(&rootCfg.DryRun,
+		"dry-run",
+		false,
+		"Do everything except resetting root and session keys of exported devices")
+	rootCmd.PersistentFlags().BoolVar(&rootCfg.Verbose,
+		"verbose",
+		false,
+		"Verbose output")
+	rootCmd.PersistentFlags().StringVar(&rootCfg.FrequencyPlansURL,
+		"frequency-plans-url",
+		"https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master",
+		"URL for fetching frequency plans")
 }

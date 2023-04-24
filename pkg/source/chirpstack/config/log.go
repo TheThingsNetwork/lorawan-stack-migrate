@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package chirpstack
+package config
 
 import "go.thethings.network/lorawan-stack/v3/pkg/log"
 
-func (p *Source) logFields() log.Fielder {
+func (c *Config) LogFields() log.Fielder {
 	return log.Fields(
-		"export_vars", p.exportVars,
-		"export_session", p.exportSession,
-		"insecure", p.insecure,
-		"url", p.url,
+		"export_vars", c.ExportVars,
+		"export_session", c.ExportSession,
+		"insecure", c.insecure,
+		"url", c.url,
 	)
 }

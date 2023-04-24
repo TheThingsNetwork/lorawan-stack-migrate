@@ -1,38 +1,50 @@
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package ttnv3
 
 import (
 	"context"
 
-	"github.com/spf13/pflag"
-	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
-
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv3/api"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv3/config"
+	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
+	"go.uber.org/zap"
 )
+
+var logger *zap.SugaredLogger
 
 // Source implements the Source interface.
 type Source struct {
 	ctx context.Context
 
-	config *config
+	config *config.Config
 }
 
-// NewSource creates a new TTNv3 cource
-func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error) {
-	config, err := getConfig(flags)
-	if err != nil {
-		return Source{}, err
+func createNewSource(cfg *config.Config) source.CreateSource {
+	return func(ctx context.Context, rootCfg source.Config) (source.Source, error) {
+		return Source{
+			ctx:    ctx,
+			config: cfg,
+		}, cfg.Initialize(rootCfg)
 	}
-	s := Source{
-		ctx:    ctx,
-		config: config,
-	}
-	return s, nil
 }
 
 // ExportDevice implements the source.Source interface.
 func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
-	if s.config.appID == "" {
+	if s.config.AppID == "" {
 		return nil, errNoAppID.New()
 	}
 
@@ -46,12 +58,12 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if len(jsPaths) > 0 {
 		isPaths = ttnpb.AddFields(isPaths, "join_server_address")
 	}
-	is, err := api.Dial(s.ctx, s.config.identityServerGRPCAddress)
+	is, err := api.Dial(s.ctx, s.config.ServerConfig.IdentityServerGRPCAddress)
 	if err != nil {
 		return nil, err
 	}
 	ids := &ttnpb.EndDeviceIdentifiers{
-		ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: s.config.appID},
+		ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: s.config.AppID},
 		DeviceId:       devID,
 	}
 	dev, err := ttnpb.NewEndDeviceRegistryClient(is).Get(s.ctx, &ttnpb.GetEndDeviceRequest{
@@ -81,17 +93,17 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		return nil, err
 	}
 
-	if s.config.noSession {
+	if s.config.NoSession {
 		if err := clearDeviceSession(dev); err != nil {
 			return nil, err
 		}
 	}
 	switch {
-	case s.config.deleteSourceDevice:
+	case s.config.DeleteSourceDevice:
 		if err := s.deleteEndDevice(dev.GetIds()); err != nil {
 			return nil, err
 		}
-	case !s.config.dryRun:
+	case !s.config.DryRun:
 		d := &ttnpb.EndDevice{
 			Ids:         dev.GetIds(),
 			MacSettings: &ttnpb.MACSettings{ScheduleDownlinks: &ttnpb.BoolValue{Value: false}},
@@ -108,9 +120,9 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 
 // RangeDevices implements the source.Source interface.
 func (s Source) RangeDevices(appID string, f func(source.Source, string) error) error {
-	s.config.appID = appID
+	s.config.AppID = appID
 
-	is, err := api.Dial(s.ctx, s.config.identityServerGRPCAddress)
+	is, err := api.Dial(s.ctx, s.config.ServerConfig.IdentityServerGRPCAddress)
 	if err != nil {
 		return err
 	}
@@ -147,10 +159,10 @@ func (s Source) Close() error {
 func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, jsPaths []string) (*ttnpb.EndDevice, error) {
 	res := &ttnpb.EndDevice{}
 	if len(jsPaths) > 0 {
-		if s.config.joinServerGRPCAddress == "" {
+		if s.config.ServerConfig.JoinServerGRPCAddress == "" {
 			logger.With("paths", jsPaths).Warn("Join Server disabled but fields specified to get")
 		} else {
-			js, err := api.Dial(s.ctx, s.config.joinServerGRPCAddress)
+			js, err := api.Dial(s.ctx, s.config.ServerConfig.JoinServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -172,10 +184,10 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 		}
 	}
 	if len(asPaths) > 0 {
-		if s.config.applicationServerGRPCAddress == "" {
+		if s.config.ServerConfig.ApplicationServerGRPCAddress == "" {
 			logger.With("paths", asPaths).Warn("Application Server disabled but fields specified to get")
 		} else {
-			as, err := api.Dial(s.ctx, s.config.applicationServerGRPCAddress)
+			as, err := api.Dial(s.ctx, s.config.ServerConfig.ApplicationServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -196,10 +208,10 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 		}
 	}
 	if len(nsPaths) > 0 {
-		if s.config.networkServerGRPCAddress == "" {
+		if s.config.ServerConfig.NetworkServerGRPCAddress == "" {
 			logger.With("paths", nsPaths).Warn("Network Server disabled but fields specified to get")
 		} else {
-			ns, err := api.Dial(s.ctx, s.config.networkServerGRPCAddress)
+			ns, err := api.Dial(s.ctx, s.config.ServerConfig.NetworkServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -230,7 +242,7 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 		return nil, err
 	}
 	if len(isPaths) > 0 {
-		is, err := api.Dial(s.ctx, s.config.identityServerGRPCAddress)
+		is, err := api.Dial(s.ctx, s.config.ServerConfig.IdentityServerGRPCAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -250,10 +262,10 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 		updateDeviceTimestamps(&res, isRes)
 	}
 	if len(jsPaths) > 0 {
-		if s.config.joinServerGRPCAddress == "" {
+		if s.config.ServerConfig.JoinServerGRPCAddress == "" {
 			logger.With("paths", jsPaths).Warn("Join Server disabled but fields specified to set")
 		} else {
-			js, err := api.Dial(s.ctx, s.config.joinServerGRPCAddress)
+			js, err := api.Dial(s.ctx, s.config.ServerConfig.JoinServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -276,10 +288,10 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 		}
 	}
 	if len(nsPaths) > 0 {
-		if s.config.networkServerGRPCAddress == "" {
+		if s.config.ServerConfig.NetworkServerGRPCAddress == "" {
 			logger.With("paths", nsPaths).Warn("Network Server disabled but fields specified to set")
 		} else {
-			ns, err := api.Dial(s.ctx, s.config.networkServerGRPCAddress)
+			ns, err := api.Dial(s.ctx, s.config.ServerConfig.NetworkServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -302,10 +314,10 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 		}
 	}
 	if len(asPaths) > 0 {
-		if s.config.applicationServerGRPCAddress == "" {
+		if s.config.ServerConfig.ApplicationServerGRPCAddress == "" {
 			logger.With("paths", asPaths).Warn("Application Server disabled but fields specified to set")
 		} else {
-			as, err := api.Dial(s.ctx, s.config.applicationServerGRPCAddress)
+			as, err := api.Dial(s.ctx, s.config.ServerConfig.ApplicationServerGRPCAddress)
 			if err != nil {
 				return nil, err
 			}
@@ -328,7 +340,7 @@ func (s Source) setEndDevice(device *ttnpb.EndDevice, isPaths, nsPaths, asPaths,
 }
 
 func (s Source) deleteEndDevice(ids *ttnpb.EndDeviceIdentifiers) error {
-	if address := s.config.applicationServerGRPCAddress; address != "" {
+	if address := s.config.ServerConfig.ApplicationServerGRPCAddress; address != "" {
 		as, err := api.Dial(s.ctx, address)
 		if err != nil {
 			return err
@@ -337,7 +349,7 @@ func (s Source) deleteEndDevice(ids *ttnpb.EndDeviceIdentifiers) error {
 			return err
 		}
 	}
-	if address := s.config.networkServerGRPCAddress; address != "" {
+	if address := s.config.ServerConfig.NetworkServerGRPCAddress; address != "" {
 		ns, err := api.Dial(s.ctx, address)
 		if err != nil {
 			return err
@@ -346,7 +358,7 @@ func (s Source) deleteEndDevice(ids *ttnpb.EndDeviceIdentifiers) error {
 			return err
 		}
 	}
-	if address := s.config.joinServerGRPCAddress; address != "" {
+	if address := s.config.ServerConfig.JoinServerGRPCAddress; address != "" {
 		js, err := api.Dial(s.ctx, address)
 		if err != nil {
 			return err
@@ -355,7 +367,7 @@ func (s Source) deleteEndDevice(ids *ttnpb.EndDeviceIdentifiers) error {
 			return err
 		}
 	}
-	if address := s.config.identityServerGRPCAddress; address != "" {
+	if address := s.config.ServerConfig.IdentityServerGRPCAddress; address != "" {
 		is, err := api.Dial(s.ctx, address)
 		if err != nil {
 			return err
