@@ -15,9 +15,9 @@
 package ttnv3
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
+	root "go.thethings.network/lorawan-stack-migrate/cmd"
+	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
@@ -25,8 +25,8 @@ var devicesCmd = &cobra.Command{
 	Use:     "device [dev-id] ...",
 	Short:   "Export devices by DevEUI",
 	Aliases: []string{"end-devices", "end-device", "devices", "dev"},
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("%s called\n", cmd.Name())
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return commands.Export(cmd, args, root.ExportCfg.ExportDev)
 	},
 }
 
