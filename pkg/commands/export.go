@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"go.thethings.network/lorawan-stack-migrate/pkg/export"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 )
@@ -58,5 +59,19 @@ func Export(cmd *cobra.Command, args []string, f func(s source.Source, item stri
 		if err := f(s, item); err != nil {
 			return err
 		}
+	}
+}
+
+func ExportApplication() CobraRun {
+	return func(cmd *cobra.Command, args []string) {
+		Export(cmd, args, func(s source.Source, item string) error {
+			return s.RangeDevices(item, export.FromContext(cmd.Context()).ExportDev)
+		})
+	}
+}
+
+func ExportDevices() CobraRunE {
+	return func(cmd *cobra.Command, args []string) error {
+		return Export(cmd, args, export.FromContext(cmd.Context()).ExportDev)
 	}
 }

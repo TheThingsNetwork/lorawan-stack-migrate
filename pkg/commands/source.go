@@ -19,6 +19,48 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
+func Source(sourceName, short string, opts ...Option) *cobra.Command {
+	fs, _ := source.FlagSet(sourceName)
+
+	appCmd := Application(
+		WithFlagSet(fs),
+		WithPersistentPreRunE(ExecuteParentPersistentPreRun),
+	)
+	devCmd := Devices(
+		WithFlagSet(fs),
+		WithPersistentPreRunE(ExecuteParentPersistentPreRun),
+	)
+
+	cmd := New(append(opts,
+		WithUse(sourceName+" ..."),
+		WithShort(short),
+		WithPersistentPreRunE(SourcePersistentPreRunE()),
+		WithSubcommands(appCmd, devCmd),
+	)...)
+
+	return cmd
+}
+
+func Application(opts ...Option) *cobra.Command {
+	defaultOpts := []Option{
+		WithUse("application ..."),
+		WithShort("Export all devices of an application"),
+		WithAliases([]string{"applications", "apps", "app", "a"}),
+		WithRun(ExportApplication()),
+	}
+	return New(append(defaultOpts, opts...)...)
+}
+
+func Devices(opts ...Option) *cobra.Command {
+	defaultOpts := []Option{
+		WithUse("device ..."),
+		WithShort("Export devices by DevEUI"),
+		WithAliases([]string{"end-devices", "end-device", "devices", "devs", "dev", "d"}),
+		WithRunE(ExportDevices()),
+	}
+	return New(append(defaultOpts, opts...)...)
+}
+
 func SourcePersistentPreRunE() func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		s := cmd.Name()
