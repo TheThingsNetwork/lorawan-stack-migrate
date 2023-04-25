@@ -12,20 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ttnv3
+package source
 
-import (
-	"github.com/spf13/cobra"
-	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
+import "go.thethings.network/lorawan-stack/v3/pkg/errors"
+
+var (
+	ErrNotRegistered     = errors.DefineInvalidArgument("not_registered", "source `{source}` is not registered")
+	ErrAlreadyRegistered = errors.DefineInvalidArgument("already_registered", "source `{source}` is already registered")
+	ErrNoSource          = errors.DefineInvalidArgument("no_source", "no source")
 )
-
-const sourceName = "ttnv3"
-
-// TTNv3Cmd represents the ttnv3 source.
-var TTNv3Cmd = &cobra.Command{
-	Use:   sourceName + " ...",
-	Short: "Export devices from The Things Stack",
-
-	SilenceUsage:      true,
-	PersistentPreRunE: commands.SourcePersistentPreRunE(),
-}

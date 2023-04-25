@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,14 +20,26 @@ import (
 	"strings"
 
 	"github.com/spf13/pflag"
-	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 )
 
 type Config struct {
-	DryRun, Verbose bool
-	FrequencyPlansURL,
-	Source string
+	DryRun, Verbose   bool
+	FrequencyPlansURL string
+
+	source string
+}
+
+func (c *Config) SetSource(s string) bool {
+	if _, ok := registeredSources[s]; ok {
+		c.source = s
+		return true
+	}
+	return false
+}
+
+func (c *Config) Source() string {
+	return c.source
 }
 
 var RootConfig Config
@@ -54,18 +66,12 @@ type Registration struct {
 	FlagSet *pflag.FlagSet
 }
 
-var (
-	errNotRegistered     = errors.DefineInvalidArgument("not_registered", "source `{source}` is not registered")
-	errAlreadyRegistered = errors.DefineInvalidArgument("already_registered", "source `{source}` is already registered")
-	errNoSource          = errors.DefineInvalidArgument("no_source", "no source")
-
-	registeredSources map[string]Registration
-)
+var registeredSources map[string]Registration
 
 // RegisterSource registers a new Source.
 func RegisterSource(r Registration) error {
 	if _, ok := registeredSources[r.Name]; ok {
-		return errAlreadyRegistered.WithAttributes("source", r.Name)
+		return ErrAlreadyRegistered.WithAttributes("source", r.Name)
 	}
 	registeredSources[r.Name] = r
 	return nil
@@ -73,13 +79,13 @@ func RegisterSource(r Registration) error {
 
 // NewSource creates a new Source from parsed flags.
 func NewSource(ctx context.Context) (Source, error) {
-	if RootConfig.Source == "" {
-		return nil, errNoSource.New()
+	if RootConfig.Source() == "" {
+		return nil, ErrNoSource.New()
 	}
-	if registration, ok := registeredSources[RootConfig.Source]; ok {
+	if registration, ok := registeredSources[RootConfig.Source()]; ok {
 		return registration.Create(ctx, RootConfig)
 	}
-	return nil, errNotRegistered.WithAttributes("source", RootConfig.Source)
+	return nil, ErrNotRegistered.WithAttributes("source", RootConfig.Source())
 }
 
 func addPrefix(name, prefix string) string {
@@ -110,7 +116,7 @@ func AllFlagSets() *pflag.FlagSet {
 			fs.AddFlag(&b)
 		})
 	}
-	fs.StringVar(&RootConfig.Source,
+	fs.StringVar(&RootConfig.source,
 		"source",
 		"",
 		fmt.Sprintf("source (%s)", strings.Join(Names(), "|")),
@@ -122,7 +128,7 @@ func AllFlagSets() *pflag.FlagSet {
 func FlagSet(s string) (*pflag.FlagSet, error) {
 	src, ok := registeredSources[s]
 	if !ok {
-		return nil, errNotRegistered.WithAttributes("source", s)
+		return nil, ErrNotRegistered.WithAttributes("source", s)
 	}
 	return src.FlagSet, nil
 }
