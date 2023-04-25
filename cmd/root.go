@@ -49,13 +49,14 @@ var (
 				logHandler,
 				log.WithLevel(logLevel),
 			)
+			rpclog.ReplaceGrpcLogger(logger)
 			ctx = log.NewContext(ctx, logger)
 
 			exportCfg.DevIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
 			exportCfg.EUIForID, _ = cmd.Flags().GetBool("set-eui-as-id")
 			ctx = export.NewContext(ctx, exportCfg)
 
-			rpclog.ReplaceGrpcLogger(logger)
+			cmd.SetContext(ctx)
 			return nil
 		},
 	}
