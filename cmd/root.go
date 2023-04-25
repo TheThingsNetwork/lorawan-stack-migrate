@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"go.thethings.network/lorawan-stack-migrate/cmd/chirpstack"
 	"go.thethings.network/lorawan-stack-migrate/cmd/ttnv3"
 	"go.thethings.network/lorawan-stack-migrate/pkg/export"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
@@ -86,4 +87,5 @@ func init() {
 		"URL for fetching frequency plans")
 
 	rootCmd.AddCommand(ttnv3.TTNv3Cmd)
+	rootCmd.AddCommand(chirpstack.ChirpStackCmd)
 }
