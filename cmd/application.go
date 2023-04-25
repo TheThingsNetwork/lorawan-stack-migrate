@@ -30,12 +30,12 @@ var applicationsCmd = &cobra.Command{
 	Deprecated: fmt.Sprintf("use [%s] commands instead", strings.Join(source.Names(), "|")),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return commands.Export(cmd, args, func(s source.Source, item string) error {
-			return s.RangeDevices(item, ExportCfg.ExportDev)
+			return s.RangeDevices(item, exportCfg.ExportDev)
 		})
 	},
 }
 
 func init() {
 	applicationsCmd.Flags().AddFlagSet(source.AllFlagSets())
-	RootCmd.AddCommand(applicationsCmd)
+	rootCmd.AddCommand(applicationsCmd)
 }

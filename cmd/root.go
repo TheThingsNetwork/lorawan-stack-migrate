@@ -19,6 +19,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"go.thethings.network/lorawan-stack-migrate/cmd/ttnv3"
+	"go.thethings.network/lorawan-stack-migrate/pkg/export"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/rpcmiddleware/rpclog"
@@ -26,10 +28,10 @@ import (
 
 var (
 	logger    *log.Logger
-	ctx       context.Context
+	ctx       = context.Background()
+	exportCfg = export.Config{}
 	rootCfg   = &source.RootConfig
-	ExportCfg = ExportConfig{}
-	RootCmd   = &cobra.Command{
+	rootCmd   = &cobra.Command{
 		Use:   "ttn-lw-migrate",
 		Short: "Migrate from other LoRaWAN network servers to The Things Stack",
 
@@ -47,10 +49,11 @@ var (
 				logHandler,
 				log.WithLevel(logLevel),
 			)
-			ctx = log.NewContext(context.Background(), logger)
+			ctx = log.NewContext(ctx, logger)
 
-			ExportCfg.DevIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
-			ExportCfg.EUIForID, _ = cmd.Flags().GetBool("set-eui-as-id")
+			exportCfg.DevIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
+			exportCfg.EUIForID, _ = cmd.Flags().GetBool("set-eui-as-id")
+			ctx = export.NewContext(ctx, exportCfg)
 
 			rpclog.ReplaceGrpcLogger(logger)
 			return nil
@@ -60,7 +63,7 @@ var (
 
 // Execute runs the root command and returns the exit code.
 func Execute() int {
-	if err := RootCmd.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		printStack(os.Stderr, err)
 		return 1
 	}
@@ -68,16 +71,18 @@ func Execute() int {
 }
 
 func init() {
-	RootCmd.PersistentFlags().BoolVar(&rootCfg.DryRun,
+	rootCmd.PersistentFlags().BoolVar(&rootCfg.DryRun,
 		"dry-run",
 		false,
 		"Do everything except resetting root and session keys of exported devices")
-	RootCmd.PersistentFlags().BoolVar(&rootCfg.Verbose,
+	rootCmd.PersistentFlags().BoolVar(&rootCfg.Verbose,
 		"verbose",
 		false,
 		"Verbose output")
-	RootCmd.PersistentFlags().StringVar(&rootCfg.FrequencyPlansURL,
+	rootCmd.PersistentFlags().StringVar(&rootCfg.FrequencyPlansURL,
 		"frequency-plans-url",
 		"https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master",
 		"URL for fetching frequency plans")
+
+	rootCmd.AddCommand(ttnv3.TTNv3Cmd)
 }

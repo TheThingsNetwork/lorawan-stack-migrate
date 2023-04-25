@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ttnv3
+package export
 
-import (
-	"github.com/spf13/cobra"
+import "go.thethings.network/lorawan-stack/v3/pkg/errors"
+
+var (
+	errExport                = errors.Define("export", "export device `{device_id}`")
+	errFormat                = errors.DefineCorruption("format", "format device `{device_id}`")
+	errInvalidFields         = errors.DefineInvalidArgument("invalid_fields", "invalid fields for device `{device_id}`")
+	errDevIDExceedsMaxLength = errors.Define("dev_id_exceeds_max_length", "device ID `{id}` exceeds max length")
+	errAppIDExceedsMaxLength = errors.Define("app_id_exceeds_max_length", "application ID `{id}` exceeds max length")
 )
-
-const sourceName = "ttnv3"
-
-// TTNv3Cmd represents the ttnv3 source.
-var TTNv3Cmd = &cobra.Command{
-	Use:          sourceName + " ...",
-	Short:        "Export devices from The Things Stack",
-	SilenceUsage: true,
-}

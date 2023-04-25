@@ -16,8 +16,8 @@ package ttnv3
 
 import (
 	"github.com/spf13/cobra"
-	root "go.thethings.network/lorawan-stack-migrate/cmd"
 	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
+	"go.thethings.network/lorawan-stack-migrate/pkg/export"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
@@ -27,13 +27,13 @@ var applicationsCmd = &cobra.Command{
 	Short:   "Export all devices of an application",
 	Run: func(cmd *cobra.Command, args []string) {
 		commands.Export(cmd, args, func(s source.Source, item string) error {
-			return s.RangeDevices(item, root.ExportCfg.ExportDev)
+			return s.RangeDevices(item, export.FromContext(cmd.Context()).ExportDev)
 		})
 	},
 }
 
 func init() {
-	ttnv3Cmd.AddCommand(applicationsCmd)
+	TTNv3Cmd.AddCommand(applicationsCmd)
 
 	fs, err := source.FlagSet(sourceName)
 	if err != nil {

@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package export
 
-import (
-	"fmt"
+import "context"
 
-	"github.com/spf13/cobra"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-)
+type exportConfigKeyType struct{}
 
-var sourcesCmd = &cobra.Command{
-	Use:     "sources",
-	Aliases: []string{"list-sources", "get-sources"},
-	Short:   "List available sources",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		for name, description := range source.Sources() {
-			fmt.Printf("%-20s %s\n", name, description)
-		}
-		return nil
-	},
+var exportConfigKey = &exportConfigKeyType{}
+
+func NewContext(ctx context.Context, cfg Config) context.Context {
+	return context.WithValue(ctx, exportConfigKey, cfg)
 }
 
-func init() {
-	rootCmd.AddCommand(sourcesCmd)
+func FromContext(ctx context.Context) Config {
+	v := ctx.Value(exportConfigKey)
+	if v == nil {
+		return Config{}
+	}
+	return v.(Config)
 }

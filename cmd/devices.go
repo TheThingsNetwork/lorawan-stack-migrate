@@ -29,11 +29,11 @@ var devicesCmd = &cobra.Command{
 	Aliases:    []string{"end-devices", "end-device", "devices", "dev"},
 	Deprecated: fmt.Sprintf("use [%s] commands instead", strings.Join(source.Names(), "|")),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return commands.Export(cmd, args, ExportCfg.ExportDev)
+		return commands.Export(cmd, args, exportCfg.ExportDev)
 	},
 }
 
 func init() {
 	devicesCmd.Flags().AddFlagSet(source.AllFlagSets())
-	RootCmd.AddCommand(devicesCmd)
+	rootCmd.AddCommand(devicesCmd)
 }
