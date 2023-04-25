@@ -19,6 +19,7 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
+// Source returns a new source command.
 func Source(sourceName, short string, opts ...Option) *cobra.Command {
 	fs, _ := source.FlagSet(sourceName)
 
@@ -41,6 +42,7 @@ func Source(sourceName, short string, opts ...Option) *cobra.Command {
 	return cmd
 }
 
+// Application returns a new application command.
 func Application(opts ...Option) *cobra.Command {
 	defaultOpts := []Option{
 		WithUse("application ..."),
@@ -51,6 +53,7 @@ func Application(opts ...Option) *cobra.Command {
 	return New(append(defaultOpts, opts...)...)
 }
 
+// Devices returns a new devices command.
 func Devices(opts ...Option) *cobra.Command {
 	defaultOpts := []Option{
 		WithUse("device ..."),
@@ -61,7 +64,8 @@ func Devices(opts ...Option) *cobra.Command {
 	return New(append(defaultOpts, opts...)...)
 }
 
-func SourcePersistentPreRunE() func(*cobra.Command, []string) error {
+// SourcePersistentPreRunE returns a new function that sets the active source.
+func SourcePersistentPreRunE() CobraRunE {
 	return func(cmd *cobra.Command, args []string) error {
 		s := cmd.Name()
 		if ok := source.RootConfig.SetSource(s); !ok {
@@ -69,4 +73,38 @@ func SourcePersistentPreRunE() func(*cobra.Command, []string) error {
 		}
 		return ExecuteParentPersistentPreRun(cmd, args)
 	}
+}
+
+// ExecuteParentPersistentPreRun executes cmd's parent's PersistentPreRunE or PersistentPreRun.
+func ExecuteParentPersistentPreRun(cmd *cobra.Command, args []string) error {
+	if !cmd.HasParent() {
+		return nil
+	}
+	p := cmd.Parent()
+
+	if f := p.PersistentPreRunE; f != nil {
+		if err := f(p, args); err != nil {
+			return err
+		}
+	} else if f := p.PersistentPreRun; f != nil {
+		f(p, args)
+	}
+	return nil
+}
+
+// ExecuteParentPersistentPostRun executes cmd's parent's PersistentPostRunE or PersistentPostRun.
+func ExecuteParentPersistentPostRun(cmd *cobra.Command, args []string) error {
+	if !cmd.HasParent() {
+		return nil
+	}
+	p := cmd.Parent()
+
+	if f := p.PersistentPostRunE; f != nil {
+		if err := f(p, args); err != nil {
+			return err
+		}
+	} else if f := p.PersistentPostRun; f != nil {
+		f(p, args)
+	}
+	return nil
 }
