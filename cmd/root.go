@@ -87,6 +87,9 @@ func init() {
 		"https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master",
 		"URL for fetching frequency plans")
 
+	// TODO: After dependency update (https://github.com/TheThingsNetwork/lorawan-stack-migrate/issues/72)
+	// Create "sources" group in `rootCmd`
+
 	rootCmd.AddCommand(ttnv2.TTNv2Cmd)
 	rootCmd.AddCommand(ttnv3.TTNv3Cmd)
 	rootCmd.AddCommand(chirpstack.ChirpStackCmd)

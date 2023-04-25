@@ -50,6 +50,9 @@ func WithAliases(a []string) Option {
 	return func(c *cobra.Command) { c.Aliases = a }
 }
 
+// TODO: After dependency update (https://github.com/TheThingsNetwork/lorawan-stack-migrate/issues/72)
+// Add `WithGroup` option.
+
 // WithPersistentPreRun returns an option that sets the command's PersistentPreRun field.
 func WithPersistentPreRun(f CobraRun) Option {
 	return func(c *cobra.Command) { c.PersistentPreRun = f }
