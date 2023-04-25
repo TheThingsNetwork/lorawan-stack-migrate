@@ -25,6 +25,8 @@ var devicesCmd = &cobra.Command{
 	Use:     "device [dev-id] ...",
 	Short:   "Export devices by DevEUI",
 	Aliases: []string{"end-devices", "end-device", "devices", "dev"},
+
+	PersistentPreRunE: commands.ExecuteParentPersistentPreRun,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return commands.Export(cmd, args, export.FromContext(cmd.Context()).ExportDev)
 	},

@@ -23,8 +23,10 @@ import (
 
 var applicationsCmd = &cobra.Command{
 	Use:     "application [app-id] ...",
-	Aliases: []string{"applications", "app"},
 	Short:   "Export all devices of an application",
+	Aliases: []string{"applications", "app"},
+
+	PersistentPreRunE: commands.ExecuteParentPersistentPreRun,
 	Run: func(cmd *cobra.Command, args []string) {
 		commands.Export(cmd, args, func(s source.Source, item string) error {
 			return s.RangeDevices(item, export.FromContext(cmd.Context()).ExportDev)

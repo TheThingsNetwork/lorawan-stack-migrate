@@ -16,13 +16,22 @@ package ttnv3
 
 import (
 	"github.com/spf13/cobra"
+
+	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
 const sourceName = "ttnv3"
 
 // TTNv3Cmd represents the ttnv3 source.
 var TTNv3Cmd = &cobra.Command{
-	Use:          sourceName + " ...",
-	Short:        "Export devices from The Things Stack",
+	Use:   sourceName + " ...",
+	Short: "Export devices from The Things Stack",
+
 	SilenceUsage: true,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		source.RootConfig.Source = sourceName
+
+		return commands.ExecuteParentPersistentPreRun(cmd, args)
+	},
 }
