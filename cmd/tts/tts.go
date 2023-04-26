@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ttnv3
+package tts
 
 import "go.thethings.network/lorawan-stack-migrate/pkg/commands"
 
-const sourceName = "ttnv3"
+const sourceName = "tts"
 
-// TTNv3Cmd represents the ttnv3 source.
-var TTNv3Cmd = commands.Source(sourceName, "Export devices from The Things Stack")
+// TTSCmd represents the tts source.
+var TTSCmd = commands.Source(sourceName,
+	"Export devices from The Things Stack",
+	commands.WithAliases([]string{"ttnv3"}),
+)

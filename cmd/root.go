@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/cmd/chirpstack"
 	"go.thethings.network/lorawan-stack-migrate/cmd/ttnv2"
-	"go.thethings.network/lorawan-stack-migrate/cmd/ttnv3"
+	"go.thethings.network/lorawan-stack-migrate/cmd/tts"
 	"go.thethings.network/lorawan-stack-migrate/pkg/export"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
@@ -91,6 +91,6 @@ func init() {
 	// Create "sources" group in `rootCmd`
 
 	rootCmd.AddCommand(ttnv2.TTNv2Cmd)
-	rootCmd.AddCommand(ttnv3.TTNv3Cmd)
+	rootCmd.AddCommand(tts.TTSCmd)
 	rootCmd.AddCommand(chirpstack.ChirpStackCmd)
 }

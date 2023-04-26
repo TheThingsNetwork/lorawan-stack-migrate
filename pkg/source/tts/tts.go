@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ttnv3
+package tts
 
 import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv3/config"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/tts/config"
 )
 
 func init() {
@@ -25,7 +25,7 @@ func init() {
 	logger, _ = config.NewLogger(cfg.Verbose)
 
 	source.RegisterSource(source.Registration{
-		Name:        "ttnv3",
+		Name:        "tts",
 		Description: "Migrate from The Things Stack",
 		FlagSet:     flags,
 		Create:      createNewSource(cfg),
