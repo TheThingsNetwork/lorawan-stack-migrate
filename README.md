@@ -71,9 +71,9 @@ To export a single device using its Device ID (e.g. `mydevice`):
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate device --source ttnv2 "mydevice" --dry-run --verbose > devices.json
+$ ttn-lw-migrate ttnv2 device 'mydevice' --dry-run --verbose > devices.json
 # export device
-$ ttn-lw-migrate device --source ttnv2 "mydevice" > devices.json
+$ ttn-lw-migrate ttnv2 device 'mydevice' > devices.json
 ```
 
 In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
@@ -90,9 +90,9 @@ And then export with:
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate devices --source ttnv2 "mydevice" --dry-run --verbose < device_ids.txt > devices.json
+$ ttn-lw-migrate ttnv2 devices 'mydevice' --dry-run --verbose < device_ids.txt > devices.json
 # export devices
-$ ttn-lw-migrate devices --source ttnv2 < device_ids.txt > devices.json
+$ ttn-lw-migrate ttnv2 devices < device_ids.txt > devices.json
 ```
 
 ### Export Applications
@@ -101,9 +101,9 @@ Similarly, to export all devices of application `my-app-id`:
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate application --source ttnv2 "my-app-id" --dry-run --verbose > devices.json
+$ ttn-lw-migrate ttnv2 application 'my-app-id' --dry-run --verbose > devices.json
 # export devices
-$ ttn-lw-migrate application --source ttnv2 "my-app-id" > devices.json
+$ ttn-lw-migrate ttnv2 application 'my-app-id' > devices.json
 ```
 
 ## ChirpStack
@@ -134,7 +134,7 @@ See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for 
 To export a single device using its DevEUI (e.g. `0102030405060708`):
 
 ```
-$ ttn-lw-migrate device --source chirpstack "0102030405060708" > devices.json
+$ ttn-lw-migrate chirpstack device '0102030405060708' > devices.json
 ```
 
 In order to export a large number of devices, create a file named `device_euis.txt` with one DevEUI per line:
@@ -151,7 +151,7 @@ In order to export a large number of devices, create a file named `device_euis.t
 And then export with:
 
 ```bash
-$ ttn-lw-migrate device --source chirpstack < device_euis.txt > devices.json
+$ ttn-lw-migrate chirpstack device < device_euis.txt > devices.json
 ```
 
 ### Export Applications
@@ -159,7 +159,7 @@ $ ttn-lw-migrate device --source chirpstack < device_euis.txt > devices.json
 Similarly, to export all devices of application `chirpstack-app-1`:
 
 ```bash
-$ ttn-lw-migrate application --source chirpstack "chirpstack-app-1" > devices.json
+$ ttn-lw-migrate chirpstack application 'chirpstack-app-1' > devices.json
 ```
 
 In order to export multiple applications, create a file named `application_names.txt` with one Application name per line:
@@ -173,7 +173,7 @@ chirpstack-app-3
 And export with:
 
 ```bash
-$ ttn-lw-migrate application --source chirpstack < application_names.txt > devices.json
+$ ttn-lw-migrate chirpstack application < application_names.txt > devices.json
 ```
 
 ## The Things Stack
@@ -203,9 +203,9 @@ To export a single device using its Device ID (e.g. `mydevice`):
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate device --source tts "mydevice" --dry-run --verbose > devices.json
+$ ttn-lw-migrate tts device 'mydevice' --dry-run --verbose > devices.json
 # export device
-$ ttn-lw-migrate device --source tts "mydevice" > devices.json
+$ ttn-lw-migrate tts device 'mydevice' > devices.json
 ```
 
 In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
@@ -222,9 +222,9 @@ And then export with:
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate devices --source tts "mydevice" --dry-run --verbose < device_ids.txt > devices.json
+$ ttn-lw-migrate tts devices 'mydevice' --dry-run --verbose < device_ids.txt > devices.json
 # export devices
-$ ttn-lw-migrate devices --source tts < device_ids.txt > devices.json
+$ ttn-lw-migrate tts devices < device_ids.txt > devices.json
 ```
 
 ### Export Applications
@@ -233,9 +233,9 @@ Similarly, to export all devices of application `my-app-id`:
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate application --source tts "my-app-id" --dry-run --verbose > devices.json
+$ ttn-lw-migrate tts application 'my-app-id' --dry-run --verbose > devices.json
 # export devices
-$ ttn-lw-migrate application --source tts "my-app-id" > devices.json
+$ ttn-lw-migrate tts application 'my-app-id' > devices.json
 ```
 
 ## Development Environment
