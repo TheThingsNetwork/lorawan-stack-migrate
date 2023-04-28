@@ -8,9 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Each source has it's own dedicated command.
+
 ### Changed
 
+- `ttnv3` source is named `tts` now.
+
 ### Deprecated
+
+- `--source` flag is now depreciated.
 
 ### Removed
 
