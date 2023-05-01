@@ -17,13 +17,12 @@ package config
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv3/api"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/tts/api"
 	"go.uber.org/zap"
 )
 
@@ -78,16 +77,16 @@ func New() (*Config, *pflag.FlagSet) {
 
 	flags.StringVar(&config.AppID,
 		"app-id",
-		os.Getenv("TTNV3_APP_ID"),
+		os.Getenv("TTS_APP_ID"),
 		"TTS Application ID")
 	flags.StringVar(&config.appAPIKey,
 		"app-api-key",
-		os.Getenv("TTNV3_APP_API_KEY"),
+		os.Getenv("TTS_APP_API_KEY"),
 		"TTS Application Access Key (with 'devices' permissions)")
 
 	flags.StringVar(&config.caPath,
 		"ca-file",
-		os.Getenv("TTNV3_CA_FILE"),
+		os.Getenv("TTS_CA_FILE"),
 		"TTS Path to a CA file (optional)")
 	flags.BoolVar(&config.insecure,
 		"insecure",
@@ -96,23 +95,23 @@ func New() (*Config, *pflag.FlagSet) {
 
 	flags.StringVar(&config.ServerConfig.defaultGRPCAddress,
 		"default-grpc-address",
-		os.Getenv("TTNV3_DEFAULT_GRPC_ADDRESS"),
+		os.Getenv("TTS_DEFAULT_GRPC_ADDRESS"),
 		"TTS default GRPC Address (optional)")
 	flags.StringVar(&config.ServerConfig.ApplicationServerGRPCAddress,
 		"appplication-server-grpc-address",
-		os.Getenv("TTNV3_APPLICATION_SERVER_GRPC_ADDRESS"),
+		os.Getenv("TTS_APPLICATION_SERVER_GRPC_ADDRESS"),
 		"TTS Application Server GRPC Address")
 	flags.StringVar(&config.ServerConfig.IdentityServerGRPCAddress,
 		"identity-server-grpc-address",
-		os.Getenv("TTNV3_IDENTITY_SERVER_GRPC_ADDRESS"),
+		os.Getenv("TTS_IDENTITY_SERVER_GRPC_ADDRESS"),
 		"TTS Identity Server GRPC Address")
 	flags.StringVar(&config.ServerConfig.JoinServerGRPCAddress,
 		"join-server-grpc-address",
-		os.Getenv("TTNV3_JOIN_SERVER_GRPC_ADDRESS"),
+		os.Getenv("TTS_JOIN_SERVER_GRPC_ADDRESS"),
 		"TTS Join Server GRPC Address")
 	flags.StringVar(&config.ServerConfig.NetworkServerGRPCAddress,
 		"network-server-grpc-address",
-		os.Getenv("TTNV3_NETWORK_SERVER_GRPC_ADDRESS"),
+		os.Getenv("TTS_NETWORK_SERVER_GRPC_ADDRESS"),
 		"TTS Network Server GRPC Address")
 
 	flags.BoolVar(&config.NoSession,
@@ -212,8 +211,4 @@ func setCustomCA(path string) error {
 		return err
 	}
 	return nil
-}
-
-func flagWithPrefix(f string) string {
-	return fmt.Sprintf("ttnv3.%s", f)
 }

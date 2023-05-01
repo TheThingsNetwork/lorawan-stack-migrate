@@ -12,15 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package version
+package export
 
-var (
-	// BuildDate is the date the binary was built. For release builds, this is set by goreleaser.
-	BuildDate = ""
+import "context"
 
-	// GitCommit is the commit from which the binary was built. For release builds, this is set by goreleaser.
-	GitCommit = ""
+type exportConfigKeyType struct{}
 
-	// Version is the binary version. For release builds, this is set by goreleaser.
-	Version = "dev"
-)
+var exportConfigKey = &exportConfigKeyType{}
+
+func NewContext(ctx context.Context, cfg Config) context.Context {
+	return context.WithValue(ctx, exportConfigKey, cfg)
+}
+
+func FromContext(ctx context.Context) Config {
+	v := ctx.Value(exportConfigKey)
+	if v == nil {
+		return Config{}
+	}
+	return v.(Config)
+}

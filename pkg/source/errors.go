@@ -12,22 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ttnv3
+package source
 
-import (
-	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv3/config"
+import "go.thethings.network/lorawan-stack/v3/pkg/errors"
+
+var (
+	ErrNotRegistered     = errors.DefineInvalidArgument("not_registered", "source `{source}` is not registered")
+	ErrAlreadyRegistered = errors.DefineInvalidArgument("already_registered", "source `{source}` is already registered")
+	ErrNoSource          = errors.DefineInvalidArgument("no_source", "no source")
 )
-
-func init() {
-	cfg, flags := config.New()
-
-	logger, _ = config.NewLogger(cfg.Verbose)
-
-	source.RegisterSource(source.Registration{
-		Name:        "ttnv3",
-		Description: "Migrate from The Things Stack",
-		FlagSet:     flags,
-		Create:      createNewSource(cfg),
-	})
-}

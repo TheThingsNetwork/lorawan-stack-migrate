@@ -1,4 +1,4 @@
-// Copyright © 2020 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import (
 
 	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack" // ChirpStack source
 	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv2"      // TTNv2 source
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv3"      // TTS source
+	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/tts"        // TTS source
 
 	"go.thethings.network/lorawan-stack-migrate/cmd"
 )

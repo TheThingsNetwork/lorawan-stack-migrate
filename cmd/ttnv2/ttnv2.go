@@ -12,15 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package version
+package ttnv2
 
-var (
-	// BuildDate is the date the binary was built. For release builds, this is set by goreleaser.
-	BuildDate = ""
+import "go.thethings.network/lorawan-stack-migrate/pkg/commands"
 
-	// GitCommit is the commit from which the binary was built. For release builds, this is set by goreleaser.
-	GitCommit = ""
+const sourceName = "ttnv2"
 
-	// Version is the binary version. For release builds, this is set by goreleaser.
-	Version = "dev"
-)
+// TTNv2Cmd represents the ttnv2 source.
+var TTNv2Cmd = commands.Source(sourceName, "Export devices from TTN V2")

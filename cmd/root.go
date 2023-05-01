@@ -19,6 +19,10 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"go.thethings.network/lorawan-stack-migrate/cmd/chirpstack"
+	"go.thethings.network/lorawan-stack-migrate/cmd/ttnv2"
+	"go.thethings.network/lorawan-stack-migrate/cmd/tts"
+	"go.thethings.network/lorawan-stack-migrate/pkg/export"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/rpcmiddleware/rpclog"
@@ -26,9 +30,9 @@ import (
 
 var (
 	logger    *log.Logger
-	ctx       context.Context
+	ctx       = context.Background()
+	exportCfg = export.Config{}
 	rootCfg   = &source.RootConfig
-	exportCfg = exportConfig{}
 	rootCmd   = &cobra.Command{
 		Use:   "ttn-lw-migrate",
 		Short: "Migrate from other LoRaWAN network servers to The Things Stack",
@@ -47,12 +51,14 @@ var (
 				logHandler,
 				log.WithLevel(logLevel),
 			)
-			ctx = log.NewContext(context.Background(), logger)
-
-			exportCfg.devIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
-			exportCfg.euiForID, _ = cmd.Flags().GetBool("set-eui-as-id")
-
 			rpclog.ReplaceGrpcLogger(logger)
+			ctx = log.NewContext(ctx, logger)
+
+			exportCfg.DevIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
+			exportCfg.EUIForID, _ = cmd.Flags().GetBool("set-eui-as-id")
+			ctx = export.NewContext(ctx, exportCfg)
+
+			cmd.SetContext(ctx)
 			return nil
 		},
 	}
@@ -80,4 +86,11 @@ func init() {
 		"frequency-plans-url",
 		"https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master",
 		"URL for fetching frequency plans")
+
+	// TODO: After dependency update (https://github.com/TheThingsNetwork/lorawan-stack-migrate/issues/72)
+	// Create "sources" group in `rootCmd`
+
+	rootCmd.AddCommand(ttnv2.TTNv2Cmd)
+	rootCmd.AddCommand(tts.TTSCmd)
+	rootCmd.AddCommand(chirpstack.ChirpStackCmd)
 }

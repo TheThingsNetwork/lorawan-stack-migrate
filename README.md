@@ -10,9 +10,9 @@ Binaries are available on [GitHub](https://github.com/TheThingsNetwork/lorawan-s
 
 ## Support
 
-- [X] The Things Network Stack V2
-- [X] [ChirpStack Network Server](https://www.chirpstack.io/)
-- [X] [The Things Stack](https://www.github.com/TheThingsNetwork/lorawan-stack/)
+- [x] The Things Network Stack V2
+- [x] [ChirpStack Network Server](https://www.chirpstack.io/)
+- [x] [The Things Stack](https://www.github.com/TheThingsNetwork/lorawan-stack/)
 - [ ] [Firefly](https://fireflyiot.com/)
 - [ ] [LORIOT Network Server](https://www.loriot.io/)
 
@@ -71,9 +71,9 @@ To export a single device using its Device ID (e.g. `mydevice`):
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate device --source ttnv2 "mydevice" --dry-run --verbose > devices.json
+$ ttn-lw-migrate ttnv2 device 'mydevice' --dry-run --verbose > devices.json
 # export device
-$ ttn-lw-migrate device --source ttnv2 "mydevice" > devices.json
+$ ttn-lw-migrate ttnv2 device 'mydevice' > devices.json
 ```
 
 In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
@@ -90,9 +90,9 @@ And then export with:
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate devices --source ttnv2 "mydevice" --dry-run --verbose < device_ids.txt > devices.json
+$ ttn-lw-migrate ttnv2 devices 'mydevice' --dry-run --verbose < device_ids.txt > devices.json
 # export devices
-$ ttn-lw-migrate devices --source ttnv2 < device_ids.txt > devices.json
+$ ttn-lw-migrate ttnv2 devices < device_ids.txt > devices.json
 ```
 
 ### Export Applications
@@ -101,9 +101,9 @@ Similarly, to export all devices of application `my-app-id`:
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate application --source ttnv2 "my-app-id" --dry-run --verbose > devices.json
+$ ttn-lw-migrate ttnv2 application 'my-app-id' --dry-run --verbose > devices.json
 # export devices
-$ ttn-lw-migrate application --source ttnv2 "my-app-id" > devices.json
+$ ttn-lw-migrate ttnv2 application 'my-app-id' > devices.json
 ```
 
 ## ChirpStack
@@ -121,7 +121,7 @@ $ export FREQUENCY_PLAN_ID="EU_863_870"         # Frequency Plan for exported de
 
 See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for the list of frequency plans available on The Things Stack. For example, to use `United States 902-928 MHz, FSB 1`, you need to specify the `US_902_928_FSB_1` frequency plan ID.
 
-> *NOTE*: `JoinEUI` and `FrequencyPlanID` are required because ChirpStack does not store these fields.
+> _NOTE_: `JoinEUI` and `FrequencyPlanID` are required because ChirpStack does not store these fields.
 
 ### Notes
 
@@ -134,7 +134,7 @@ See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for 
 To export a single device using its DevEUI (e.g. `0102030405060708`):
 
 ```
-$ ttn-lw-migrate device --source chirpstack "0102030405060708" > devices.json
+$ ttn-lw-migrate chirpstack device '0102030405060708' > devices.json
 ```
 
 In order to export a large number of devices, create a file named `device_euis.txt` with one DevEUI per line:
@@ -151,7 +151,7 @@ In order to export a large number of devices, create a file named `device_euis.t
 And then export with:
 
 ```bash
-$ ttn-lw-migrate device --source chirpstack < device_euis.txt > devices.json
+$ ttn-lw-migrate chirpstack device < device_euis.txt > devices.json
 ```
 
 ### Export Applications
@@ -159,7 +159,7 @@ $ ttn-lw-migrate device --source chirpstack < device_euis.txt > devices.json
 Similarly, to export all devices of application `chirpstack-app-1`:
 
 ```bash
-$ ttn-lw-migrate application --source chirpstack "chirpstack-app-1" > devices.json
+$ ttn-lw-migrate chirpstack application 'chirpstack-app-1' > devices.json
 ```
 
 In order to export multiple applications, create a file named `application_names.txt` with one Application name per line:
@@ -173,7 +173,7 @@ chirpstack-app-3
 And export with:
 
 ```bash
-$ ttn-lw-migrate application --source chirpstack < application_names.txt > devices.json
+$ ttn-lw-migrate chirpstack application < application_names.txt > devices.json
 ```
 
 ## The Things Stack
@@ -183,13 +183,13 @@ $ ttn-lw-migrate application --source chirpstack < application_names.txt > devic
 Configure with environment variables, or command-line arguments. See `--help` for more details:
 
 ```bash
-$ export TTNV3_APP_ID="my-tts-app"                                                  # TTS App ID
-$ export TTNV3_APP_API_KEY="NNSXS.U..."                                             # TTS App API Key (needs `device` permissions)
-$ export TTNV3_APPLICATION_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"   # TTS Application Server URL Address
-$ export TTNV3_IDENTITY_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"      # TTS Identity Server URL Address
-$ export TTNV3_JOIN_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"          # TTS Join Server URL Address
-$ export TTNV3_NETWORK_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"       # TTS Network Server URL Address
-$ export TTNV3_CA_FILE="/path/to/ca.file"                                           # Path to a CA file (optional)
+$ export TTS_APP_ID="my-tts-app"                                                  # TTS App ID
+$ export TTS_APP_API_KEY="NNSXS.U..."                                             # TTS App API Key (needs `device` permissions)
+$ export TTS_APPLICATION_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"   # TTS Application Server URL Address
+$ export TTS_IDENTITY_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"      # TTS Identity Server URL Address
+$ export TTS_JOIN_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"          # TTS Join Server URL Address
+$ export TTS_NETWORK_SERVER_GRPC_ADDRESS="eu1.cloud.thethings.network:8884"       # TTS Network Server URL Address
+$ export TTS_CA_FILE="/path/to/ca.file"                                           # Path to a CA file (optional)
 ```
 
 ### Notes
@@ -203,9 +203,9 @@ To export a single device using its Device ID (e.g. `mydevice`):
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate device --source ttnv3 "mydevice" --dry-run --verbose > devices.json
+$ ttn-lw-migrate tts device 'mydevice' --dry-run --verbose > devices.json
 # export device
-$ ttn-lw-migrate device --source ttnv3 "mydevice" > devices.json
+$ ttn-lw-migrate tts device 'mydevice' > devices.json
 ```
 
 In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
@@ -222,9 +222,9 @@ And then export with:
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate devices --source ttnv3 "mydevice" --dry-run --verbose < device_ids.txt > devices.json
+$ ttn-lw-migrate tts devices 'mydevice' --dry-run --verbose < device_ids.txt > devices.json
 # export devices
-$ ttn-lw-migrate devices --source ttnv3 < device_ids.txt > devices.json
+$ ttn-lw-migrate tts devices < device_ids.txt > devices.json
 ```
 
 ### Export Applications
@@ -233,9 +233,9 @@ Similarly, to export all devices of application `my-app-id`:
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate application --source ttnv3 "my-app-id" --dry-run --verbose > devices.json
+$ ttn-lw-migrate tts application 'my-app-id' --dry-run --verbose > devices.json
 # export devices
-$ ttn-lw-migrate application --source ttnv3 "my-app-id" > devices.json
+$ ttn-lw-migrate tts application 'my-app-id' > devices.json
 ```
 
 ## Development Environment
@@ -293,16 +293,21 @@ This will compile binaries for all supported platforms, `deb`, `rpm`, Snapcraft 
 ### Release from master
 
 1. Create a `release/${version}` branch off the `master` branch.
+
 ```bash
 $ git checkout master
 $ git checkout -b release/${version}
 ```
+
 2. Update the `CHANGELOG.md` file as explained below:
+
 - Change the **Unreleased** section to the new version and add date obtained via `date +%Y-%m-%d` (e.g. `## [1.0.0] - 2020-10-18`)
+
   - Check if we didn't forget anything important
   - Remove empty subsections
   - Update the list of links in the bottom of the file
   - Add new **Unreleased** section:
+
     ```md
     ## [Unreleased]
 
@@ -318,12 +323,15 @@ $ git checkout -b release/${version}
 
     ### Security
     ```
+
 4. Create a pull request targeting `master`.
 5. Once this PR is approved and merged, checkout the latest `master` branch locally.
 6. Create a version tag, and push to GitHub:
+
 ```bash
 $ git tag -s -a "v${version}" -m "ttn-lw-migrate v${version}"
 $ git push origin "v${version}"
 ```
+
 7. CI will automatically start building and pushing to package managers. When this is done, you'll find a new release on the [releases page](https://github.com/TheThingsNetwork/lorawan-stack-migrate/releases).
 8. Edit the release notes on the GitHub releases page, typically copied from `CHANGELOG.md`.

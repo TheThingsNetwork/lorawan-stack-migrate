@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package version
+package export
+
+import "go.thethings.network/lorawan-stack/v3/pkg/errors"
 
 var (
-	// BuildDate is the date the binary was built. For release builds, this is set by goreleaser.
-	BuildDate = ""
-
-	// GitCommit is the commit from which the binary was built. For release builds, this is set by goreleaser.
-	GitCommit = ""
-
-	// Version is the binary version. For release builds, this is set by goreleaser.
-	Version = "dev"
+	errExport                = errors.Define("export", "export device `{device_id}`")
+	errFormat                = errors.DefineCorruption("format", "format device `{device_id}`")
+	errInvalidFields         = errors.DefineInvalidArgument("invalid_fields", "invalid fields for device `{device_id}`")
+	errDevIDExceedsMaxLength = errors.Define("dev_id_exceeds_max_length", "device ID `{id}` exceeds max length")
+	errAppIDExceedsMaxLength = errors.Define("app_id_exceeds_max_length", "application ID `{id}` exceeds max length")
 )
