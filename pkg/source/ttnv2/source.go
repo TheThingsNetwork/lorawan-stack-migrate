@@ -19,13 +19,16 @@ import (
 
 	ttnsdk "github.com/TheThingsNetwork/go-app-sdk"
 	ttntypes "github.com/TheThingsNetwork/ttn/core/types"
-	pbtypes "github.com/gogo/protobuf/types"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/networkserver/mac"
 	"go.thethings.network/lorawan-stack/v3/pkg/random"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
 // Source implements the Source interface.
@@ -82,8 +85,8 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 			JoinEui:  dev.AppEUI.Bytes(),
 		},
 		MacSettings: &ttnpb.MACSettings{
-			StatusTimePeriodicity:  pbtypes.DurationProto(0),
-			StatusCountPeriodicity: &pbtypes.UInt32Value{Value: 0},
+			StatusTimePeriodicity:  durationpb.New(0),
+			StatusCountPeriodicity: wrapperspb.UInt32(0),
 		},
 		Name:              dev.DevID,
 		Description:       dev.Description,
@@ -133,7 +136,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 			DevAddr:       dev.DevAddr.Bytes(),
 			LastFCntUp:    dev.FCntUp,
 			LastNFCntDown: dev.FCntDown,
-			StartedAt:     pbtypes.TimestampNow(),
+			StartedAt:     timestamppb.Now(),
 		}
 		if deviceSupportsJoin {
 			v3dev.Session.Keys.SessionKeyId = generateBytes(16)
