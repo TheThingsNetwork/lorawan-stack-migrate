@@ -37,8 +37,7 @@ func Source(sourceName, short string, opts ...Option) *cobra.Command {
 		WithShort(short),
 		WithPersistentPreRunE(SourcePersistentPreRunE()),
 		WithSubcommands(appCmd, devCmd),
-		// TODO: After dependency update (https://github.com/TheThingsNetwork/lorawan-stack-migrate/issues/72)
-		// Add to "sources" group.
+		WithGroupID("sources"),
 	)...)
 
 	return cmd
