@@ -22,13 +22,14 @@ import (
 	"time"
 
 	csapi "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
-	pbtypes "github.com/gogo/protobuf/types"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack/config"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -162,8 +163,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if svcProfile.DevStatusReqFreq > 0 {
 		// ChirpStack frequency is requests/day. TTS is time.Duration of interval
 		d := time.Duration(24) * time.Hour / time.Duration(svcProfile.DevStatusReqFreq)
-		dev.MacSettings.StatusTimePeriodicity = pbtypes.DurationProto(d)
-
+		dev.MacSettings.StatusTimePeriodicity = durationpb.New(d)
 	}
 
 	// Frequency Plan
@@ -237,7 +237,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if dev.SupportsClassB {
 		if devProfile.ClassBTimeout > 0 {
 			timeout := time.Duration(devProfile.ClassBTimeout) * time.Second
-			dev.MacSettings.ClassBTimeout = pbtypes.DurationProto(timeout)
+			dev.MacSettings.ClassBTimeout = durationpb.New(timeout)
 		}
 		// ChirpStack API returns 2^(seconds + 5)
 		dev.MacSettings.PingSlotPeriodicity = &ttnpb.PingSlotPeriodValue{
@@ -245,7 +245,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		}
 
 		if devProfile.PingSlotFreq > 0 {
-			dev.MacSettings.DesiredPingSlotFrequency = &ttnpb.FrequencyValue{
+			dev.MacSettings.DesiredPingSlotFrequency = &ttnpb.ZeroableFrequencyValue{
 				Value: uint64(devProfile.PingSlotFreq),
 			}
 		}
@@ -259,7 +259,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if dev.SupportsClassC {
 		if devProfile.ClassCTimeout > 0 {
 			timeout := time.Duration(devProfile.ClassCTimeout) * time.Second
-			dev.MacSettings.ClassCTimeout = pbtypes.DurationProto(timeout)
+			dev.MacSettings.ClassCTimeout = durationpb.New(timeout)
 		}
 	}
 
@@ -315,7 +315,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if p.ExportSession {
 		activation, err := p.getActivation(devEui)
 		if err == nil {
-			dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{}, StartedAt: pbtypes.TimestampNow()}
+			dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{}, StartedAt: timestamppb.Now()}
 
 			devAddr := &types.DevAddr{}
 			if err := devAddr.UnmarshalText([]byte(activation.DevAddr)); err != nil {
@@ -324,7 +324,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 			dev.Session.DevAddr = devAddr.Bytes()
 
 			// This cannot be empty
-			dev.Session.StartedAt = pbtypes.TimestampNow()
+			dev.Session.StartedAt = timestamppb.Now()
 
 			dev.Session.Keys.AppSKey = &ttnpb.KeyEnvelope{}
 			dev.Session.Keys.AppSKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, activation.AppSKey)

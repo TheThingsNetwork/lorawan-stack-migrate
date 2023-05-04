@@ -19,27 +19,68 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
+type SourceOptions struct {
+	opts, appOpts, devOpts []Option
+}
+
+// Extend merges respectable fields from src into s.
+func (s *SourceOptions) Extend(src SourceOptions) {
+	s.opts = append(s.opts, src.opts...)
+	s.appOpts = append(s.appOpts, src.appOpts...)
+	s.devOpts = append(s.devOpts, src.devOpts...)
+}
+
+// WithSourceOptions returns SourceOptions with opts field set to opts.
+func WithSourceOptions(opts ...Option) SourceOptions {
+	return SourceOptions{
+		opts: opts,
+	}
+}
+
+// WithApplicationOptions returns SourceOptions with appOpts field set to opts.
+func WithApplicationOptions(opts ...Option) SourceOptions {
+	return SourceOptions{
+		appOpts: opts,
+	}
+}
+
+// WithDevicesOptions returns SourceOptions with devOpts field set to opts.
+func WithDevicesOptions(opts ...Option) SourceOptions {
+	return SourceOptions{
+		devOpts: opts,
+	}
+}
+
 // Source returns a new source command.
-func Source(sourceName, short string, opts ...Option) *cobra.Command {
+func Source(sourceName, short string, opts ...SourceOptions) *cobra.Command {
 	fs, _ := source.FlagSet(sourceName)
 
-	appCmd := Application(
+	sourceOpts := new(SourceOptions)
+	for _, opt := range opts {
+		sourceOpts.Extend(opt)
+	}
+
+	defaults := []Option{
 		WithFlagSet(fs),
 		WithPersistentPreRunE(ExecuteParentPersistentPreRun),
+	}
+	appCmd := Application(
+		append(defaults, sourceOpts.appOpts...)...,
 	)
 	devCmd := Devices(
-		WithFlagSet(fs),
-		WithPersistentPreRunE(ExecuteParentPersistentPreRun),
+		append(defaults, sourceOpts.devOpts...)...,
 	)
 
-	cmd := New(append(opts,
-		WithUse(sourceName+" ..."),
+	defaults = []Option{
+		WithUse(sourceName + " ..."),
 		WithShort(short),
 		WithPersistentPreRunE(SourcePersistentPreRunE()),
 		WithSubcommands(appCmd, devCmd),
-		// TODO: After dependency update (https://github.com/TheThingsNetwork/lorawan-stack-migrate/issues/72)
-		// Add to "sources" group.
-	)...)
+		WithGroupID("sources"),
+	}
+	cmd := New(
+		append(defaults, sourceOpts.opts...)...,
+	)
 
 	return cmd
 }
@@ -59,7 +100,7 @@ func Application(opts ...Option) *cobra.Command {
 func Devices(opts ...Option) *cobra.Command {
 	defaultOpts := []Option{
 		WithUse("device ..."),
-		WithShort("Export devices by DevEUI"),
+		WithShort("Export devices by Device ID"),
 		WithAliases([]string{"end-devices", "end-device", "devices", "devs", "dev", "d"}),
 		WithRunE(ExportDevices()),
 	}

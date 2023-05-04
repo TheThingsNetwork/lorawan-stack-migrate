@@ -87,8 +87,10 @@ func init() {
 		"https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master",
 		"URL for fetching frequency plans")
 
-	// TODO: After dependency update (https://github.com/TheThingsNetwork/lorawan-stack-migrate/issues/72)
-	// Create "sources" group in `rootCmd`
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "sources",
+		Title: "Sources:",
+	})
 
 	rootCmd.AddCommand(ttnv2.TTNv2Cmd)
 	rootCmd.AddCommand(tts.TTSCmd)

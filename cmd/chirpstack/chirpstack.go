@@ -19,4 +19,9 @@ import "go.thethings.network/lorawan-stack-migrate/pkg/commands"
 const sourceName = "chirpstack"
 
 // ChirpStackCmd represents the chirpstack source.
-var ChirpStackCmd = commands.Source(sourceName, "Export devices from ChirpStack V3")
+var ChirpStackCmd = commands.Source(sourceName,
+	"Export devices from ChirpStack V3",
+	commands.WithDevicesOptions(
+		commands.WithShort("Export devices by DevEUI"),
+	),
+)

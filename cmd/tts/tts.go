@@ -21,5 +21,7 @@ const sourceName = "tts"
 // TTSCmd represents the tts source.
 var TTSCmd = commands.Source(sourceName,
 	"Export devices from The Things Stack",
-	commands.WithAliases([]string{"ttnv3"}),
+	commands.WithSourceOptions(
+		commands.WithAliases([]string{"ttnv3"}),
+	),
 )
