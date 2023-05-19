@@ -12,19 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package loriot
 
-import (
-	"os"
+import "go.thethings.network/lorawan-stack-migrate/pkg/commands"
 
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack" // ChirpStack source
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/loriot"     // LorIoT source
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv2"      // TTNv2 source
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/tts"        // TTS source
+const sourceName = "loriot"
 
-	"go.thethings.network/lorawan-stack-migrate/cmd"
-)
-
-func main() {
-	os.Exit(cmd.Execute())
-}
+var LoriotCmd = commands.Source(sourceName, "Export devices from Loriot")
