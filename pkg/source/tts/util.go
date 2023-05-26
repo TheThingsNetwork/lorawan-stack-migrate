@@ -16,6 +16,7 @@ package tts
 
 import (
 	"bytes"
+	"encoding/hex"
 	"strconv"
 	"strings"
 
@@ -51,7 +52,6 @@ func validateDeviceIds(a, b *ttnpb.EndDeviceIdentifiers) error {
 		{[]byte(a.DeviceId), []byte(b.DeviceId), "device_id"},
 		{a.DevEui, b.DevEui, "dev_eui"},
 		{a.JoinEui, b.JoinEui, "join_eui"},
-		{a.DevAddr, b.DevAddr, "dev_addr"},
 	}
 	if x, y := a.ApplicationIds, b.ApplicationIds; x != nil && y != nil {
 		pairs = append(pairs, pair{[]byte(x.ApplicationId), []byte(y.ApplicationId), "application_ids.application_id"})
@@ -67,7 +67,11 @@ func validateDeviceIds(a, b *ttnpb.EndDeviceIdentifiers) error {
 		if bytes.Equal(s.x, s.y) {
 			continue
 		}
-		return errDeviceIdentifiersMismatch.WithAttributes("field", s.name, "a", s.x, "b", s.y)
+		return errDeviceIdentifiersMismatch.WithAttributes(
+			"field", s.name,
+			"a", hex.EncodeToString(s.x),
+			"b", hex.EncodeToString(s.y),
+		)
 	}
 	return nil
 }
