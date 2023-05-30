@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Each source has it's own dedicated command.
+- Each source has its own dedicated command.
 
 ### Changed
 
@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Deprecated
 
-- `--source` flag is now depreciated.
+- `--source` flag is now deprecated.
 
 ### Removed
 
