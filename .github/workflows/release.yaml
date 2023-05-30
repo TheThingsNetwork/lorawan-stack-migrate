@@ -42,7 +42,7 @@ jobs:
     - name: Run Goreleaser
       uses: goreleaser/goreleaser-action@v4
       with:
-        version: 'v1.2.5'
+        version: 'v1.18.2'
         args: release --release-notes /tmp/release-notes.md
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
