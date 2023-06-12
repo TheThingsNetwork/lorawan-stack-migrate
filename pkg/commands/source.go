@@ -91,7 +91,7 @@ func Application(opts ...Option) *cobra.Command {
 		WithUse("application ..."),
 		WithShort("Export all devices of an application"),
 		WithAliases([]string{"applications", "apps", "app", "a"}),
-		WithRun(ExportApplication()),
+		WithRunE(ExportApplication()),
 	}
 	return New(append(defaultOpts, opts...)...)
 }

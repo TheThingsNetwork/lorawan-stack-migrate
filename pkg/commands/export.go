@@ -62,9 +62,9 @@ func Export(cmd *cobra.Command, args []string, f func(s source.Source, item stri
 	}
 }
 
-func ExportApplication() CobraRun {
-	return func(cmd *cobra.Command, args []string) {
-		Export(cmd, args, func(s source.Source, item string) error {
+func ExportApplication() CobraRunE {
+	return func(cmd *cobra.Command, args []string) error {
+		return Export(cmd, args, func(s source.Source, item string) error {
 			return s.RangeDevices(item, export.FromContext(cmd.Context()).ExportDev)
 		})
 	}
