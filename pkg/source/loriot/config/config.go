@@ -15,6 +15,9 @@
 package config
 
 import (
+	"flag"
+	"os"
+
 	"github.com/spf13/pflag"
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
@@ -26,9 +29,30 @@ func New() (*Config, *pflag.FlagSet) {
 		flags = new(pflag.FlagSet)
 	)
 
+	flags.StringVar(&cfg.APIKey,
+		"api-key",
+		os.Getenv("API_KEY"),
+		"Loriot API Key")
+	flags.StringVar(&cfg.URL, "api-url",
+		os.Getenv("API_URL"),
+		"Loriot API URL")
+	flags.StringVar(&cfg.AppID,
+		"app-id",
+		os.Getenv("APP_ID"),
+		"Loriot APP ID")
+	flag.BoolVar(&cfg.Insecure,
+		"api-insecure",
+		os.Getenv("API_INSECURE") == "1",
+		"Do not connect to Loriot over TLS")
+
 	return cfg, flags
 }
 
 type Config struct {
 	source.Config
+
+	APIKey, URL string
+	Insecure    bool
+
+	AppID string
 }
