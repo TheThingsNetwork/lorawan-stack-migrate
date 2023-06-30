@@ -14,10 +14,18 @@
 
 package loriot
 
-import "go.thethings.network/lorawan-stack-migrate/pkg/source"
+import (
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/loriot/api"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/loriot/config"
+)
 
 func init() {
 	cfg, flags := config.New()
+
+	api.SetURLPrefix(cfg.Insecure)
+	api.SetAPIURL(cfg.URL)
+	api.SetAPIKey(cfg.APIKey)
 
 	source.RegisterSource(source.Registration{
 		Name:        "loriot",
