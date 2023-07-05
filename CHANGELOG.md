@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Each source has its own dedicated command.
+- End Device Claim Authentication Codes are exported only if `--export-cacs` is set.
 
 ### Changed
 
@@ -21,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Removed
 
 ### Fixed
+
+- Wrong flag name `appplication-server-grpc-address` fixed to `application-server-grpc-address`.
 
 ### Security
 
