@@ -48,7 +48,13 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		return nil, errNoAppID.New()
 	}
 
-	isPaths, nsPaths, asPaths, jsPaths := splitEndDeviceGetPaths(ttnpb.BottomLevelFields(ttnpb.EndDeviceFieldPathsNested)...)
+	basePaths := ttnpb.EndDeviceFieldPathsNested
+
+	if !s.config.ExportCACs {
+		basePaths = ttnpb.ExcludeFields(basePaths, claimAuthenticationCodePaths...)
+	}
+
+	isPaths, nsPaths, asPaths, jsPaths := splitEndDeviceGetPaths(ttnpb.BottomLevelFields(basePaths)...)
 	if len(nsPaths) > 0 {
 		isPaths = ttnpb.AddFields(isPaths, "network_server_address")
 	}
@@ -73,7 +79,7 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if err != nil {
 		return nil, err
 	}
-	if dev.ClaimAuthenticationCode.GetValue() != "" {
+	if dev.ClaimAuthenticationCode.GetValue() != "" || !s.config.ExportCACs {
 		// ClaimAuthenticationCode is already retrieved from the IS. We can unset the related JS paths
 		jsPaths = ttnpb.ExcludeFields(jsPaths, claimAuthenticationCodePaths...)
 	}

@@ -98,7 +98,7 @@ func New() (*Config, *pflag.FlagSet) {
 		os.Getenv("TTS_DEFAULT_GRPC_ADDRESS"),
 		"TTS default GRPC Address (optional)")
 	flags.StringVar(&config.ServerConfig.ApplicationServerGRPCAddress,
-		"appplication-server-grpc-address",
+		"application-server-grpc-address",
 		os.Getenv("TTS_APPLICATION_SERVER_GRPC_ADDRESS"),
 		"TTS Application Server GRPC Address")
 	flags.StringVar(&config.ServerConfig.IdentityServerGRPCAddress,
@@ -123,6 +123,12 @@ func New() (*Config, *pflag.FlagSet) {
 		false,
 		"TTS delete exported devices")
 
+	flags.BoolVar(&config.ExportCACs,
+		"export-cacs",
+		false,
+		"Export Claim Authentication Codes (CAC)",
+	)
+
 	return config, flags
 }
 
@@ -131,11 +137,14 @@ type Config struct {
 
 	ServerConfig *serverConfig
 
-	caPath, appAPIKey,
-	AppID string
+	insecure  bool
+	caPath    string
+	appAPIKey string
 
-	insecure, NoSession,
+	ExportCACs         bool
+	NoSession          bool
 	DeleteSourceDevice bool
+	AppID              string
 }
 
 func (c *Config) Initialize(rootConfig source.Config) error {
