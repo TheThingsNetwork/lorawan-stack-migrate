@@ -32,7 +32,11 @@ type Source struct {
 
 func createNewSource(cfg *config.Config) source.CreateSource {
 	return func(ctx context.Context, rootCfg source.Config) (source.Source, error) {
-		return Source{}, nil
+		api.SetURLPrefix(cfg.Insecure)
+		api.SetAPIURL(cfg.URL)
+		api.SetAPIKey(cfg.APIKey)
+
+		return Source{Config: cfg}, nil
 	}
 }
 

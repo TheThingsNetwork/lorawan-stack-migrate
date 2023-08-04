@@ -15,7 +15,6 @@
 package config
 
 import (
-	"flag"
 	"os"
 
 	"github.com/spf13/pflag"
@@ -31,18 +30,18 @@ func New() (*Config, *pflag.FlagSet) {
 
 	flags.StringVar(&cfg.APIKey,
 		"api-key",
-		os.Getenv("API_KEY"),
+		os.Getenv("LORIOT_API_KEY"),
 		"Loriot API Key")
 	flags.StringVar(&cfg.URL, "api-url",
-		os.Getenv("API_URL"),
+		os.Getenv("LORIOT_API_URL"),
 		"Loriot API URL")
 	flags.StringVar(&cfg.AppID,
 		"app-id",
-		os.Getenv("APP_ID"),
+		os.Getenv("LORIOT_APP_ID"),
 		"Loriot APP ID")
-	flag.BoolVar(&cfg.Insecure,
-		"api-insecure",
-		os.Getenv("API_INSECURE") == "1",
+	flags.BoolVar(&cfg.Insecure,
+		"insecure",
+		os.Getenv("LORIOT_INSECURE") == "1",
 		"Do not connect to Loriot over TLS")
 
 	return cfg, flags

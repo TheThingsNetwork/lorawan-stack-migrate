@@ -41,8 +41,8 @@ func SetURLPrefix(insecure bool) {
 }
 
 func SetAPIURL(url string) {
-	if len(strings.Split(url, "://")) <= 1 {
-		url = urlPrefix + url
+	if s := strings.Split(url, "://"); len(s) > 1 {
+		url = strings.Join(s[1:], "")
 	}
 	apiURL = url
 }
@@ -52,7 +52,15 @@ func SetAPIKey(key string) {
 }
 
 func NewRequest(method, path string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(method, apiURL+path, body)
+	switch {
+	case apiURL == "":
+		return nil, errNoAPIURL.New()
+
+	case apiKey == "":
+		return nil, errNoAPIKey.New()
+	}
+
+	req, err := http.NewRequest(method, urlPrefix+apiURL+path, body)
 	if err != nil {
 		return nil, err
 	}
@@ -142,6 +150,10 @@ func GetPaginatedDevices(appID string, page int) (*PaginatedDevices, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if sc := resp.StatusCode; sc < 200 || sc >= 300 {
+		return nil, errInvalidStatusCode.WithAttributes("code", sc)
+	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
