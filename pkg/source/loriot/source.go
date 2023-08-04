@@ -22,7 +22,6 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/loriot/api"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/loriot/config"
-	"go.thethings.network/lorawan-stack/v3/pkg/errors"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 )
@@ -51,7 +50,7 @@ func unmarshalTextToBytes(
 // ExportDevice implements the source.Source interface.
 func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if s.Config.AppID == "" {
-		return nil, errors.New("no app id")
+		return nil, errNoAppID.New()
 	}
 
 	dev := new(ttnpb.EndDevice)
@@ -114,7 +113,7 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		dev.LorawanPhyVersion = ttnpb.PHYVersion_RP001_V1_1_REV_B
 
 	default:
-		return nil, errors.New("invalid lorawan version {version}").WithAttributes("version", v)
+		return nil, errInvalidLorawanVersion.WithAttributes("version", v).New()
 	}
 
 	// Join (OTAA/ABP)
