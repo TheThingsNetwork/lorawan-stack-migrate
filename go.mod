@@ -12,7 +12,7 @@ require (
 	github.com/apex/log v1.9.0
 	github.com/brocaar/chirpstack-api/go/v3 v3.12.5
 	github.com/mdempsky/unconvert v0.0.0-20230125054757-2661c2c99a9b
-	github.com/mgechev/revive v1.3.3
+	github.com/mgechev/revive v1.3.4
 	github.com/smartystreets/assertions v1.13.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
@@ -39,7 +39,7 @@ require (
 	github.com/brocaar/lorawan v0.0.0-20170626123636-a64aca28516d // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/chavacava/garif v0.0.0-20230608123814-4bd63c2919ab // indirect
+	github.com/chavacava/garif v0.1.0 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/eclipse/paho.mqtt.golang v1.4.2 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.0.2 // indirect
@@ -98,15 +98,15 @@ require (
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	gocloud.dev v0.29.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
-	golang.org/x/tools v0.12.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/tools v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.122.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
