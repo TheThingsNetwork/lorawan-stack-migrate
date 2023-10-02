@@ -40,7 +40,7 @@ jobs:
           const tagParts = tag.split('.');
           require('fs').writeFileSync('/tmp/release-notes.md', `[Release notes](https://github.com/TheThingsNetwork/lorawan-stack-migrate/blob/${tag}/CHANGELOG.md#${tagParts[0]}${tagParts[1]}${tagParts[2]}---${{ steps.date.outputs.value }})`);
     - name: Run Goreleaser
-      uses: goreleaser/goreleaser-action@v4
+      uses: goreleaser/goreleaser-action@v5
       with:
         version: 'v1.18.2'
         args: release --release-notes /tmp/release-notes.md
