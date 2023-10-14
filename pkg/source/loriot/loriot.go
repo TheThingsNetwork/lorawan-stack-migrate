@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package loriot
 
 import (
-	"os"
-
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack" // ChirpStack source
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/loriot"     // LorIoT source
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv2"      // TTNv2 source
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/tts"        // TTS source
-
-	"go.thethings.network/lorawan-stack-migrate/cmd"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/loriot/config"
 )
 
-func main() {
-	os.Exit(cmd.Execute())
+func init() {
+	cfg, flags := config.New()
+
+	source.RegisterSource(source.Registration{
+		Name:        "loriot",
+		Description: "Migrate from Loriot LoRaWAN Network Server",
+		FlagSet:     flags,
+		Create:      createNewSource(cfg),
+	})
 }
