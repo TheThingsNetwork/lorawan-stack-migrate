@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Wrong flag name `appplication-server-grpc-address` fixed to `application-server-grpc-address`.
+- `--ttnv3.no-session` no longer keeps the end device device address.
 
 ### Security
 

@@ -110,9 +110,10 @@ func updateDeviceTimestamps(dev, src *ttnpb.EndDevice) {
 func clearDeviceSession(dev *ttnpb.EndDevice) error {
 	return dev.SetFields(nil,
 		"activated_at",
-		"mac_state",
+		"ids.dev_addr",
 		"last_dev_status_received_at",
 		"last_seen_at",
+		"mac_state",
 		"pending_mac_state",
 		"pending_session",
 		"session",
