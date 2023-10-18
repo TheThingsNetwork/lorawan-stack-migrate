@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [v0.9.0] (2023-10-18)
+
+### Added
+
+- `tts` source to migrate devices between TTS instances.
+- `--tts.no-session` and `--tts.delete-source-device` flags.
 - Each source has its own dedicated command.
 - End Device Claim Authentication Codes are exported only if `--export-cacs` is set.
 
@@ -19,28 +35,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - `--source` flag is now deprecated.
 
-### Removed
-
 ### Fixed
 
-- Wrong flag name `appplication-server-grpc-address` fixed to `application-server-grpc-address`.
-- `--ttnv3.no-session` no longer keeps the end device device address.
-
-### Security
-
-## [v0.9.0]
-
-### Added
-
-- `ttnv3` source to migrate devices between TTS instances.
-- `--ttnv3.no-session` and `--ttnv3.delete-source-device` flags.
-
-### Fixed
-
-- `app-id` flag/variable is no longer needed when calling `application` command with `ttnv2` and `ttnv3` sources.
+- `app-id` flag/variable is no longer needed when calling `application` command with `ttnv2` and `tts` sources.
 - `application` command no longer panics when called with a different `app-id` argument than set with flag/variable.
-- Using `--ttnv3.no-session` flag will no longer crash.
+- Using `--tts.no-session` flag will no longer crash.
 - End Device Identifiers are now exported from all available servers.
+- Wrong flag name `appplication-server-grpc-address` fixed to `application-server-grpc-address`.
+- `--tts.no-session` no longer keeps the end device device address.
 
 ## [v0.8.1] (2021-10-12)
 
