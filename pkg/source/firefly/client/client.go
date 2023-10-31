@@ -94,6 +94,7 @@ func (c *Client) do(resource, method string, body []byte, params string) ([]byte
 	logger := c.logger.With("url", url)
 	logger.Debug("Request resource")
 	req, err := http.NewRequest(method, url, bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -134,6 +135,21 @@ func (c *Client) GetDeviceByEUI(eui string) (*Device, error) {
 	return &wrapper.Device, nil
 }
 
+// UpdateDevice updates the device.
+func (c *Client) UpdateDeviceByEUI(eui string, dev Device) error {
+	wrapper := struct {
+		Device Device `json:"device"`
+	}{
+		Device: dev,
+	}
+	body, err := json.Marshal(wrapper)
+	if err != nil {
+		return err
+	}
+	_, err = c.do(fmt.Sprintf("devices/eui/%s", eui), http.MethodPut, body, "")
+	return err
+}
+
 // GetLastPacket gets the last packet for a device.
 func (c *Client) GetLastPacket(eui string) (*Packet, error) {
 	body, err := c.do(fmt.Sprintf("devices/eui/%s/packets", eui), http.MethodGet, nil, "limit_to_last=1")
@@ -147,16 +163,6 @@ func (c *Client) GetLastPacket(eui string) (*Packet, error) {
 		return nil, err
 	}
 	return &wrapper.Packet, nil
-}
-
-// UpdateDevice updates the device.
-func (c *Client) UpdateDevice(eui string, dev Device) error {
-	var body bytes.Buffer
-	if err := json.NewEncoder(&body).Encode(dev); err != nil {
-		return err
-	}
-	_, err := c.do(fmt.Sprintf("devices/eui/%s/packets", eui), http.MethodPost, body.Bytes(), "")
-	return err
 }
 
 // GetAllDevices gets all devices that the API key has access to.

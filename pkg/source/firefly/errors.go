@@ -23,4 +23,7 @@ var (
 	errNoJoinEUI         = errors.DefineInvalidArgument("no_join_eui", "no join eui")
 	errNoDeviceFound     = errors.DefineInvalidArgument("no_device_found", "no device with eui `{eui}` found")
 	errNoFrequencyPlanID = errors.DefineInvalidArgument("no_frequency_plan_id", "no frequency plan ID")
+	errNoMACVersion      = errors.DefineInvalidArgument("no_mac_version", "no MAC version")
+	errInvalidPHYVersion = errors.DefineInvalidArgument("invalid_phy_version", "invalid PHY version `{phy_version}`")
+	errInvalidMACVersion = errors.DefineInvalidArgument("invalid_mac_version", "invalid MAC version `{mac_version}`")
 )

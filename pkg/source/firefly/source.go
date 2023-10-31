@@ -21,6 +21,7 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
@@ -76,8 +77,10 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 			StatusCountPeriodicity:     wrapperspb.UInt32(0),
 			StatusTimePeriodicity:      durationpb.New(0),
 		},
-		SupportsClassC: ffdev.ClassC,
-		SupportsJoin:   ffdev.ApplicationKey != "",
+		SupportsClassC:    ffdev.ClassC,
+		SupportsJoin:      ffdev.ApplicationKey != "",
+		LorawanVersion:    s.derivedMacVersion,
+		LorawanPhyVersion: s.derivedPhyVersion,
 	}
 
 	if ffdev.Location != nil {
@@ -107,18 +110,34 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 	}
 	hasSession := ffdev.Address != "" && ffdev.NetworkSessionKey != "" && ffdev.ApplicationSessionKey != ""
 	if hasSession || !v3dev.SupportsJoin {
-		v3dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, NwkSEncKey: &ttnpb.KeyEnvelope{}}}
+		v3dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, FNwkSIntKey: &ttnpb.KeyEnvelope{}}}
 		v3dev.Session.DevAddr, err = unmarshalTextToBytes(&types.DevAddr{}, ffdev.Address)
 		if err != nil {
 			return nil, err
 		}
+		// This cannot be empty
+		v3dev.Session.StartedAt = timestamppb.Now()
+
 		v3dev.Session.Keys.AppSKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationSessionKey)
 		if err != nil {
 			return nil, err
 		}
-		v3dev.Session.Keys.NwkSEncKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.NetworkSessionKey)
+		v3dev.Session.Keys.FNwkSIntKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.NetworkSessionKey)
 		if err != nil {
 			return nil, err
+		}
+		switch v3dev.LorawanVersion {
+		case ttnpb.MACVersion_MAC_V1_1:
+			v3dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
+			v3dev.Session.Keys.NwkSEncKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationSessionKey)
+			if err != nil {
+				return nil, err
+			}
+			v3dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
+			v3dev.Session.Keys.SNwkSIntKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.NetworkSessionKey)
+			if err != nil {
+				return nil, err
+			}
 		}
 		v3dev.Session.LastAFCntDown = uint32(ffdev.FrameCounter)
 		v3dev.Session.LastNFCntDown = uint32(ffdev.FrameCounter)
@@ -131,10 +150,10 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 
 	if !s.src.DryRun {
 		logger.Debugw("Increment the last byte of the device keys", "device_id", ffdev.Name, "device_eui", ffdev.EUI)
-		// Increment the last byte of the AppKey and AppSKey.
+		// Increment the last byte of the device keys.
 		// This makes it easier to rollback a migration if needed.
-		updated := ffdev.WithIncrementKeys()
-		err := s.client.UpdateDevice(devEUI, updated)
+		updated := ffdev.WithIncrementedKeys()
+		err := s.client.UpdateDeviceByEUI(devEUI, updated)
 		if err != nil {
 			return nil, err
 		}

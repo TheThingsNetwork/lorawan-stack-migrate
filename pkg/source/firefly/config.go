@@ -22,17 +22,20 @@ import (
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/client"
+	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 )
 
 type Config struct {
 	client.Config
-
 	src source.Config
 
 	appID           string
 	frequencyPlanID string
 	joinEUI         string
 	macVersion      string
+
+	derivedMacVersion ttnpb.MACVersion
+	derivedPhyVersion ttnpb.PHYVersion
 
 	flags *pflag.FlagSet
 }
@@ -99,6 +102,35 @@ func (c *Config) Initialize() error {
 	if c.frequencyPlanID == "" {
 		return errNoFrequencyPlanID.New()
 	}
+	if c.macVersion == "" {
+		return errNoMACVersion.New()
+	}
+	switch c.macVersion {
+	case "1.0.0":
+		c.derivedMacVersion = ttnpb.MACVersion_MAC_V1_0
+		c.derivedPhyVersion = ttnpb.PHYVersion_TS001_V1_0
+	case "1.0.1":
+		c.derivedMacVersion = ttnpb.MACVersion_MAC_V1_0_1
+		c.derivedPhyVersion = ttnpb.PHYVersion_TS001_V1_0_1
+	case "1.0.2a":
+		c.derivedMacVersion = ttnpb.MACVersion_MAC_V1_0_2
+		c.derivedPhyVersion = ttnpb.PHYVersion_RP001_V1_0_2
+	case "1.0.2b":
+		c.derivedMacVersion = ttnpb.MACVersion_MAC_V1_0_2
+		c.derivedPhyVersion = ttnpb.PHYVersion_RP001_V1_0_2_REV_B
+	case "1.0.3":
+		c.derivedMacVersion = ttnpb.MACVersion_MAC_V1_0_3
+		c.derivedPhyVersion = ttnpb.PHYVersion_RP001_V1_0_3_REV_A
+	case "1.1.0a":
+		c.derivedMacVersion = ttnpb.MACVersion_MAC_V1_1
+		c.derivedPhyVersion = ttnpb.PHYVersion_RP001_V1_1_REV_A
+	case "1.1.0b":
+		c.derivedMacVersion = ttnpb.MACVersion_MAC_V1_1
+		c.derivedPhyVersion = ttnpb.PHYVersion_RP001_V1_1_REV_B
+	default:
+		return errInvalidMACVersion.WithAttributes("mac_version", c.macVersion)
+	}
+
 	return nil
 }
 

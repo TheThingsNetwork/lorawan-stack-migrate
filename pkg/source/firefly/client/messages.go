@@ -24,32 +24,32 @@ type Location struct {
 
 // Device is a Firefly device.
 type Device struct {
-	Address               string    `json:"address"`
-	AdrLimit              int       `json:"adr_limit"`
-	ApplicationKey        string    `json:"application_key"`
-	ApplicationSessionKey string    `json:"application_session_key"`
-	ClassC                bool      `json:"class_c"`
-	Deduplicate           bool      `json:"deduplicate"`
-	Description           string    `json:"description"`
-	DeviceClassID         int       `json:"device_class_id"`
-	EUI                   string    `json:"eui"`
-	FrameCounter          int       `json:"frame_counter"`
-	InsertedAt            string    `json:"inserted_at"`
-	Location              *Location `json:"location"`
-	Name                  string    `json:"name"`
-	NetworkSessionKey     string    `json:"network_session_key"`
-	OTAA                  bool      `json:"otaa"`
-	OrganizationID        int       `json:"organization_id"`
-	OverrideLocation      bool      `json:"override_location"`
-	Region                string    `json:"region"`
-	Rx2DataRate           int       `json:"rx2_data_rate"`
-	SkipFCntCheck         bool      `json:"skip_fcnt_check"`
-	Tags                  []string  `json:"tags"`
-	UpdatedAt             string    `json:"updated_at"`
+	Address               string    `json:"address,omitempty"`
+	AdrLimit              int       `json:"adr_limit,omitempty"`
+	ApplicationKey        string    `json:"application_key,omitempty"`
+	ApplicationSessionKey string    `json:"application_session_key,omitempty"`
+	ClassC                bool      `json:"class_c,omitempty"`
+	Deduplicate           bool      `json:"deduplicate,omitempty"`
+	Description           string    `json:"description,omitempty"`
+	DeviceClassID         int       `json:"device_class_id,omitempty"`
+	EUI                   string    `json:"eui,omitempty"`
+	FrameCounter          int       `json:"frame_counter,omitempty"`
+	InsertedAt            string    `json:"inserted_at,omitempty"`
+	Location              *Location `json:"location,omitempty"`
+	Name                  string    `json:"name,omitempty"`
+	NetworkSessionKey     string    `json:"network_session_key,omitempty"`
+	OTAA                  bool      `json:"otaa,omitempty"`
+	OrganizationID        int       `json:"organization_id,omitempty"`
+	OverrideLocation      bool      `json:"override_location,omitempty"`
+	Region                string    `json:"region,omitempty"`
+	Rx2DataRate           int       `json:"rx2_data_rate,omitempty"`
+	SkipFCntCheck         bool      `json:"skip_fcnt_check,omitempty"`
+	Tags                  []string  `json:"tags,omitempty"`
+	UpdatedAt             string    `json:"updated_at,omitempty"`
 }
 
-// WithIncrementKeys returns the device with last byte of AppKey and AppSKey incremented by one.
-func (d Device) WithIncrementKeys() Device {
+// WithIncrementedKeys returns the device with last byte of the keys incremented.
+func (d Device) WithIncrementedKeys() Device {
 	var ret Device
 	// Increment last byte of AppKey and AppSKey
 	if d.ApplicationKey != "" {
@@ -68,6 +68,15 @@ func (d Device) WithIncrementKeys() Device {
 		k[len(k)-1]++
 		ret.ApplicationSessionKey = hex.EncodeToString(k)
 	}
+	if d.NetworkSessionKey != "" {
+		k, err := hex.DecodeString(d.NetworkSessionKey)
+		if err != nil {
+			panic(err)
+		}
+		k[len(k)-1]++
+		ret.NetworkSessionKey = hex.EncodeToString(k)
+	}
+
 	return ret
 }
 
