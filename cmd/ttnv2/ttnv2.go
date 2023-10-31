@@ -14,7 +14,10 @@
 
 package ttnv2
 
-import "go.thethings.network/lorawan-stack-migrate/pkg/commands"
+import (
+	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
+	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/ttnv2"
+)
 
 const sourceName = "ttnv2"
 

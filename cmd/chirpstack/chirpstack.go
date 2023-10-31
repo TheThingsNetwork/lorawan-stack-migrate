@@ -14,7 +14,10 @@
 
 package chirpstack
 
-import "go.thethings.network/lorawan-stack-migrate/pkg/commands"
+import (
+	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
+	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack"
+)
 
 const sourceName = "chirpstack"
 
