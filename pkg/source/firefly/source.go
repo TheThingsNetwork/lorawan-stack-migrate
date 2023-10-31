@@ -18,6 +18,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/TheThingsNetwork/go-utils/random"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -78,7 +79,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 			StatusTimePeriodicity:      durationpb.New(0),
 		},
 		SupportsClassC:    ffdev.ClassC,
-		SupportsJoin:      ffdev.ApplicationKey != "",
+		SupportsJoin:      ffdev.OTAA,
 		LorawanVersion:    s.derivedMacVersion,
 		LorawanPhyVersion: s.derivedPhyVersion,
 	}
@@ -109,6 +110,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		}
 	}
 	hasSession := ffdev.Address != "" && ffdev.NetworkSessionKey != "" && ffdev.ApplicationSessionKey != ""
+
 	if hasSession || !v3dev.SupportsJoin {
 		v3dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, FNwkSIntKey: &ttnpb.KeyEnvelope{}}}
 		v3dev.Session.DevAddr, err = unmarshalTextToBytes(&types.DevAddr{}, ffdev.Address)
@@ -117,6 +119,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		}
 		// This cannot be empty
 		v3dev.Session.StartedAt = timestamppb.Now()
+		v3dev.Session.Keys.SessionKeyId = random.Bytes(16)
 
 		v3dev.Session.Keys.AppSKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationSessionKey)
 		if err != nil {
@@ -139,13 +142,15 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 				return nil, err
 			}
 		}
-		v3dev.Session.LastAFCntDown = uint32(ffdev.FrameCounter)
-		v3dev.Session.LastNFCntDown = uint32(ffdev.FrameCounter)
+
+		// Set FrameCounters
 		packet, err := s.client.GetLastPacket(devEUI)
 		if err != nil {
 			return nil, err
 		}
 		v3dev.Session.LastFCntUp = uint32(packet.FCnt)
+		v3dev.Session.LastAFCntDown = uint32(ffdev.FrameCounter)
+		v3dev.Session.LastNFCntDown = uint32(ffdev.FrameCounter)
 	}
 
 	if !s.src.DryRun {

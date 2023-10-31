@@ -80,7 +80,7 @@ func (d Device) WithIncrementedKeys() Device {
 	return ret
 }
 
-// Packet is a LoRaWAN packet.
+// Packet is a LoRaWAN uplink packet.
 type Packet struct {
 	FCnt int `json:"fcnt"`
 }
