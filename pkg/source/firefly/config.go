@@ -3,84 +3,110 @@ package firefly
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/api"
 )
 
-type config struct {
+type Config struct {
+	source.Config
+
 	apiKey string
 	apiURL string
+	caPath string
 
 	appID           string
 	frequencyPlanID string
 	joinEUI         string
 	macVersion      string
 
+	verbose     bool
 	dryRun      bool
 	withSession bool
+
+	flags *pflag.FlagSet
+}
+
+// New
+func New() *Config {
+	config := &Config{
+		flags: &pflag.FlagSet{},
+	}
+	config.flags.StringVar(&config.appID,
+		"app-id",
+		os.Getenv("FIREFLY_APP_ID"),
+		"Firefly application ID")
+	config.flags.StringVar(&config.apiURL,
+		"api-url",
+		os.Getenv("FIREFLY_API_URL"),
+		"URL of the Firefly API")
+	config.flags.StringVar(&config.apiKey,
+		"api-key",
+		os.Getenv("FIREFLY_API_KEY"),
+		"Key to access the Firefly API")
+	config.flags.StringVar(&config.joinEUI,
+		"join-eui",
+		os.Getenv("JOIN_EUI"),
+		"JoinEUI for the exported devices")
+	config.flags.StringVar(&config.joinEUI,
+		"frequency-plan-id",
+		os.Getenv("FREQUENCY_PLAN_ID"),
+		"Frequency Plan ID for the exported devices")
+	config.flags.StringVar(&config.joinEUI,
+		"mac-version",
+		os.Getenv("MAC_VERSION"),
+		"MAC version for the exported devices")
+
+	config.verbose, _ = config.flags.GetBool("verbose")
+	config.dryRun, _ = config.flags.GetBool("dry-run")
+	config.withSession, _ = config.flags.GetBool("with-session")
+
+	return config
 }
 
 var logger *zap.SugaredLogger
 
-func flagSet() *pflag.FlagSet {
-	flags := &pflag.FlagSet{}
-	flags.String(flagWithPrefix("app-id"), os.Getenv("FIREFLY_APP_ID"), "Firefly app ID")
-	flags.String(flagWithPrefix("api-url"), os.Getenv("FIREFLY_API_URL"), "Firefly API URL")
-	flags.String(flagWithPrefix("api-key"), os.Getenv("FIREFLY_API_KEY"), "Firefly API key")
-	flags.String(flagWithPrefix("ca-file"), os.Getenv("FIREFLY_CA_FILE"), "Firefly CA file for TLS (optional)")
-	flags.String(flagWithPrefix("join-eui"), os.Getenv("JOIN_EUI"), "JoinEUI of exported devices")
-	return flags
-}
-
-func getConfig(flags *pflag.FlagSet) (*config, error) {
-	stringFlag := func(n string) string {
-		f, _ := flags.GetString(n)
-		return f
-	}
-	boolFlag := func(n string) bool {
-		f, _ := flags.GetBool(n)
-		return f
-	}
-
+// Initialize the configuration.
+func (c *Config) Initialize() error {
 	cfg := zap.NewProductionConfig()
-	if boolFlag("verbose") {
+	if c.verbose {
 		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	}
 	zapLogger, err := cfg.Build()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	logger = zapLogger.Sugar()
 	api.SetLogger(logger)
-	appID := stringFlag(flagWithPrefix("app-id"))
-	if appID == "" {
-		return nil, errNoAppID
+
+	if c.appID == "" {
+		return errNoAppID.New()
 	}
-	apiURL := stringFlag(flagWithPrefix("api-url"))
-	if apiURL == "" {
-		return nil, errNoAPIURL
+	if c.apiURL == "" {
+		return errNoAPIURL.New()
 	}
-	api.SetApiURL(apiURL)
-	apiKey := stringFlag(flagWithPrefix("api-key"))
-	if apiKey == "" {
-		return nil, errNoAPIKEY
+	api.SetApiURL(c.apiURL)
+	if c.apiKey == "" {
+		return errNoAPIKEY.New()
 	}
-	api.SetAuth(apiKey)
-	joinEUI := stringFlag(flagWithPrefix("join-eui"))
-	if joinEUI == "" {
-		return nil, errNoJoinEUI
+	api.SetAuth(c.apiKey)
+	if c.joinEUI == "" {
+		return errNoJoinEUI.New()
 	}
+	if c.frequencyPlanID == "" {
+		return errNoFrequencyPlanID.New()
+	}
+
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{}
-	if caPath := stringFlag(flagWithPrefix("ca-file")); caPath != "" {
-		pemBytes, err := os.ReadFile(caPath)
+	if c.caPath != "" {
+		pemBytes, err := os.ReadFile(c.caPath)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		rootCAs := http.DefaultTransport.(*http.Transport).TLSClientConfig.RootCAs
 		if rootCAs == nil {
@@ -92,17 +118,11 @@ func getConfig(flags *pflag.FlagSet) (*config, error) {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig.RootCAs = rootCAs
 		api.UseTLS(true)
 	}
-	return &config{
-		apiKey: apiKey,
-		apiURL: apiURL,
 
-		appID:   appID,
-		joinEUI: joinEUI,
-
-		dryRun: boolFlag("dry-run"),
-	}, nil
+	return nil
 }
 
-func flagWithPrefix(flag string) string {
-	return fmt.Sprint("firefly.", flag)
+// Flags returns the flags for the configuration.
+func (c *Config) Flags() *pflag.FlagSet {
+	return c.flags
 }

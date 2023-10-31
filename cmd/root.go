@@ -20,6 +20,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/cmd/chirpstack"
+	"go.thethings.network/lorawan-stack-migrate/cmd/firefly"
 	"go.thethings.network/lorawan-stack-migrate/cmd/ttnv2"
 	"go.thethings.network/lorawan-stack-migrate/cmd/tts"
 	"go.thethings.network/lorawan-stack-migrate/pkg/export"
@@ -95,4 +96,5 @@ func init() {
 	rootCmd.AddCommand(ttnv2.TTNv2Cmd)
 	rootCmd.AddCommand(tts.TTSCmd)
 	rootCmd.AddCommand(chirpstack.ChirpStackCmd)
+	rootCmd.AddCommand(firefly.FireflyCmd)
 }

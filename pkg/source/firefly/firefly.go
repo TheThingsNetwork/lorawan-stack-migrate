@@ -5,10 +5,12 @@ import (
 )
 
 func init() {
+	cfg := New()
+
 	source.RegisterSource(source.Registration{
 		Name:        "firefly",
 		Description: "Migrate from Digimondo's Firefly",
-		FlagSet:     flagSet(),
-		Create:      NewSource,
+		FlagSet:     cfg.Flags(),
+		Create:      createNewSource(cfg),
 	})
 }

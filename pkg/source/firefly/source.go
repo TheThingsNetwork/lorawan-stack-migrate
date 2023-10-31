@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	pbtypes "github.com/gogo/protobuf/types"
-	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/api"
@@ -15,22 +15,22 @@ import (
 )
 
 type Source struct {
-	ctx context.Context
+	*Config
 
-	config *config
+	ctx context.Context
 }
 
-// NewSource creates a ner Firefly source
-func NewSource(ctx context.Context, flags *pflag.FlagSet) (source.Source, error) {
-	config, err := getConfig(flags)
-	if err != nil {
-		return Source{}, err
+func createNewSource(cfg *Config) source.CreateSource {
+	return func(ctx context.Context, src source.Config) (source.Source, error) {
+		cfg.Config = src
+		if err := cfg.Initialize(); err != nil {
+			return nil, err
+		}
+		return Source{
+			ctx:    ctx,
+			Config: cfg,
+		}, nil
 	}
-	return Source{
-		ctx: ctx,
-
-		config: config,
-	}, nil
 }
 
 // ExportDevice implements the source.Source interface.
@@ -43,16 +43,16 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		Name:        ffdev.Name,
 		Description: ffdev.Description,
 		// Formatters:      &ttnpb.MessagePayloadFormatters{},
-		FrequencyPlanId: s.config.frequencyPlanID,
+		FrequencyPlanId: s.frequencyPlanID,
 		Ids: &ttnpb.EndDeviceIdentifiers{
-			ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: s.config.appID},
+			ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: s.appID},
 			DeviceId:       "eui-" + strings.ToLower(ffdev.EUI),
 		},
 		MacSettings: &ttnpb.MACSettings{
 			DesiredAdrAckLimitExponent: &ttnpb.ADRAckLimitExponentValue{Value: ttnpb.ADRAckLimitExponent(ffdev.AdrLimit)},
 			Rx2DataRateIndex:           &ttnpb.DataRateIndexValue{Value: ttnpb.DataRateIndex(ffdev.Rx2DataRate)},
-			StatusCountPeriodicity:     &pbtypes.UInt32Value{Value: 0},
-			StatusTimePeriodicity:      pbtypes.DurationProto(0),
+			StatusCountPeriodicity:     wrapperspb.UInt32(0),
+			StatusTimePeriodicity:      durationpb.New(0),
 		},
 		SupportsClassC: ffdev.ClassC,
 		SupportsJoin:   ffdev.ApplicationKey != "",
@@ -72,7 +72,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 	if err != nil {
 		return nil, err
 	}
-	v3dev.Ids.JoinEui, err = unmarshalTextToBytes(&types.EUI64{}, s.config.joinEUI)
+	v3dev.Ids.JoinEui, err = unmarshalTextToBytes(&types.EUI64{}, s.joinEUI)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		v3dev.Session.LastFCntUp = uint32(packet.FCnt)
 	}
 
-	if !s.config.dryRun {
+	if !s.DryRun {
 		logger.Debugw("Clearing device keys", "device_id", ffdev.Name, "device_eui", ffdev.EUI)
 		r, err := api.PutDeviceUpdate(devEUI, map[string]string{
 			"address": "", "application_key": "", "application_session_key": "",
