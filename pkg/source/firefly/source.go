@@ -1,3 +1,17 @@
+// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package firefly
 
 import (
@@ -10,39 +24,47 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/api"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/devices"
+	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/client"
 )
 
 type Source struct {
 	*Config
 
 	ctx context.Context
+
+	client *client.Client
 }
 
 func createNewSource(cfg *Config) source.CreateSource {
 	return func(ctx context.Context, src source.Config) (source.Source, error) {
-		cfg.Config = src
+		cfg.src = src
 		if err := cfg.Initialize(); err != nil {
+			return nil, err
+		}
+		client, err := cfg.NewClient(logger)
+		if err != nil {
 			return nil, err
 		}
 		return Source{
 			ctx:    ctx,
 			Config: cfg,
+			client: client,
 		}, nil
 	}
 }
 
 // ExportDevice implements the source.Source interface.
 func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
-	ffdev, err := devices.GetDevice(devEUI)
+	ffdev, err := s.client.GetDeviceByEUI(devEUI)
 	if err != nil {
 		return nil, err
 	}
+	if ffdev == nil {
+		return nil, errNoDeviceFound.WithAttributes("eui", devEUI)
+	}
 	v3dev := &ttnpb.EndDevice{
-		Name:        ffdev.Name,
-		Description: ffdev.Description,
-		// Formatters:      &ttnpb.MessagePayloadFormatters{},
+		Name:            ffdev.Name,
+		Description:     ffdev.Description,
 		FrequencyPlanId: s.frequencyPlanID,
 		Ids: &ttnpb.EndDeviceIdentifiers{
 			ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: s.appID},
@@ -61,7 +83,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 	if ffdev.Location != nil {
 		v3dev.Locations = map[string]*ttnpb.Location{
 			"user": {
-				Latitude:  ffdev.Location.Lattitude,
+				Latitude:  ffdev.Location.Latitude,
 				Longitude: ffdev.Location.Longitude,
 				Source:    ttnpb.LocationSource_SOURCE_REGISTRY,
 			},
@@ -100,22 +122,22 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		}
 		v3dev.Session.LastAFCntDown = uint32(ffdev.FrameCounter)
 		v3dev.Session.LastNFCntDown = uint32(ffdev.FrameCounter)
-		packet, err := devices.GetLastPacket()
+		packet, err := s.client.GetLastPacket(devEUI)
 		if err != nil {
 			return nil, err
 		}
 		v3dev.Session.LastFCntUp = uint32(packet.FCnt)
 	}
 
-	if !s.DryRun {
-		logger.Debugw("Clearing device keys", "device_id", ffdev.Name, "device_eui", ffdev.EUI)
-		r, err := api.PutDeviceUpdate(devEUI, map[string]string{
-			"address": "", "application_key": "", "application_session_key": "",
-		})
+	if !s.src.DryRun {
+		logger.Debugw("Increment the last byte of the device keys", "device_id", ffdev.Name, "device_eui", ffdev.EUI)
+		// Increment the last byte of the AppKey and AppSKey.
+		// This makes it easier to rollback a migration if needed.
+		updated := ffdev.WithIncrementKeys()
+		err := s.client.UpdateDevice(devEUI, updated)
 		if err != nil {
 			return nil, err
 		}
-		r.Body.Close()
 	}
 
 	return v3dev, nil
@@ -123,25 +145,15 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 
 // RangeDevices implements the source.Source interface.
 func (s Source) RangeDevices(appID string, f func(source.Source, string) error) error {
-	// req, err := http.Get(fmt.Sprintf("http://%s/api/v1/applications/%s/euis?auth=%s", s.config.apiURL, appID, s.config.apiKey))
 	var (
-		devs []devices.Device
+		devs []client.Device
 		err  error
 	)
-	logger.With("app-id", appID).Debug("App ID")
-	switch {
-	case appID != "":
-		devs, err = devices.GetDeviceListByAppID(appID)
-		if err != nil {
-			return err
-		}
-	default:
-		devs, err = devices.GetAllDevices()
-		if err != nil {
-			return err
-		}
+	logger.Debugw("Firefly LNS does not group devices by application ID. Get all devices accessible by the API key")
+	devs, err = s.client.GetAllDevices()
+	if err != nil {
+		return err
 	}
-	logger.With("devices", devs).Debug("Devices List")
 	for _, d := range devs {
 		if err := f(s, d.EUI); err != nil {
 			return err
