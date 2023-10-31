@@ -157,12 +157,19 @@ func (c *Client) GetLastPacket(eui string) (*Packet, error) {
 		return nil, err
 	}
 	var wrapper struct {
-		Packet Packet `json:"packet"`
+		Packets []Packet `json:"packets"`
 	}
 	if err := json.Unmarshal(body, &wrapper); err != nil {
 		return nil, err
 	}
-	return &wrapper.Packet, nil
+	if len(wrapper.Packets) == 0 {
+		return &Packet{}, nil
+	}
+
+	if len(wrapper.Packets) > 1 {
+		c.logger.Warn("More than one packet found for device. Returning the last one.")
+	}
+	return &wrapper.Packets[0], nil
 }
 
 // GetAllDevices gets all devices that the API key has access to.
