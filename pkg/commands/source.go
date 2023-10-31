@@ -53,7 +53,10 @@ func WithDevicesOptions(opts ...Option) SourceOptions {
 
 // Source returns a new source command.
 func Source(sourceName, short string, opts ...SourceOptions) *cobra.Command {
-	fs, _ := source.FlagSet(sourceName)
+	fs, err := source.FlagSet(sourceName)
+	if err != nil {
+		panic(err)
+	}
 
 	sourceOpts := new(SourceOptions)
 	for _, opt := range opts {
