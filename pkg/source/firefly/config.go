@@ -33,6 +33,7 @@ type Config struct {
 	frequencyPlanID string
 	joinEUI         string
 	macVersion      string
+	invalidateKeys  bool
 
 	derivedMacVersion ttnpb.MACVersion
 	derivedPhyVersion ttnpb.PHYVersion
@@ -40,15 +41,13 @@ type Config struct {
 	flags *pflag.FlagSet
 }
 
+var logger *zap.SugaredLogger
+
 // New returns a new Firefly configuration.
 func New() *Config {
 	config := &Config{
 		flags: &pflag.FlagSet{},
 	}
-	config.flags.BoolVar(&config.UseHTTP,
-		"use-http",
-		(os.Getenv("FIREFLY_USE_HTTP") == "true"),
-		"(optional) Use HTTP instead of HTTPS for the Firefly API. Only for testing")
 	config.flags.StringVar(&config.Host,
 		"host",
 		os.Getenv("FIREFLY_HOST"),
@@ -72,15 +71,28 @@ func New() *Config {
 	config.flags.StringVar(&config.macVersion,
 		"mac-version",
 		os.Getenv("MAC_VERSION"),
-		"LoRaWAN MAC version for the exported devices. Supported options are 1.0.0, 1.0.1, 1.0.2a, 1.0.2b, 1.0.3, 1.1.0a, 1.1.0b")
+		`LoRaWAN MAC version for the exported devices.
+Supported options are 1.0.0, 1.0.1, 1.0.2a, 1.0.2b, 1.0.3, 1.1.0a, 1.1.0b`)
 	config.flags.StringVar(&config.appID,
 		"app-id",
 		os.Getenv("APP_ID"),
 		"Application ID for the exported devices")
+	config.flags.BoolVar(&config.invalidateKeys,
+		"invalidate-keys",
+		(os.Getenv("INVALIDATE_KEYS") == "true"),
+		`Invalidate the root and/or session keys of the devices on the Firefly server.
+This is necessary to prevent both networks from communicating with the same device.
+The last byte of the keys will be incremented by 0x01. This enables an easy rollback if necessary.
+Setting this flag to false would result in a dry run,
+where the devices are exported but they are still valid on the firefly server
+		`)
+	config.flags.BoolVar(&config.UseHTTP,
+		"use-http",
+		(os.Getenv("FIREFLY_USE_HTTP") == "true"),
+		"(optional) Use HTTP instead of HTTPS for the Firefly API. Only for testing")
+
 	return config
 }
-
-var logger *zap.SugaredLogger
 
 // Initialize the configuration.
 func (c *Config) Initialize() error {

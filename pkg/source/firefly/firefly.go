@@ -16,6 +16,17 @@ package firefly
 
 import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack/v3/pkg/errors"
+)
+
+var (
+	errNoAPIKey          = errors.DefineInvalidArgument("no_api_key", "no api key")
+	errNoHost            = errors.DefineInvalidArgument("no_host", "no host")
+	errNoAppID           = errors.DefineInvalidArgument("no_app_id", "no app id")
+	errNoJoinEUI         = errors.DefineInvalidArgument("no_join_eui", "no join eui")
+	errNoDeviceFound     = errors.DefineInvalidArgument("no_device_found", "no device with eui `{eui}` found")
+	errNoFrequencyPlanID = errors.DefineInvalidArgument("no_frequency_plan_id", "no frequency plan ID")
+	errInvalidMACVersion = errors.DefineInvalidArgument("invalid_mac_version", "invalid MAC version `{mac_version}`")
 )
 
 func init() {

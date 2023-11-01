@@ -150,7 +150,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		v3dev.Session.LastNFCntDown = uint32(ffdev.FrameCounter)
 	}
 
-	if !s.src.DryRun {
+	if s.invalidateKeys {
 		logger.Debugw("Increment the last byte of the device keys", "device_id", ffdev.Name, "device_eui", ffdev.EUI)
 		// Increment the last byte of the device keys.
 		// This makes it easier to rollback a migration if needed.
