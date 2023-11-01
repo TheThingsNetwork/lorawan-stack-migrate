@@ -242,59 +242,69 @@ $ ttn-lw-migrate tts application 'my-app-id' > devices.json
 
 ### Configuration
 
-Configure with environment variables, or command-line arguments. See `--help` for more details:
+Configure with environment variables, or command-line arguments.
+
+See `ttn-lw-migrate firefly {device|application} --help` for more details.
+
+The following example shows how to set options via environment variables.
 
 ```bash
-$ export FIREFLY_API_URL="api.fireflyiot.com/api/v1"  # Firefly API URL
-$ export FIREFLY_API_KEY="3f55..."                    # Firefly API Key
-$ export FIREFLY_APP_ID="1"
-$ export FIREFLY_CA_FILE="/path/to/ca.file"           # Path to CA file (optional)
+$ export FIREFLY_HOST=example.com       # Host of the Firefly API
+$ export FIREFLY_API_KEY=abcdefgh       # Firefly API Key
+$ export APP_ID=my-test-app             # Application ID for the exported devices
+$ export JOIN_EUI=1111111111111111      # JoinEUI for the exported devices
+$ export FREQUENCY_PLAN_ID=EU_863_870   # Frequency Plan ID for the exported devices
+$ export MAC_VERSION=1.0.2b             # LoRaWAN MAC version for the exported devices
 ```
 
 ### Notes
 
 - The export process will halt if any error occurs.
-- Execute commands with the `--dry-run` flag to verify whether the outcome will be as expected.
+- Use the `--invalidate-keys` option to invalidate the root and/or session keys of the devices on the Firefly server. This is necessary to prevent both networks from communicating with the same device. The last byte of the keys will be incremented by 0x01. This enables an easy rollback if necessary. Setting this flag to false (default) would result in a "dry run", where the devices are exported but they will still be able to communicate with the Firefly server.
 
 ### Export Devices
 
-To export a single device using its Device ID (e.g. `mydevice`):
+To export a single device using its Device EUI (e.g. `1111111111111112`):
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate device --source firefly "mydevice" --dry-run --verbose > devices.json
+$ ttn-lw-migrate firefly device 1111111111111112 --verbose > devices.json
 # export device
-$ ttn-lw-migrate device --source firefly "mydevice" > devices.json
+$ ttn-lw-migrate firefly device 1111111111111112 --invalidate-keys > devices.json
 ```
 
-In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
+In order to export a large number of devices, create a file named `device_euis.txt` with one device EUI per line:
 
-```
-mydevice
-otherdevice
-device3
-device4
-device5
+```txt
+1111111111111112
+FF11111111111134
+ABCD111111111100
 ```
 
 And then export with:
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate devices --source firefly "mydevice" --dry-run --verbose < device_ids.txt > devices.json
+$ ttn-lw-migrate firefly device --verbose < device_ids.txt > devices.json
 # export devices
-$ ttn-lw-migrate devices --source firefly < device_ids.txt > devices.json
+$ ttn-lw-migrate firefly device --invalidate-keys < device_ids.txt > devices.json
 ```
 
-### Export Applications
+### Export All Devices
+
+The Firefly LNS does not strictly enforce device to application relationships.
+
+In order to preserve the semantics of the migration tool, the `firefly` source supports the `application` command but in this case, **all devices that are accessible by the API key** are exported.
+
+> Note: Please be cautious while using this command as this might invalidate all the keys of all the devices.
 
 Similarly, to export all devices of application `my-app-id`:
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate application --source firefly "my-app-id" --dry-run --verbose > devices.json
+$ ttn-lw-migrate firefly application all --verbose > devices.json
 # export devices
-$ ttn-lw-migrate application --source firefly "my-app-id" > devices.json
+$ ttn-lw-migrate firefly application all --invalidate-keys > devices.json
 ```
 
 ## Development Environment
