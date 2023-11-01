@@ -33,10 +33,10 @@ const defaultTimeout = 10 * time.Second
 
 // Config is the Firefly client configuration.
 type Config struct {
-	APIKey  string
-	Host    string
-	CAPath  string
-	UseHTTP bool
+	APIKey     string
+	Host       string
+	CACertPath string
+	UseHTTP    bool
 }
 
 // Client is a Firefly client.
@@ -49,8 +49,8 @@ type Client struct {
 // New creates a new Firefly client.
 func (cfg *Config) NewClient(logger *zap.SugaredLogger) (*Client, error) {
 	httpTransport := &http.Transport{}
-	if cfg.CAPath != "" && !cfg.UseHTTP {
-		pemBytes, err := os.ReadFile(cfg.CAPath)
+	if cfg.CACertPath != "" && !cfg.UseHTTP {
+		pemBytes, err := os.ReadFile(cfg.CACertPath)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +81,7 @@ var (
 	errUnexpectedStatusCode = errors.Define("unexpected_status_code", "unexpected status code `{code}`")
 )
 
-// Do executes a request.
+// do executes an HTTP request.
 func (c *Client) do(resource, method string, body []byte, params string) ([]byte, error) {
 	scheme := "https"
 	if c.UseHTTP {
@@ -110,7 +110,6 @@ func (c *Client) do(resource, method string, body []byte, params string) ([]byte
 			return nil, err
 		}
 		return body, nil
-
 	case res.StatusCode == http.StatusNotFound:
 		return nil, errResourceNotFound.WithAttributes("resource", resource)
 	case res.StatusCode >= 500:

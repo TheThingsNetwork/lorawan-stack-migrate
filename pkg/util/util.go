@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package firefly
+package util
 
-func unmarshalTextToBytes(
+// UnmarshalTextToBytes unmarshals the given source into the given unmarshaller and returns the bytes.
+func UnmarshalTextToBytes(
 	unmarshaller interface {
 		UnmarshalText([]byte) error
 		Bytes() []byte

@@ -45,10 +45,18 @@ func New() *Config {
 	config := &Config{
 		flags: &pflag.FlagSet{},
 	}
+	config.flags.BoolVar(&config.UseHTTP,
+		"use-http",
+		(os.Getenv("FIREFLY_USE_HTTP") == "true"),
+		"(optional) Use HTTP instead of HTTPS for the Firefly API. Only for testing")
 	config.flags.StringVar(&config.Host,
 		"host",
 		os.Getenv("FIREFLY_HOST"),
-		"Host of the Firefly API")
+		"Host of the Firefly API. Don't use the scheme (http/https). Port is optional")
+	config.flags.StringVar(&config.CACertPath,
+		"ca-cert-path",
+		os.Getenv("FIREFLY_CA_CERT_PATH"),
+		"(optional) Path to the CA certificate for the Firefly API")
 	config.flags.StringVar(&config.APIKey,
 		"api-key",
 		os.Getenv("FIREFLY_API_KEY"),
@@ -64,12 +72,11 @@ func New() *Config {
 	config.flags.StringVar(&config.macVersion,
 		"mac-version",
 		os.Getenv("MAC_VERSION"),
-		"MAC version for the exported devices")
+		"LoRaWAN MAC version for the exported devices. Supported options are 1.0.0, 1.0.1, 1.0.2a, 1.0.2b, 1.0.3, 1.1.0a, 1.1.0b")
 	config.flags.StringVar(&config.appID,
 		"app-id",
 		os.Getenv("APP_ID"),
 		"Application ID for the exported devices")
-
 	return config
 }
 
@@ -101,9 +108,6 @@ func (c *Config) Initialize() error {
 	}
 	if c.frequencyPlanID == "" {
 		return errNoFrequencyPlanID.New()
-	}
-	if c.macVersion == "" {
-		return errNoMACVersion.New()
 	}
 	switch c.macVersion {
 	case "1.0.0":

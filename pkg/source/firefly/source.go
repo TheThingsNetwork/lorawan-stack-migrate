@@ -27,14 +27,12 @@ import (
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/client"
+	"go.thethings.network/lorawan-stack-migrate/pkg/util"
 )
 
 type Source struct {
 	*Config
-
-	ctx context.Context
-
-	client *client.Client
+	*client.Client
 }
 
 func createNewSource(cfg *Config) source.CreateSource {
@@ -48,16 +46,15 @@ func createNewSource(cfg *Config) source.CreateSource {
 			return nil, err
 		}
 		return Source{
-			ctx:    ctx,
 			Config: cfg,
-			client: client,
+			Client: client,
 		}, nil
 	}
 }
 
 // ExportDevice implements the source.Source interface.
 func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
-	ffdev, err := s.client.GetDeviceByEUI(devEUI)
+	ffdev, err := s.GetDeviceByEUI(devEUI)
 	if err != nil {
 		return nil, err
 	}
@@ -94,17 +91,17 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		}
 		logger.Debugw("Set location", "location", v3dev.Locations)
 	}
-	v3dev.Ids.DevEui, err = unmarshalTextToBytes(&types.EUI64{}, ffdev.EUI)
+	v3dev.Ids.DevEui, err = util.UnmarshalTextToBytes(&types.EUI64{}, ffdev.EUI)
 	if err != nil {
 		return nil, err
 	}
-	v3dev.Ids.JoinEui, err = unmarshalTextToBytes(&types.EUI64{}, s.joinEUI)
+	v3dev.Ids.JoinEui, err = util.UnmarshalTextToBytes(&types.EUI64{}, s.joinEUI)
 	if err != nil {
 		return nil, err
 	}
 	if v3dev.SupportsJoin {
 		v3dev.RootKeys = &ttnpb.RootKeys{AppKey: &ttnpb.KeyEnvelope{}}
-		v3dev.RootKeys.AppKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationKey)
+		v3dev.RootKeys.AppKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationKey)
 		if err != nil {
 			return nil, err
 		}
@@ -113,7 +110,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 
 	if hasSession || !v3dev.SupportsJoin {
 		v3dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, FNwkSIntKey: &ttnpb.KeyEnvelope{}}}
-		v3dev.Session.DevAddr, err = unmarshalTextToBytes(&types.DevAddr{}, ffdev.Address)
+		v3dev.Session.DevAddr, err = util.UnmarshalTextToBytes(&types.DevAddr{}, ffdev.Address)
 		if err != nil {
 			return nil, err
 		}
@@ -121,30 +118,30 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		v3dev.Session.StartedAt = timestamppb.Now()
 		v3dev.Session.Keys.SessionKeyId = random.Bytes(16)
 
-		v3dev.Session.Keys.AppSKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationSessionKey)
+		v3dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationSessionKey)
 		if err != nil {
 			return nil, err
 		}
-		v3dev.Session.Keys.FNwkSIntKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.NetworkSessionKey)
+		v3dev.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, ffdev.NetworkSessionKey)
 		if err != nil {
 			return nil, err
 		}
 		switch v3dev.LorawanVersion {
 		case ttnpb.MACVersion_MAC_V1_1:
 			v3dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
-			v3dev.Session.Keys.NwkSEncKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationSessionKey)
+			v3dev.Session.Keys.NwkSEncKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationSessionKey)
 			if err != nil {
 				return nil, err
 			}
 			v3dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
-			v3dev.Session.Keys.SNwkSIntKey.Key, err = unmarshalTextToBytes(&types.AES128Key{}, ffdev.NetworkSessionKey)
+			v3dev.Session.Keys.SNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, ffdev.NetworkSessionKey)
 			if err != nil {
 				return nil, err
 			}
 		}
 
 		// Set FrameCounters
-		packet, err := s.client.GetLastPacket(devEUI)
+		packet, err := s.GetLastPacket(devEUI)
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +155,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		// Increment the last byte of the device keys.
 		// This makes it easier to rollback a migration if needed.
 		updated := ffdev.WithIncrementedKeys()
-		err := s.client.UpdateDeviceByEUI(devEUI, updated)
+		err := s.UpdateDeviceByEUI(devEUI, updated)
 		if err != nil {
 			return nil, err
 		}
@@ -173,8 +170,8 @@ func (s Source) RangeDevices(appID string, f func(source.Source, string) error) 
 		devs []client.Device
 		err  error
 	)
-	logger.Debugw("Firefly LNS does not group devices by application ID. Get all devices accessible by the API key")
-	devs, err = s.client.GetAllDevices()
+	logger.Debugw("Firefly LNS does not group devices by an application. Get all devices accessible by the API key")
+	devs, err = s.GetAllDevices()
 	if err != nil {
 		return err
 	}
