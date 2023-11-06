@@ -294,17 +294,19 @@ $ ttn-lw-migrate firefly device --invalidate-keys < device_ids.txt > devices.jso
 
 The Firefly LNS does not strictly enforce device to application relationships.
 
-In order to preserve the semantics of the migration tool, the `firefly` source supports the `application` command but in this case, **all devices that are accessible by the API key** are exported.
+Setting the `--all` flag will export **all devices that are accessible by the API key** are exported.
+
+The `application` command without the `--all` flag does nothing.
 
 > Note: Please be cautious while using this command as this might invalidate all the keys of all the devices.
 
-Similarly, to export all devices of application `my-app-id`:
+Similarly, to export all devices accessible by the API Key,
 
 ```bash
 # dry run first, verify that no errors occur
-$ ttn-lw-migrate firefly application all --verbose > devices.json
+$ ttn-lw-migrate firefly application --all --verbose > devices.json
 # export devices
-$ ttn-lw-migrate firefly application all --invalidate-keys > devices.json
+$ ttn-lw-migrate firefly application --all --invalidate-keys > devices.json
 ```
 
 ## Development Environment

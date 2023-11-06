@@ -19,10 +19,9 @@ import (
 	"os"
 	"strings"
 
+	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/jsonpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
-
-	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
 const (

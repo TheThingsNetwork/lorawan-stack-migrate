@@ -16,6 +16,7 @@ package ttnv2
 
 import (
 	"context"
+	"os"
 
 	ttnsdk "github.com/TheThingsNetwork/go-app-sdk"
 	ttntypes "github.com/TheThingsNetwork/ttn/core/types"
@@ -28,6 +29,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
 
@@ -189,6 +191,11 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	}
 
 	return v3dev, nil
+}
+
+// Iterator implements source.Source.
+func (s *Source) Iterator() iterator.Iterator {
+	return iterator.NewReaderIterator(os.Stdin, '\n')
 }
 
 // RangeDevices implements the source.Source interface.

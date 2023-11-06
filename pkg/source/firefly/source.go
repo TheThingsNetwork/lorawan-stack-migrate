@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/client"
 	"go.thethings.network/lorawan-stack-migrate/pkg/util"
@@ -37,8 +38,7 @@ type Source struct {
 
 func createNewSource(cfg *Config) source.CreateSource {
 	return func(ctx context.Context, src source.Config) (source.Source, error) {
-		cfg.src = src
-		if err := cfg.Initialize(); err != nil {
+		if err := cfg.Initialize(src); err != nil {
 			return nil, err
 		}
 		client, err := cfg.NewClient(logger)
@@ -50,6 +50,20 @@ func createNewSource(cfg *Config) source.CreateSource {
 			Client: client,
 		}, nil
 	}
+}
+
+// Iterator implements source.Source.
+func (s Source) Iterator() iterator.Iterator {
+	if s.all {
+		// The Firefly LNS does not group devices by an application.
+		// When the "all" flag is set, we get all devices accessible by the API key.
+		// We use a dummy "all" App ID to fallthrough to the RangeDevices method,
+		// where the appID argument is unused.
+		return iterator.NewListIterator(
+			[]string{"all"},
+		)
+	}
+	return iterator.NewNoopIterator()
 }
 
 // ExportDevice implements the source.Source interface.
@@ -165,7 +179,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 }
 
 // RangeDevices implements the source.Source interface.
-func (s Source) RangeDevices(appID string, f func(source.Source, string) error) error {
+func (s Source) RangeDevices(_ string, f func(source.Source, string) error) error {
 	var (
 		devs []client.Device
 		err  error

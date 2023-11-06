@@ -34,6 +34,7 @@ type Config struct {
 	joinEUI         string
 	macVersion      string
 	invalidateKeys  bool
+	all             bool
 
 	derivedMacVersion ttnpb.MACVersion
 	derivedPhyVersion ttnpb.PHYVersion
@@ -43,8 +44,8 @@ type Config struct {
 
 var logger *zap.SugaredLogger
 
-// New returns a new Firefly configuration.
-func New() *Config {
+// NewConfig returns a new Firefly configuration.
+func NewConfig() *Config {
 	config := &Config{
 		flags: &pflag.FlagSet{},
 	}
@@ -90,12 +91,16 @@ where the devices are exported but they are still valid on the firefly server
 		"use-http",
 		(os.Getenv("FIREFLY_USE_HTTP") == "true"),
 		"(optional) Use HTTP instead of HTTPS for the Firefly API. Only for testing")
-
+	config.flags.BoolVar(&config.all,
+		"all",
+		(os.Getenv("ALL") == "true"),
+		"Export all devices that the API key has access to. This is only used by the application command")
 	return config
 }
 
 // Initialize the configuration.
-func (c *Config) Initialize() error {
+func (c *Config) Initialize(src source.Config) error {
+	c.src = src
 	cfg := zap.NewProductionConfig()
 	if c.src.Verbose {
 		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)

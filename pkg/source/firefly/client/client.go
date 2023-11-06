@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -79,6 +80,7 @@ var (
 	errResourceNotFound     = errors.DefineNotFound("resource_not_found", "resource `{resource}` not found")
 	errServer               = errors.Define("server", "server error with code `{code}`")
 	errUnexpectedStatusCode = errors.Define("unexpected_status_code", "unexpected status code `{code}`")
+	errMultiplePackets      = errors.Define("multiple_packets", "multiple packets found for device")
 )
 
 // do executes an HTTP request.
@@ -87,13 +89,20 @@ func (c *Client) do(resource, method string, body []byte, params string) ([]byte
 	if c.UseHTTP {
 		scheme = "http"
 	}
-	url := fmt.Sprintf("%s://%s/api/v1/%s?auth=%s", scheme, c.Host, resource, c.APIKey)
+
+	authAndParams := fmt.Sprintf("auth=%s", c.APIKey)
 	if params != "" {
-		url += "&" + params
+		authAndParams += "&" + params
 	}
-	logger := c.logger.With("url", url)
+	url := url.URL{
+		Scheme:   scheme,
+		Host:     c.Host,
+		Path:     fmt.Sprintf("/api/v1/%s", resource),
+		RawQuery: authAndParams,
+	}
+	logger := c.logger.With("url", url.String())
 	logger.Debug("Request resource")
-	req, err := http.NewRequest(method, url, bytes.NewReader(body))
+	req, err := http.NewRequest(method, url.String(), bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
@@ -161,12 +170,8 @@ func (c *Client) GetLastPacket(eui string) (*Packet, error) {
 	if err := json.Unmarshal(body, &wrapper); err != nil {
 		return nil, err
 	}
-	if len(wrapper.Packets) == 0 {
-		return &Packet{}, nil
-	}
-
-	if len(wrapper.Packets) > 1 {
-		c.logger.Warn("More than one packet found for device. Returning the last one.")
+	if len(wrapper.Packets) != 1 {
+		return nil, errMultiplePackets.WithAttributes("len", len(wrapper.Packets))
 	}
 	return &wrapper.Packets[0], nil
 }

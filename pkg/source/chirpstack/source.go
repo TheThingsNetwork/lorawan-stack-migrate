@@ -18,10 +18,12 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"time"
 
 	csapi "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
+	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack/config"
 	"go.thethings.network/lorawan-stack-migrate/pkg/util"
@@ -76,6 +78,11 @@ func createNewSource(cfg *config.Config) source.CreateSource {
 
 		return s, nil
 	}
+}
+
+// Iterator implements source.Source.
+func (s Source) Iterator() iterator.Iterator {
+	return iterator.NewReaderIterator(os.Stdin, '\n')
 }
 
 // RangeDevices implements the Source interface.

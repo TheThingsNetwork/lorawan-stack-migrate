@@ -16,7 +16,9 @@ package tts
 
 import (
 	"context"
+	"os"
 
+	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/tts/api"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/tts/config"
@@ -122,6 +124,11 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 
 	updateDeviceTimestamps(dev, res)
 	return dev, nil
+}
+
+// Iterator implements source.Source.
+func (s Source) Iterator() iterator.Iterator {
+	return iterator.NewReaderIterator(os.Stdin, '\n')
 }
 
 // RangeDevices implements the source.Source interface.

@@ -30,7 +30,7 @@ var (
 )
 
 func init() {
-	cfg := New()
+	cfg := NewConfig()
 
 	source.RegisterSource(source.Registration{
 		Name:        "firefly",

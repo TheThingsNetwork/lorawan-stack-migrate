@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/spf13/pflag"
+	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 )
 
@@ -52,6 +53,8 @@ type Source interface {
 	RangeDevices(appID string, f func(s Source, devID string) error) error
 	// Close cleans up and terminates any open connections.
 	Close() error
+	// Iterator returns an iterator for devices.
+	Iterator() iterator.Iterator
 }
 
 // CreateSource is a function that constructs a new Source.
