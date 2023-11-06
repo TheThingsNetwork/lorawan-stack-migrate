@@ -18,11 +18,10 @@ import (
 	"context"
 
 	"github.com/TheThingsNetwork/go-utils/random"
+	"go.thethings.network/lorawan-stack/v3/pkg/networkserver/mac"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
-	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 	"go.thethings.network/lorawan-stack-migrate/pkg/log"
@@ -96,10 +95,7 @@ func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
 			JoinEui:        joinEUI.Bytes(),
 		},
 		MacSettings: &ttnpb.MACSettings{
-			DesiredAdrAckLimitExponent: &ttnpb.ADRAckLimitExponentValue{Value: ttnpb.ADRAckLimitExponent(ffdev.AdrLimit)},
-			Rx2DataRateIndex:           &ttnpb.DataRateIndexValue{Value: ttnpb.DataRateIndex(ffdev.Rx2DataRate)},
-			StatusCountPeriodicity:     wrapperspb.UInt32(0),
-			StatusTimePeriodicity:      durationpb.New(0),
+			Rx2DataRateIndex: &ttnpb.DataRateIndexValue{Value: ttnpb.DataRateIndex(ffdev.Rx2DataRate)},
 		},
 		SupportsClassC:    ffdev.ClassC,
 		SupportsJoin:      ffdev.OTAA,
@@ -174,6 +170,13 @@ func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
 		v3dev.Session.LastFCntUp = uint32(packet.FCnt)
 		v3dev.Session.LastAFCntDown = uint32(ffdev.FrameCounter)
 		v3dev.Session.LastNFCntDown = uint32(ffdev.FrameCounter)
+
+		// Create a MACState.
+		if v3dev.MacState, err = mac.NewState(v3dev, s.fpStore, &ttnpb.MACSettings{}); err != nil {
+			return nil, err
+		}
+		v3dev.MacState.CurrentParameters = v3dev.MacState.DesiredParameters
+		v3dev.MacState.CurrentParameters.Rx1Delay = ttnpb.RxDelay_RX_DELAY_1
 	}
 
 	if s.invalidateKeys {

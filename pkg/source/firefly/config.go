@@ -15,12 +15,15 @@
 package firefly
 
 import (
+	"net/http"
 	"os"
 
 	"github.com/spf13/pflag"
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/client"
+	"go.thethings.network/lorawan-stack/v3/pkg/fetch"
+	"go.thethings.network/lorawan-stack/v3/pkg/frequencyplans"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 )
 
@@ -38,7 +41,8 @@ type Config struct {
 	derivedMacVersion ttnpb.MACVersion
 	derivedPhyVersion ttnpb.PHYVersion
 
-	flags *pflag.FlagSet
+	flags   *pflag.FlagSet
+	fpStore *frequencyplans.Store
 }
 
 // NewConfig returns a new Firefly configuration.
@@ -138,6 +142,12 @@ func (c *Config) Initialize(src source.Config) error {
 	default:
 		return errInvalidMACVersion.WithAttributes("mac_version", c.macVersion)
 	}
+
+	fpFetcher, err := fetch.FromHTTP(http.DefaultClient, src.FrequencyPlansURL)
+	if err != nil {
+		return err
+	}
+	c.fpStore = frequencyplans.NewStore(fpFetcher)
 
 	return nil
 }
