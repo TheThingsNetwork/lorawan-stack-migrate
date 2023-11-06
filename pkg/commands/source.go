@@ -134,6 +134,7 @@ func ExecuteParentPersistentPreRun(cmd *cobra.Command, args []string) error {
 	} else if f := p.PersistentPreRun; f != nil {
 		f(p, args)
 	}
+	cmd.SetContext(p.Context())
 	return nil
 }
 

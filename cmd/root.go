@@ -25,11 +25,9 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/cmd/tts"
 	"go.thethings.network/lorawan-stack-migrate/pkg/export"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-	"go.thethings.network/lorawan-stack/v3/pkg/log"
 )
 
 var (
-	logger    *log.Logger
 	ctx       = context.Background()
 	exportCfg = export.Config{}
 	rootCfg   = &source.RootConfig
@@ -39,11 +37,8 @@ var (
 
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			ctx = log.NewContext(ctx, logger)
-
 			exportCfg.DevIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
-			ctx = export.NewContext(ctx, exportCfg)
-			cmd.SetContext(ctx)
+			cmd.SetContext(export.NewContext(ctx, exportCfg))
 			return nil
 		},
 	}
@@ -71,6 +66,11 @@ func init() {
 		"frequency-plans-url",
 		"https://raw.githubusercontent.com/TheThingsNetwork/lorawan-frequency-plans/master",
 		"URL for fetching frequency plans")
+	rootCmd.PersistentFlags().String(
+		"dev-id-prefix",
+		"",
+		"(optional) value to be prefixed to the resulting device IDs",
+	)
 
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    "sources",
