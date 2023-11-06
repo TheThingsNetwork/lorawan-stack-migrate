@@ -26,6 +26,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
+	"go.thethings.network/lorawan-stack-migrate/pkg/log"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/client"
 	"go.thethings.network/lorawan-stack-migrate/pkg/util"
@@ -41,7 +42,7 @@ func createNewSource(cfg *Config) source.CreateSource {
 		if err := cfg.Initialize(src); err != nil {
 			return nil, err
 		}
-		client, err := cfg.NewClient(logger)
+		client, err := cfg.NewClient(log.NewContext(ctx, src.Logger))
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +104,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 				Source:    ttnpb.LocationSource_SOURCE_REGISTRY,
 			},
 		}
-		logger.Debugw("Set location", "location", v3dev.Locations)
+		s.src.Logger.Debugw("Set location", "location", v3dev.Locations)
 	}
 	v3dev.Ids.DevEui, err = util.UnmarshalTextToBytes(&types.EUI64{}, ffdev.EUI)
 	if err != nil {
@@ -165,7 +166,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 	}
 
 	if s.invalidateKeys {
-		logger.Debugw("Increment the last byte of the device keys", "device_id", ffdev.Name, "device_eui", ffdev.EUI)
+		s.src.Logger.Debugw("Increment the last byte of the device keys", "device_id", ffdev.Name, "device_eui", ffdev.EUI)
 		// Increment the last byte of the device keys.
 		// This makes it easier to rollback a migration if needed.
 		updated := ffdev.WithIncrementedKeys()
@@ -184,7 +185,7 @@ func (s Source) RangeDevices(_ string, f func(source.Source, string) error) erro
 		devs []client.Device
 		err  error
 	)
-	logger.Debugw("Firefly LNS does not group devices by an application. Get all devices accessible by the API key")
+	s.src.Logger.Debugw("Firefly LNS does not group devices by an application. Get all devices accessible by the API key")
 	devs, err = s.GetAllDevices()
 	if err != nil {
 		return err

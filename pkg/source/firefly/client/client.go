@@ -16,6 +16,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -26,8 +27,8 @@ import (
 	"os"
 	"time"
 
+	"go.thethings.network/lorawan-stack-migrate/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/errors"
-	"go.uber.org/zap"
 )
 
 const defaultTimeout = 10 * time.Second
@@ -44,11 +45,11 @@ type Config struct {
 type Client struct {
 	*Config
 	*http.Client
-	logger *zap.SugaredLogger
+	ctx context.Context
 }
 
 // New creates a new Firefly client.
-func (cfg *Config) NewClient(logger *zap.SugaredLogger) (*Client, error) {
+func (cfg *Config) NewClient(ctx context.Context) (*Client, error) {
 	httpTransport := &http.Transport{}
 	if cfg.CACertPath != "" && !cfg.UseHTTP {
 		pemBytes, err := os.ReadFile(cfg.CACertPath)
@@ -72,7 +73,7 @@ func (cfg *Config) NewClient(logger *zap.SugaredLogger) (*Client, error) {
 			Transport: httpTransport,
 			Timeout:   defaultTimeout,
 		},
-		logger: logger,
+		ctx: ctx,
 	}, nil
 }
 
@@ -100,7 +101,8 @@ func (c *Client) do(resource, method string, body []byte, params string) ([]byte
 		Path:     fmt.Sprintf("/api/v1/%s", resource),
 		RawQuery: authAndParams,
 	}
-	logger := c.logger.With("url", url.String())
+
+	logger := log.FromContext(c.ctx).With("url", url.String())
 	logger.Debug("Request resource")
 	req, err := http.NewRequest(method, url.String(), bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -112,12 +114,12 @@ func (c *Client) do(resource, method string, body []byte, params string) ([]byte
 		return nil, err
 	}
 	defer res.Body.Close()
+	body, err = io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	switch {
 	case res.StatusCode == http.StatusOK:
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			return nil, err
-		}
 		return body, nil
 	case res.StatusCode == http.StatusNotFound:
 		return nil, errResourceNotFound.WithAttributes("resource", resource)

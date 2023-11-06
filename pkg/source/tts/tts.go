@@ -22,8 +22,6 @@ import (
 func init() {
 	cfg, flags := config.New()
 
-	logger, _ = config.NewLogger(cfg.Verbose)
-
 	source.RegisterSource(source.Registration{
 		Name:        "tts",
 		Description: "Migrate from The Things Stack",

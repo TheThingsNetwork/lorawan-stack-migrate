@@ -18,7 +18,6 @@ import (
 	"os"
 
 	"github.com/spf13/pflag"
-	"go.uber.org/zap"
 
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/firefly/client"
@@ -41,8 +40,6 @@ type Config struct {
 
 	flags *pflag.FlagSet
 }
-
-var logger *zap.SugaredLogger
 
 // NewConfig returns a new Firefly configuration.
 func NewConfig() *Config {
@@ -101,16 +98,6 @@ where the devices are exported but they are still valid on the firefly server
 // Initialize the configuration.
 func (c *Config) Initialize(src source.Config) error {
 	c.src = src
-	cfg := zap.NewProductionConfig()
-	if c.src.Verbose {
-		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	}
-	zapLogger, err := cfg.Build()
-	if err != nil {
-		return err
-	}
-	logger = zapLogger.Sugar()
-
 	if c.appID == "" {
 		return errNoAppID.New()
 	}

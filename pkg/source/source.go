@@ -22,11 +22,14 @@ import (
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
+	"go.uber.org/zap"
 )
 
 type Config struct {
 	DryRun, Verbose   bool
 	FrequencyPlansURL string
+
+	Logger *zap.SugaredLogger
 
 	source string
 }
@@ -85,6 +88,15 @@ func NewSource(ctx context.Context) (Source, error) {
 	if RootConfig.Source() == "" {
 		return nil, ErrNoSource.New()
 	}
+	cfg := zap.NewProductionConfig()
+	if RootConfig.Verbose {
+		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	}
+	zapLogger, err := cfg.Build()
+	if err != nil {
+		return nil, err
+	}
+	RootConfig.Logger = zapLogger.Sugar()
 	if registration, ok := registeredSources[RootConfig.Source()]; ok {
 		return registration.Create(ctx, RootConfig)
 	}

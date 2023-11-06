@@ -26,7 +26,6 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/export"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
-	"go.thethings.network/lorawan-stack/v3/pkg/rpcmiddleware/rpclog"
 )
 
 var (
@@ -40,25 +39,10 @@ var (
 
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			logLevel := log.InfoLevel
-			if verbose, _ := cmd.Flags().GetBool("verbose"); verbose {
-				logLevel = log.DebugLevel
-			}
-			logHandler, err := log.NewZap("console")
-			if err != nil {
-				return err
-			}
-			logger = log.NewLogger(
-				logHandler,
-				log.WithLevel(logLevel),
-			)
-			rpclog.ReplaceGrpcLogger(logger)
 			ctx = log.NewContext(ctx, logger)
 
 			exportCfg.DevIDPrefix, _ = cmd.Flags().GetString("dev-id-prefix")
-			exportCfg.EUIForID, _ = cmd.Flags().GetBool("set-eui-as-id")
 			ctx = export.NewContext(ctx, exportCfg)
-
 			cmd.SetContext(ctx)
 			return nil
 		},
