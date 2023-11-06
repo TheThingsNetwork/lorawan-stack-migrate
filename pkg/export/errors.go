@@ -22,4 +22,5 @@ var (
 	errInvalidFields         = errors.DefineInvalidArgument("invalid_fields", "invalid fields for device `{device_id}`")
 	errDevIDExceedsMaxLength = errors.Define("dev_id_exceeds_max_length", "device ID `{id}` exceeds max length")
 	errAppIDExceedsMaxLength = errors.Define("app_id_exceeds_max_length", "application ID `{id}` exceeds max length")
+	errNoExportedIDorEUI     = errors.Define("no_exported_id_or_eui", "device `{device_id}` has no exported ID or EUI")
 )

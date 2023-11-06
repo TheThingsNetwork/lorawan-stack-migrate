@@ -16,7 +16,6 @@ package firefly
 
 import (
 	"context"
-	"strings"
 
 	"github.com/TheThingsNetwork/go-utils/random"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
@@ -68,21 +67,33 @@ func (s Source) Iterator() iterator.Iterator {
 }
 
 // ExportDevice implements the source.Source interface.
-func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
-	ffdev, err := s.GetDeviceByEUI(devEUI)
+func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
+	ffdev, err := s.GetDeviceByEUI(devEUIString)
 	if err != nil {
 		return nil, err
 	}
 	if ffdev == nil {
-		return nil, errNoDeviceFound.WithAttributes("eui", devEUI)
+		return nil, errNoDeviceFound.WithAttributes("eui", devEUIString)
 	}
+
+	var (
+		devEUI, joinEUI types.EUI64
+	)
+	if err := devEUI.UnmarshalText([]byte(devEUIString)); err != nil {
+		return nil, err
+	}
+	if err := joinEUI.UnmarshalText([]byte(s.joinEUI)); err != nil {
+		return nil, err
+	}
+
 	v3dev := &ttnpb.EndDevice{
 		Name:            ffdev.Name,
 		Description:     ffdev.Description,
 		FrequencyPlanId: s.frequencyPlanID,
 		Ids: &ttnpb.EndDeviceIdentifiers{
 			ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: s.appID},
-			DeviceId:       "eui-" + strings.ToLower(ffdev.EUI),
+			DevEui:         devEUI.Bytes(),
+			JoinEui:        joinEUI.Bytes(),
 		},
 		MacSettings: &ttnpb.MACSettings{
 			DesiredAdrAckLimitExponent: &ttnpb.ADRAckLimitExponentValue{Value: ttnpb.ADRAckLimitExponent(ffdev.AdrLimit)},
@@ -156,7 +167,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		}
 
 		// Set FrameCounters
-		packet, err := s.GetLastPacket(devEUI)
+		packet, err := s.GetLastPacket(devEUIString)
 		if err != nil {
 			return nil, err
 		}
@@ -170,7 +181,7 @@ func (s Source) ExportDevice(devEUI string) (*ttnpb.EndDevice, error) {
 		// Increment the last byte of the device keys.
 		// This makes it easier to rollback a migration if needed.
 		updated := ffdev.WithIncrementedKeys()
-		err := s.UpdateDeviceByEUI(devEUI, updated)
+		err := s.UpdateDeviceByEUI(devEUIString, updated)
 		if err != nil {
 			return nil, err
 		}

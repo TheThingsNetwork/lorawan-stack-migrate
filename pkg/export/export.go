@@ -15,6 +15,7 @@
 package export
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
 	"strings"
@@ -35,7 +36,6 @@ func toJSON(dev *ttnpb.EndDevice) ([]byte, error) {
 }
 
 type Config struct {
-	EUIForID    bool
 	DevIDPrefix string
 }
 
@@ -45,9 +45,13 @@ func (cfg Config) ExportDev(s source.Source, devID string) error {
 		return errExport.WithAttributes("device_id", devID).WithCause(err)
 	}
 	oldID := dev.Ids.DeviceId
+	eui := dev.Ids.DevEui
 
-	if eui := dev.Ids.DevEui; cfg.EUIForID && eui != nil {
-		dev.Ids.DeviceId = strings.ToLower(string(eui))
+	if oldID == "" {
+		if eui == nil {
+			return errNoExportedIDorEUI.WithAttributes("device_id", devID)
+		}
+		dev.Ids.DeviceId = strings.ToLower(hex.EncodeToString(eui))
 	}
 	if cfg.DevIDPrefix != "" {
 		dev.Ids.DeviceId = fmt.Sprintf("%s-%s", cfg.DevIDPrefix, dev.Ids.DeviceId)
