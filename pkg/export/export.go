@@ -62,7 +62,7 @@ func (cfg Config) ExportDev(s source.Source, devID string) error {
 		return errDevIDExceedsMaxLength.WithAttributes("id", id)
 	}
 
-	if dev.Ids.DeviceId != oldID {
+	if dev.Ids.DeviceId != oldID && oldID != "" {
 		if dev.Attributes == nil {
 			dev.Attributes = make(map[string]string)
 		}

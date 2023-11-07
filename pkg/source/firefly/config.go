@@ -48,19 +48,7 @@ type Config struct {
 // NewConfig returns a new Firefly configuration.
 func NewConfig() *Config {
 	config := &Config{
-		flags:           &pflag.FlagSet{},
-		joinEUI:         os.Getenv("JOIN_EUI"),
-		appID:           os.Getenv("APP_ID"),
-		frequencyPlanID: os.Getenv("FREQUENCY_PLAN_ID"),
-		macVersion:      os.Getenv("MAC_VERSION"),
-		invalidateKeys:  (os.Getenv("INVALIDATE_KEYS") == "true"),
-		all:             (os.Getenv("ALL") == "true"),
-		Config: client.Config{
-			Host:       os.Getenv("FIREFLY_HOST"),
-			CACertPath: os.Getenv("FIREFLY_CA_CERT_PATH"),
-			APIKey:     os.Getenv("FIREFLY_API_KEY"),
-			UseHTTP:    (os.Getenv("FIREFLY_USE_HTTP") == "true"),
-		},
+		flags: &pflag.FlagSet{},
 	}
 
 	config.flags.StringVar(&config.Host,

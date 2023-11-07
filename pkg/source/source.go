@@ -56,7 +56,7 @@ type Source interface {
 	RangeDevices(appID string, f func(s Source, devID string) error) error
 	// Close cleans up and terminates any open connections.
 	Close() error
-	// Iterator returns an iterator for devices.
+	// Iterator returns an iterator for the source.
 	Iterator(isApplication bool) iterator.Iterator
 }
 
