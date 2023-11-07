@@ -57,7 +57,7 @@ type Source interface {
 	// Close cleans up and terminates any open connections.
 	Close() error
 	// Iterator returns an iterator for devices.
-	Iterator() iterator.Iterator
+	Iterator(isApplication bool) iterator.Iterator
 }
 
 // CreateSource is a function that constructs a new Source.

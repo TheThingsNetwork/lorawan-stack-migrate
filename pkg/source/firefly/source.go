@@ -16,6 +16,7 @@ package firefly
 
 import (
 	"context"
+	"os"
 
 	"github.com/TheThingsNetwork/go-utils/random"
 	"go.thethings.network/lorawan-stack/v3/pkg/networkserver/mac"
@@ -52,7 +53,10 @@ func createNewSource(cfg *Config) source.CreateSource {
 }
 
 // Iterator implements source.Source.
-func (s Source) Iterator() iterator.Iterator {
+func (s Source) Iterator(isApplication bool) iterator.Iterator {
+	if !isApplication {
+		return iterator.NewReaderIterator(os.Stdin, '\n')
+	}
 	if s.all {
 		// The Firefly LNS does not group devices by an application.
 		// When the "all" flag is set, we get all devices accessible by the API key.
@@ -84,7 +88,6 @@ func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
 	if err := joinEUI.UnmarshalText([]byte(s.joinEUI)); err != nil {
 		return nil, err
 	}
-
 	v3dev := &ttnpb.EndDevice{
 		Name:            ffdev.Name,
 		Description:     ffdev.Description,
@@ -102,7 +105,6 @@ func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
 		LorawanVersion:    s.derivedMacVersion,
 		LorawanPhyVersion: s.derivedPhyVersion,
 	}
-
 	if ffdev.Location != nil {
 		v3dev.Locations = map[string]*ttnpb.Location{
 			"user": {
@@ -136,10 +138,10 @@ func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
 		if err != nil {
 			return nil, err
 		}
-		// This cannot be empty
-		v3dev.Session.StartedAt = timestamppb.Now()
-		v3dev.Session.Keys.SessionKeyId = random.Bytes(16)
-
+		if v3dev.SupportsJoin {
+			v3dev.Session.StartedAt = timestamppb.Now()
+			v3dev.Session.Keys.SessionKeyId = random.Bytes(16)
+		}
 		v3dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, ffdev.ApplicationSessionKey)
 		if err != nil {
 			return nil, err

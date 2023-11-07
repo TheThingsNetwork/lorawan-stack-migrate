@@ -194,7 +194,7 @@ func (s *Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 }
 
 // Iterator implements source.Source.
-func (s *Source) Iterator() iterator.Iterator {
+func (s *Source) Iterator(bool) iterator.Iterator {
 	return iterator.NewReaderIterator(os.Stdin, '\n')
 }
 

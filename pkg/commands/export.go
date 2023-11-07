@@ -38,7 +38,7 @@ func Export(cmd *cobra.Command, args []string, f func(s source.Source, item stri
 	var iter iterator.Iterator
 	switch len(args) {
 	case 0:
-		iter = s.Iterator()
+		iter = s.Iterator(cmd.Name() == "application")
 	default:
 		iter = iterator.NewListIterator(args)
 	}
