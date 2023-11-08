@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package iterator
+package iterator_test
 
 import (
 	"bytes"
@@ -22,10 +22,11 @@ import (
 
 	"github.com/smartystreets/assertions"
 	"github.com/smartystreets/assertions/should"
+	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 )
 
 func TestListIterator(t *testing.T) {
-	it := NewListIterator([]string{"one", "two", "three"})
+	it := iterator.NewListIterator([]string{"one", "two", "three"})
 	a := assertions.New(t)
 
 	s, err := it.Next()
@@ -49,7 +50,7 @@ func TestListIterator(t *testing.T) {
 func TestReaderIterator(t *testing.T) {
 	for _, sep := range []string{"\n", "\r\n"} {
 		buf := []byte(strings.Join([]string{"one", "two", "three"}, sep))
-		it := NewReaderIterator(bytes.NewBuffer(buf), '\n')
+		it := iterator.NewReaderIterator(bytes.NewBuffer(buf), '\n')
 		a := assertions.New(t)
 
 		s, err := it.Next()

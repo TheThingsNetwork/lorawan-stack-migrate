@@ -98,7 +98,7 @@ func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
 			JoinEui:        joinEUI.Bytes(),
 		},
 		MacSettings: &ttnpb.MACSettings{
-			Rx2DataRateIndex: &ttnpb.DataRateIndexValue{Value: ttnpb.DataRateIndex(ffdev.Rx2DataRate)},
+			DesiredRx2DataRateIndex: &ttnpb.DataRateIndexValue{Value: ttnpb.DataRateIndex(ffdev.Rx2DataRate)},
 		},
 		SupportsClassC:    ffdev.ClassC,
 		SupportsJoin:      ffdev.OTAA,
@@ -114,14 +114,6 @@ func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
 			},
 		}
 		s.src.Logger.Debugw("Set location", "location", v3dev.Locations)
-	}
-	v3dev.Ids.DevEui, err = util.UnmarshalTextToBytes(&types.EUI64{}, ffdev.EUI)
-	if err != nil {
-		return nil, err
-	}
-	v3dev.Ids.JoinEui, err = util.UnmarshalTextToBytes(&types.EUI64{}, s.joinEUI)
-	if err != nil {
-		return nil, err
 	}
 	if v3dev.SupportsJoin {
 		v3dev.RootKeys = &ttnpb.RootKeys{AppKey: &ttnpb.KeyEnvelope{}}
