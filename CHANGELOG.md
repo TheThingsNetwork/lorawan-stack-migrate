@@ -8,8 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Firefly source.
-
 ### Changed
 
 ### Deprecated
@@ -18,9 +16,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-- Source command line parameters not being visible.
+## [v0.10.0] (2023-11-13)
 
-### Security
+### Added
+
+- Firefly source.
+
+### Fixed
+
+- Source command line parameters not being visible.
 
 ## [v0.9.0] (2023-10-18)
 
