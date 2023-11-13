@@ -12,20 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tts
+package firefly
 
 import (
-	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source/tts/config"
+	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
+	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/firefly"
 )
 
-func init() {
-	cfg, flags := config.New()
+const sourceName = "firefly"
 
-	source.RegisterSource(source.Registration{
-		Name:        "tts",
-		Description: "Migrate from The Things Stack",
-		FlagSet:     flags,
-		Create:      createNewSource(cfg),
-	})
-}
+// FireflyCmd represents the firefly source.
+var FireflyCmd = commands.Source(sourceName,
+	"Export devices from Digimondo's Firefly",
+)

@@ -163,14 +163,3 @@ func (p *Source) getActivation(devEui string) (*csapi.DeviceActivation, error) {
 	}
 	return resp.DeviceActivation, err
 }
-
-func unmarshalTextToBytes(
-	unmarshaller interface {
-		UnmarshalText([]byte) error
-		Bytes() []byte
-	},
-	source string,
-) ([]byte, error) {
-	err := unmarshaller.UnmarshalText([]byte(source))
-	return unmarshaller.Bytes(), err
-}

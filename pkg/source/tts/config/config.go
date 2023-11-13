@@ -23,10 +23,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/tts/api"
-	"go.uber.org/zap"
 )
-
-var logger *zap.SugaredLogger
 
 type serverConfig struct {
 	defaultGRPCAddress,
@@ -150,12 +147,6 @@ type Config struct {
 func (c *Config) Initialize(rootConfig source.Config) error {
 	c.Config = rootConfig
 
-	var err error
-	logger, err = NewLogger(c.Verbose)
-	if err != nil {
-		return err
-	}
-
 	if c.appAPIKey == "" {
 		return errNoAppAPIKey.New()
 	}
@@ -164,7 +155,7 @@ func (c *Config) Initialize(rootConfig source.Config) error {
 	switch {
 	case c.insecure:
 		api.SetInsecure(true)
-		logger.Warn("Using insecure connection to API")
+		c.Logger.Warn("Using insecure connection to API")
 
 	default:
 		if c.caPath != "" {
@@ -179,23 +170,11 @@ func (c *Config) Initialize(rootConfig source.Config) error {
 
 	// DeleteSourceDevice is not allowed during a dry run
 	if c.DryRun && c.DeleteSourceDevice {
-		logger.Warn("Cannot delete source devices during a dry run.")
+		c.Logger.Warn("Cannot delete source devices during a dry run.")
 		c.DeleteSourceDevice = false
 	}
 
 	return nil
-}
-
-func NewLogger(verbose bool) (*zap.SugaredLogger, error) {
-	cfg := zap.NewProductionConfig()
-	if verbose {
-		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	}
-	logger, err := cfg.Build()
-	if err != nil {
-		return nil, err
-	}
-	return logger.Sugar(), nil
 }
 
 func setCustomCA(path string) error {

@@ -16,23 +16,15 @@ package commands
 
 import (
 	"io"
-	"os"
 
 	"github.com/spf13/cobra"
 	"go.thethings.network/lorawan-stack-migrate/pkg/export"
+	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 )
 
 func Export(cmd *cobra.Command, args []string, f func(s source.Source, item string) error) error {
-	var iter Iterator
-	switch len(args) {
-	case 0:
-		iter = NewReaderIterator(os.Stdin, '\n')
-	default:
-		iter = NewListIterator(args)
-	}
-
 	s, err := source.NewSource(cmd.Context())
 	if err != nil {
 		return err
@@ -42,6 +34,14 @@ func Export(cmd *cobra.Command, args []string, f func(s source.Source, item stri
 			log.FromContext(cmd.Context()).WithError(err).Fatal("Failed to clean up")
 		}
 	}()
+
+	var iter iterator.Iterator
+	switch len(args) {
+	case 0:
+		iter = s.Iterator(cmd.Name() == "application")
+	default:
+		iter = iterator.NewListIterator(args)
+	}
 
 	for {
 		item, err := iter.Next()

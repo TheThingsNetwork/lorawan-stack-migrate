@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package commands
+package iterator
 
 import (
 	"bufio"
@@ -60,4 +60,18 @@ func (r *readerIterator) Next() (string, error) {
 		return s, nil
 	}
 	return strings.TrimSpace(s), err
+}
+
+// noopIterator is a no-op iterator.
+type noopIterator struct {
+}
+
+// NewNoopIterator returns a new no-op iterator.
+func NewNoopIterator() Iterator {
+	return &noopIterator{}
+}
+
+// Next implements Iterator
+func (n *noopIterator) Next() (string, error) {
+	return "", io.EOF
 }
