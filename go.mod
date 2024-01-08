@@ -1,6 +1,6 @@
 module go.thethings.network/lorawan-stack-migrate
 
-go 1.20
+go 1.21
 
 // Dependency of lorawan-stack.
 replace github.com/throttled/throttled/v2 => github.com/TheThingsIndustries/throttled/v2 v2.7.1-noredis
