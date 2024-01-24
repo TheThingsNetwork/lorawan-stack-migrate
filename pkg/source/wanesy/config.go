@@ -35,6 +35,7 @@ type Config struct {
 	appID           string
 	frequencyPlanID string
 	csvPath         string
+	all             bool
 
 	derivedMacVersion ttnpb.MACVersion
 	derivedPhyVersion ttnpb.PHYVersion
@@ -60,6 +61,10 @@ func NewConfig() *Config {
 		"csv-path",
 		"",
 		"Path to the CSV file exported from Wanesy Management Center")
+	config.flags.BoolVar(&config.all,
+		"all",
+		false,
+		"Export all devices in the CSV. This is only used by the application command")
 	return config
 }
 

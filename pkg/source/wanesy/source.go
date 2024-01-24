@@ -16,6 +16,7 @@ package wanesy
 
 import (
 	"context"
+	"os"
 
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
@@ -50,18 +51,16 @@ func createNewSource(cfg *Config) source.CreateSource {
 
 // Iterator implements source.Source.
 func (s Source) Iterator(isApplication bool) iterator.Iterator {
-	// if !isApplication {
-	// 	return iterator.NewReaderIterator(os.Stdin, '\n')
-	// }
-	// if s.all {
-	// 	// The Firefly LNS does not group devices by an application.
-	// 	// When the "all" flag is set, we get all devices accessible by the API key.
-	// 	// We use a dummy "all" App ID to fallthrough to the RangeDevices method,
-	// 	// where the appID argument is unused.
-	// 	return iterator.NewListIterator(
-	// 		[]string{"all"},
-	// 	)
-	// }
+	if !isApplication {
+		return iterator.NewReaderIterator(os.Stdin, '\n')
+	}
+	if s.all {
+		// WMC does not group devices by application.
+		// The `all` flag is used to export all the devices in the CSV.
+		return iterator.NewListIterator(
+			[]string{"all"},
+		)
+	}
 	return iterator.NewNoopIterator()
 }
 
@@ -88,17 +87,8 @@ func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
 
 // RangeDevices implements the source.Source interface.
 func (s Source) RangeDevices(_ string, f func(source.Source, string) error) error {
-	var (
-		devs []client.Device
-		err  error
-	)
-	s.src.Logger.Debugw("Firefly LNS does not group devices by an application. Get all devices accessible by the API key")
-	devs, err = s.GetAllDevices()
-	if err != nil {
-		return err
-	}
-	for _, d := range devs {
-		if err := f(s, d.EUI); err != nil {
+	for eui := range s.imported {
+		if err := f(s, eui.String()); err != nil {
 			return err
 		}
 	}
