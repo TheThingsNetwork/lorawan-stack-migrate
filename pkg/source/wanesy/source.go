@@ -79,105 +79,10 @@ func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
 	if err := joinEUI.UnmarshalText([]byte(wmcdev.AppEui)); err != nil {
 		return nil, err
 	}
-	v3dev, err := wmcdev.EndDevice(s.appID, s.frequencyPlanID)
+	v3dev, err := wmcdev.EndDevice(s.fpStore, s.appID, s.frequencyPlanID)
 	if err != nil {
 		return nil, err
 	}
-	// v3dev := &ttnpb.EndDevice{
-	// 	Name:            wmcdev.Name,
-	// 	FrequencyPlanId: s.frequencyPlanID,
-	// 	Ids: &ttnpb.EndDeviceIdentifiers{
-	// 		ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: s.appID},
-	// 		DevEui:         devEUI.Bytes(),
-	// 		JoinEui:        joinEUI.Bytes(),
-	// 	},
-	// 	MacSettings: &ttnpb.MACSettings{
-	// 		DesiredRx2DataRateIndex: &ttnpb.DataRateIndexValue{Value: ttnpb.DataRateIndex(wmcdev.Rx2Dr)},
-	// 	},
-	// 	SupportsClassC:    wmcdev.ClassC,
-	// 	SupportsJoin:      wmcdev.OTAA,
-	// 	LorawanVersion:    s.derivedMacVersion,
-	// 	LorawanPhyVersion: s.derivedPhyVersion,
-	// }
-	// if wmcdev.Location != nil {
-	// 	v3dev.Locations = map[string]*ttnpb.Location{
-	// 		"user": {
-	// 			Latitude:  wmcdev.Location.Latitude,
-	// 			Longitude: wmcdev.Location.Longitude,
-	// 			Source:    ttnpb.LocationSource_SOURCE_REGISTRY,
-	// 		},
-	// 	}
-	// 	s.src.Logger.Debugw("Set location", "location", v3dev.Locations)
-	// }
-	// if v3dev.SupportsJoin {
-	// 	v3dev.RootKeys = &ttnpb.RootKeys{AppKey: &ttnpb.KeyEnvelope{}}
-	// 	v3dev.RootKeys.AppKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, wmcdev.ApplicationKey)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-	// hasSession := wmcdev.Address != "" && wmcdev.NetworkSessionKey != "" && wmcdev.ApplicationSessionKey != ""
-
-	// if hasSession || !v3dev.SupportsJoin {
-	// 	v3dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, FNwkSIntKey: &ttnpb.KeyEnvelope{}}}
-	// 	v3dev.Session.DevAddr, err = util.UnmarshalTextToBytes(&types.DevAddr{}, wmcdev.Address)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	if v3dev.SupportsJoin {
-	// 		v3dev.Session.StartedAt = timestamppb.Now()
-	// 		v3dev.Session.Keys.SessionKeyId = random.Bytes(16)
-	// 	}
-	// 	v3dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, wmcdev.ApplicationSessionKey)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	v3dev.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, wmcdev.NetworkSessionKey)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	switch v3dev.LorawanVersion {
-	// 	case ttnpb.MACVersion_MAC_V1_1:
-	// 		v3dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
-	// 		v3dev.Session.Keys.NwkSEncKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, wmcdev.ApplicationSessionKey)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-	// 		v3dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
-	// 		v3dev.Session.Keys.SNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, wmcdev.NetworkSessionKey)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-	// 	}
-
-	// 	// Set FrameCounters
-	// 	packet, err := s.GetLastPacket(devEUIString)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	v3dev.Session.LastFCntUp = uint32(packet.FCnt)
-	// 	v3dev.Session.LastAFCntDown = uint32(wmcdev.FrameCounter)
-	// 	v3dev.Session.LastNFCntDown = uint32(wmcdev.FrameCounter)
-
-	// 	// Create a MACState.
-	// 	if v3dev.MacState, err = mac.NewState(v3dev, s.fpStore, &ttnpb.MACSettings{}); err != nil {
-	// 		return nil, err
-	// 	}
-	// 	v3dev.MacState.CurrentParameters = v3dev.MacState.DesiredParameters
-	// 	v3dev.MacState.CurrentParameters.Rx1Delay = ttnpb.RxDelay_RX_DELAY_1
-	// }
-
-	// if s.invalidateKeys {
-	// 	s.src.Logger.Debugw("Increment the last byte of the device keys", "device_id", wmcdev.Name, "device_eui", wmcdev.EUI)
-	// 	// Increment the last byte of the device keys.
-	// 	// This makes it easier to rollback a migration if needed.
-	// 	updated := wmcdev.WithIncrementedKeys()
-	// 	err := s.UpdateDeviceByEUI(devEUIString, updated)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-
 	return v3dev, nil
 }
 

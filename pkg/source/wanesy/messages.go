@@ -18,8 +18,13 @@ import (
 	"encoding/json"
 	"strconv"
 
+	"github.com/TheThingsNetwork/go-utils/random"
+	"go.thethings.network/lorawan-stack-migrate/pkg/util"
+	"go.thethings.network/lorawan-stack/v3/pkg/frequencyplans"
+	"go.thethings.network/lorawan-stack/v3/pkg/networkserver/mac"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Devices is a list of devices.
@@ -85,7 +90,7 @@ type Device struct {
 }
 
 // EndDevice converts a Wanesy device to a TTS device.
-func (d Device) EndDevice(applicationID, frequencyPlanID string) (*ttnpb.EndDevice, error) {
+func (d Device) EndDevice(fpStore *frequencyplans.Store, applicationID, frequencyPlanID string) (*ttnpb.EndDevice, error) {
 	var devEUI, joinEUI types.EUI64
 	if err := devEUI.UnmarshalText([]byte(d.DevEui)); err != nil {
 		return nil, err
@@ -160,6 +165,95 @@ func (d Device) EndDevice(applicationID, frequencyPlanID string) (*ttnpb.EndDevi
 		}
 	default:
 		return nil, errInvalidMACVersion.WithAttributes("mac_version", d.MacVersion)
+	}
+
+	if d.Longitude != "NULL" && d.Latitude != "NULL" && d.Altitude != "NULL" {
+		latitude, _ := strconv.ParseFloat(d.Latitude, 64)
+		longitude, _ := strconv.ParseFloat(d.Longitude, 64)
+		altitude, err := strconv.ParseUint(d.Rx2Dr, 16, 32)
+		if err != nil {
+			return nil, err
+		}
+		ret.Locations = map[string]*ttnpb.Location{
+			"user": {
+				Latitude:  latitude,
+				Longitude: longitude,
+				Altitude:  int32(altitude),
+				Source:    ttnpb.LocationSource_SOURCE_REGISTRY,
+			},
+		}
+	}
+	if ret.SupportsJoin {
+		var err error
+		ret.RootKeys = &ttnpb.RootKeys{AppKey: &ttnpb.KeyEnvelope{}}
+		ret.RootKeys.AppKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, d.AppKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Copy session information if available.
+	hasSession := d.DevAddr != "NULL" && d.NwkSKey != "NULL" && d.AppKey != ""
+	if hasSession || !ret.SupportsJoin {
+		var err error
+		ret.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, FNwkSIntKey: &ttnpb.KeyEnvelope{}}}
+		ret.Session.DevAddr, err = util.UnmarshalTextToBytes(&types.DevAddr{}, d.DevAddr)
+		if err != nil {
+			return nil, err
+		}
+		if ret.SupportsJoin {
+			ret.Session.StartedAt = timestamppb.Now()
+			ret.Session.Keys.SessionKeyId = random.Bytes(16)
+		}
+		ret.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, d.AppSKey)
+		if err != nil {
+			return nil, err
+		}
+		ret.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, d.NwkSKey)
+		if err != nil {
+			return nil, err
+		}
+		switch ret.LorawanVersion {
+		case ttnpb.MACVersion_MAC_V1_1:
+			ret.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, d.FNwkSIntKey)
+			if err != nil {
+				return nil, err
+			}
+			ret.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
+			ret.Session.Keys.NwkSEncKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, d.NwkSKey)
+			if err != nil {
+				return nil, err
+			}
+			ret.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
+			ret.Session.Keys.SNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, d.SNwkSIntKey)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// Set FrameCounters
+		s, err := strconv.ParseUint(d.FcntUp, 16, 32)
+		if err != nil {
+			return nil, err
+		}
+		ret.Session.LastFCntUp = uint32(s)
+		s, err = strconv.ParseUint(d.FcntDown, 16, 32)
+		if err != nil {
+			return nil, err
+		}
+		ret.Session.LastAFCntDown = uint32(s)
+		ret.Session.LastNFCntDown = uint32(s)
+
+		// Create a MACState.
+		if ret.MacState, err = mac.NewState(ret, fpStore, ret.MacSettings); err != nil {
+			return nil, err
+		}
+		ret.MacState.CurrentParameters = ret.MacState.DesiredParameters
+		s, err = strconv.ParseUint(d.Rx1Delay, 16, 32)
+		if err != nil {
+			return nil, err
+		}
+		ret.MacState.CurrentParameters.Rx1Delay = ttnpb.RxDelay(s)
 	}
 
 	return ret, nil
