@@ -307,6 +307,45 @@ $ ttn-lw-migrate firefly application --all --verbose > devices.json
 $ ttn-lw-migrate firefly application --all --invalidate-keys > devices.json
 ```
 
+## Wanesy
+
+### Configuration
+
+Configure with environment variables, or command-line arguments.
+
+See `ttn-lw-migrate wanesy {device|application} --help` for more details.
+
+The following example shows how to set options via environment variables.
+
+```bash
+$ export APP_ID=my-test-app             # Application ID for the exported devices
+$ export FREQUENCY_PLAN_ID=EU_863_870   # Frequency Plan ID for the exported devices
+$ export CSV_PATH=<path>                # Local path to the exported CSV file.
+```
+
+### Notes
+
+- The export process will halt if any error occurs.
+- Since the migration tool uses a CSV file that's exported from WMC and does not interact with the API, make sure to remove/clean up the devices on WMC once the migration is completed.
+
+### Export Devices
+
+To export a single device using its Device EUI (e.g. `1111111111111112`):
+
+```bash
+# Export a device from the CSV to TTS format.
+$ ttn-lw-migrate wanesy device 1111111111111112 > devices.json
+```
+
+### Export All Devices
+
+In order to export all devices from the CSV file, use the `application` command.
+
+```bash
+# Export all devices from the CSV.
+$ ttn-lw-migrate wanesy application --all
+```
+
 ## Development Environment
 
 Requires Go version 1.16 or higher. [Download Go](https://golang.org/dl/).
