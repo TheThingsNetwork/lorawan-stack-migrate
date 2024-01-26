@@ -66,17 +66,13 @@ func (s Source) Iterator(isApplication bool) iterator.Iterator {
 
 // ExportDevice implements the source.Source interface.
 func (s Source) ExportDevice(devEUIString string) (*ttnpb.EndDevice, error) {
-	var devEUI, joinEUI types.EUI64
+	var devEUI types.EUI64
 	if err := devEUI.UnmarshalText([]byte(devEUIString)); err != nil {
 		return nil, err
 	}
 	wmcdev, ok := s.imported[devEUI]
 	if !ok {
 		return nil, errNoDeviceFound.WithAttributes("eui", devEUIString)
-	}
-
-	if err := joinEUI.UnmarshalText([]byte(wmcdev.AppEui)); err != nil {
-		return nil, err
 	}
 	v3dev, err := wmcdev.EndDevice(s.fpStore, s.appID, s.frequencyPlanID)
 	if err != nil {

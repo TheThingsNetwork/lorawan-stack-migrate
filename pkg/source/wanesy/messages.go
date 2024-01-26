@@ -91,11 +91,8 @@ type Device struct {
 
 // EndDevice converts a Wanesy device to a TTS device.
 func (d Device) EndDevice(fpStore *frequencyplans.Store, applicationID, frequencyPlanID string) (*ttnpb.EndDevice, error) {
-	var devEUI, joinEUI types.EUI64
+	var devEUI types.EUI64
 	if err := devEUI.UnmarshalText([]byte(d.DevEui)); err != nil {
-		return nil, err
-	}
-	if err := joinEUI.UnmarshalText([]byte(d.AppEui)); err != nil {
 		return nil, err
 	}
 	ret := &ttnpb.EndDevice{
@@ -104,12 +101,26 @@ func (d Device) EndDevice(fpStore *frequencyplans.Store, applicationID, frequenc
 		Ids: &ttnpb.EndDeviceIdentifiers{
 			ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: applicationID},
 			DevEui:         devEUI.Bytes(),
-			JoinEui:        joinEUI.Bytes(),
 		},
 		MacSettings:    &ttnpb.MACSettings{},
 		SupportsClassC: d.ClassType == "C",
 		SupportsClassB: d.ClassType == "B",
 		SupportsJoin:   d.Activation == "OTAA",
+	}
+	if ret.SupportsJoin {
+		var (
+			joinEUI types.EUI64
+			err     error
+		)
+		ret.RootKeys = &ttnpb.RootKeys{AppKey: &ttnpb.KeyEnvelope{}}
+		ret.RootKeys.AppKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, d.AppKey)
+		if err != nil {
+			return nil, err
+		}
+		if err := joinEUI.UnmarshalText([]byte(d.AppEui)); err != nil {
+			return nil, err
+		}
+		ret.Ids.JoinEui = joinEUI.Bytes()
 	}
 	if d.Rx2Dr != "NULL" {
 		s, err := strconv.ParseUint(d.Rx2Dr, 16, 32)
@@ -183,14 +194,6 @@ func (d Device) EndDevice(fpStore *frequencyplans.Store, applicationID, frequenc
 			},
 		}
 	}
-	if ret.SupportsJoin {
-		var err error
-		ret.RootKeys = &ttnpb.RootKeys{AppKey: &ttnpb.KeyEnvelope{}}
-		ret.RootKeys.AppKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, d.AppKey)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	// Copy session information if available.
 	hasSession := d.DevAddr != "NULL" && d.NwkSKey != "NULL" && d.AppKey != ""
@@ -249,11 +252,14 @@ func (d Device) EndDevice(fpStore *frequencyplans.Store, applicationID, frequenc
 			return nil, err
 		}
 		ret.MacState.CurrentParameters = ret.MacState.DesiredParameters
-		s, err = strconv.ParseUint(d.Rx1Delay, 16, 32)
-		if err != nil {
-			return nil, err
+		ret.MacState.CurrentParameters.Rx1Delay = ttnpb.RxDelay_RX_DELAY_1 // Fallback
+		if d.Rx1Delay != "NULL" {
+			s, err = strconv.ParseUint(d.Rx1Delay, 16, 32)
+			if err != nil {
+				return nil, err
+			}
+			ret.MacState.CurrentParameters.Rx1Delay = ttnpb.RxDelay(s)
 		}
-		ret.MacState.CurrentParameters.Rx1Delay = ttnpb.RxDelay(s)
 	}
 
 	return ret, nil
