@@ -97,8 +97,8 @@ func (c *Config) Flags() *pflag.FlagSet {
 }
 
 // ImportDevices imports the devices from the provided CSV file.
-func (c *Config) ImportDevices() (Devices, error) {
-	raw, err := os.ReadFile(c.csvPath)
+func ImportDevices(csvPath string) (Devices, error) {
+	raw, err := os.ReadFile(csvPath)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (c *Config) ImportDevices() (Devices, error) {
 		return nil, err
 	}
 	if len(readValues) < 2 {
-		return nil, errInvalidCSV.New()
+		return nil, errNoValuesInCSV.New()
 	}
 	values := make([]map[string]string, 0)
 	for i := 1; i < len(readValues); i++ {

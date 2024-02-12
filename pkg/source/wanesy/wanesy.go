@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	errInvalidCSV              = errors.DefineInvalidArgument("invalid_csv", "invalid csv file")
+	errNoValuesInCSV           = errors.DefineInvalidArgument("no_values_in_csv", "no values in CSV file")
 	errNoAppID                 = errors.DefineInvalidArgument("no_app_id", "no app id")
 	errNoCSVFileProvided       = errors.DefineInvalidArgument("no_csv_file_provided", "no csv file provided")
 	errNoJoinEUI               = errors.DefineInvalidArgument("no_join_eui", "no join eui")

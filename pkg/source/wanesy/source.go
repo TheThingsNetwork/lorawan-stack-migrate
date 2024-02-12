@@ -38,7 +38,7 @@ func createNewSource(cfg *Config) source.CreateSource {
 		if err := cfg.Initialize(src); err != nil {
 			return nil, err
 		}
-		devs, err := cfg.ImportDevices()
+		devs, err := ImportDevices(cfg.csvPath)
 		if err != nil {
 			return nil, err
 		}
