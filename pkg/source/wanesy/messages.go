@@ -16,6 +16,7 @@ package wanesy
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/TheThingsNetwork/go-utils/random"
@@ -41,6 +42,10 @@ func (d Devices) UnmarshalJSON(b []byte) error {
 		if err := devEUI.UnmarshalText([]byte(dev.DevEui)); err != nil {
 			return err
 		}
+		if len(dev.DevAddr)%2 != 0 {
+			// Prepend 0 to make the length 8.
+			dev.DevAddr = fmt.Sprintf("0%s", dev.DevAddr)
+		}
 		d[devEUI] = dev
 	}
 	return nil
@@ -48,45 +53,46 @@ func (d Devices) UnmarshalJSON(b []byte) error {
 
 // Device is a LoRaWAN end device exported from Wanesy Management Center.
 type Device struct {
-	Activation          string `json:"activation"`
-	AdrEnabled          string `json:"adrEnabled"`
-	Altitude            string `json:"altitude"`
-	AppEui              string `json:"appEui"`
-	AppKey              string `json:"appKey"`
-	AppSKey             string `json:"appSKey"`
-	CfList              string `json:"cfList"`
-	ClassType           string `json:"classType"`
+	DevEui              string `json:"devEui"`
 	ClusterID           string `json:"clusterId"`
 	ClusterName         string `json:"clusterName"`
-	Country             string `json:"country"`
-	DevAddr             string `json:"devAddr"`
-	DevEui              string `json:"devEui"`
-	DevNonceCounter     string `json:"devNonceCounter"`
-	DwellTime           string `json:"dwellTime"`
-	FNwkSIntKey         string `json:"fNwkSIntKey"`
-	FcntDown            string `json:"fcntDown"`
-	FcntUp              string `json:"fcntUp"`
-	Geolocation         string `json:"geolocation"`
-	LastDataDownMessage string `json:"lastDataDownMessage"`
-	LastDataUpDr        string `json:"lastDataUpDr"`
-	LastDataUpMessage   string `json:"lastDataUpMessage"`
-	Latitude            string `json:"latitude"`
-	Longitude           string `json:"longitude"`
-	MacVersion          string `json:"macVersion"`
 	Name                string `json:"name"`
-	NwkSKey             string `json:"nwkSKey"`
-	PingSlotDr          string `json:"pingSlotDr"`
-	PingSlotFreq        string `json:"pingSlotFreq"`
-	Profile             string `json:"profile"`
-	RegParamsRevision   string `json:"regParamsRevision"`
+	ClassType           string `json:"classType"`
 	RfRegion            string `json:"rfRegion"`
+	Country             string `json:"country"`
+	MacVersion          string `json:"macVersion"`
+	RegParamsRevision   string `json:"regParamsRevision"`
+	Profile             string `json:"profile"`
+	AdrEnabled          string `json:"adrEnabled"`
+	Activation          string `json:"activation"`
+	AppEui              string `json:"appEui"`
+	AppKey              string `json:"appKey"`
+	FCntDown            string `json:"fcntDown"`
+	FCntUp              string `json:"fcntUp"`
+	DevNonceCounter     string `json:"devNonceCounter"`
+	FNwkSIntKey         string `json:"fNwkSIntKey"`
+	SNwkSIntKey         string `json:"sNwkSIntKey"`
 	Rx1Delay            string `json:"rx1Delay"`
 	Rx1DrOffset         string `json:"rx1DrOffset"`
 	Rx2Dr               string `json:"rx2Dr"`
 	Rx2Freq             string `json:"rx2Freq"`
 	RxWindows           string `json:"rxWindows"`
-	SNwkSIntKey         string `json:"sNwkSIntKey"`
+	CfList              string `json:"cfList"`
+	DwellTime           string `json:"dwellTime"`
+	PingSlotDr          string `json:"pingSlotDr"`
+	PingSlotFreq        string `json:"pingSlotFreq"`
+	Geolocation         string `json:"geolocation"`
+	Latitude            string `json:"latitude"`
+	Longitude           string `json:"longitude"`
+	Altitude            string `json:"altitude"`
 	Status              string `json:"status"`
+	LastDataUpMessage   string `json:"lastDataUpMessage"`
+	LastDataDownMessage string `json:"lastDataDownMessage"`
+	LastDataUpDr        string `json:"lastDataUpDr"`
+	DeviceProfile       string `json:"device_profile"`
+	DevAddr             string `json:"dev_addr"`
+	NwkSKey             string `json:"NwkSKey"`
+	AppSKey             string `json:"AppSKey"`
 }
 
 // EndDevice converts a Wanesy device to a TTS device.
@@ -122,7 +128,7 @@ func (d Device) EndDevice(fpStore *frequencyplans.Store, applicationID, frequenc
 		}
 		ret.Ids.JoinEui = joinEUI.Bytes()
 	}
-	if d.Rx2Dr != "NULL" {
+	if d.Rx2Dr != "" {
 		s, err := strconv.ParseUint(d.Rx2Dr, 16, 32)
 		if err != nil {
 			return nil, err
@@ -178,7 +184,7 @@ func (d Device) EndDevice(fpStore *frequencyplans.Store, applicationID, frequenc
 		return nil, errInvalidMACVersion.WithAttributes("mac_version", d.MacVersion)
 	}
 
-	if d.Longitude != "NULL" && d.Latitude != "NULL" && d.Altitude != "NULL" {
+	if d.Longitude != "" && d.Latitude != "" && d.Altitude != "" {
 		latitude, _ := strconv.ParseFloat(d.Latitude, 64)
 		longitude, _ := strconv.ParseFloat(d.Longitude, 64)
 		altitude, err := strconv.ParseUint(d.Rx2Dr, 16, 32)
@@ -196,7 +202,7 @@ func (d Device) EndDevice(fpStore *frequencyplans.Store, applicationID, frequenc
 	}
 
 	// Copy session information if available.
-	hasSession := d.DevAddr != "NULL" && d.NwkSKey != "NULL" && d.AppKey != ""
+	hasSession := d.DevAddr != "" && d.NwkSKey != "" && d.AppKey != ""
 	if hasSession || !ret.SupportsJoin {
 		var err error
 		ret.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, FNwkSIntKey: &ttnpb.KeyEnvelope{}}}
@@ -235,12 +241,12 @@ func (d Device) EndDevice(fpStore *frequencyplans.Store, applicationID, frequenc
 		}
 
 		// Set FrameCounters
-		s, err := strconv.ParseUint(d.FcntUp, 16, 32)
+		s, err := strconv.ParseUint(d.FCntUp, 10, 32)
 		if err != nil {
 			return nil, err
 		}
 		ret.Session.LastFCntUp = uint32(s)
-		s, err = strconv.ParseUint(d.FcntDown, 16, 32)
+		s, err = strconv.ParseUint(d.FCntDown, 10, 32)
 		if err != nil {
 			return nil, err
 		}
@@ -253,8 +259,8 @@ func (d Device) EndDevice(fpStore *frequencyplans.Store, applicationID, frequenc
 		}
 		ret.MacState.CurrentParameters = ret.MacState.DesiredParameters
 		ret.MacState.CurrentParameters.Rx1Delay = ttnpb.RxDelay_RX_DELAY_1 // Fallback
-		if d.Rx1Delay != "NULL" {
-			s, err = strconv.ParseUint(d.Rx1Delay, 16, 32)
+		if d.Rx1Delay != "" {
+			s, err = strconv.ParseUint(d.Rx1Delay, 10, 32)
 			if err != nil {
 				return nil, err
 			}
