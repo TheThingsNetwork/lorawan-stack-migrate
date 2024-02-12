@@ -309,7 +309,7 @@ $ ttn-lw-migrate firefly application --all --invalidate-keys > devices.json
 
 ## Wanesy
 
-Migration from Kerlink's Wanesy requires exporting the device data into a [CSV](./pkg/source/wanesy/testdata/test.csv) file and fed into this tool. Please reach out Kerlink to get an export of the devices that need to be migrated.
+Migration from Kerlink's Wanesy requires exporting the device data into a [CSV](./pkg/source/wanesy/testdata/test.csv) file and feeding it into this tool. Please reach out to Kerlink to get an export of the devices that need to be migrated.
 
 ### Configuration
 
