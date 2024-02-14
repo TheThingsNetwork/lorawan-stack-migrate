@@ -17,3 +17,6 @@
 # Build files
 /build/
 /dist/
+
+# macOS related
+*.DS_store

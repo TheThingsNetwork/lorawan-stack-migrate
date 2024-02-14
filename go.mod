@@ -13,6 +13,7 @@ require (
 	github.com/brocaar/chirpstack-api/go/v3 v3.12.5
 	github.com/mdempsky/unconvert v0.0.0-20230125054757-2661c2c99a9b
 	github.com/mgechev/revive v1.3.6
+	github.com/smarty/assertions v1.15.1
 	github.com/smartystreets/assertions v1.13.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5

@@ -23,6 +23,7 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/cmd/firefly"
 	"go.thethings.network/lorawan-stack-migrate/cmd/ttnv2"
 	"go.thethings.network/lorawan-stack-migrate/cmd/tts"
+	"go.thethings.network/lorawan-stack-migrate/cmd/wanesy"
 	"go.thethings.network/lorawan-stack-migrate/pkg/export"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 )
@@ -81,4 +82,5 @@ func init() {
 	rootCmd.AddCommand(tts.TTSCmd)
 	rootCmd.AddCommand(chirpstack.ChirpStackCmd)
 	rootCmd.AddCommand(firefly.FireflyCmd)
+	rootCmd.AddCommand(wanesy.WanesyCmd)
 }
