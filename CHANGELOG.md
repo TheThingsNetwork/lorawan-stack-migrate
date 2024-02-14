@@ -8,8 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Support to convert Kerlink Wanesy CSV format to The Things Stack JSON.
-
 ### Changed
 
 ### Deprecated
@@ -17,6 +15,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Removed
 
 ### Fixed
+
+## [v0.11.0] (2024-01-14)
+
+### Added
+
+- Support to convert Kerlink Wanesy CSV format to The Things Stack JSON.
 
 ## [v0.10.0] (2023-11-13)
 
