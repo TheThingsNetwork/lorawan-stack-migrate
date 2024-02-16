@@ -12,31 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate go run ./generate_field_masks.go
+
 package tts
 
 import (
 	"bytes"
 	"encoding/hex"
+	"slices"
 	"strconv"
 	"strings"
 
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-)
-
-var (
-	getEndDeviceFromIS = ttnpb.RPCFieldMaskPaths["/ttn.lorawan.v3.EndDeviceRegistry/Get"].Allowed
-	getEndDeviceFromNS = ttnpb.RPCFieldMaskPaths["/ttn.lorawan.v3.NsEndDeviceRegistry/Get"].Allowed
-	getEndDeviceFromAS = ttnpb.RPCFieldMaskPaths["/ttn.lorawan.v3.AsEndDeviceRegistry/Get"].Allowed
-	getEndDeviceFromJS = ttnpb.RPCFieldMaskPaths["/ttn.lorawan.v3.JsEndDeviceRegistry/Get"].Allowed
-
-	claimAuthenticationCodePaths = []string{
-		"claim_authentication_code",
-		"claim_authentication_code.value",
-		"claim_authentication_code.valid_from",
-		"claim_authentication_code.valid_to",
-	}
 )
 
 func validateDeviceIds(a, b *ttnpb.EndDeviceIdentifiers) error {
@@ -90,11 +79,11 @@ func nonImplicitPaths(paths ...string) []string {
 	return nonImplicitPaths
 }
 
-func splitEndDeviceGetPaths(paths ...string) (is, ns, as, js []string) {
-	is = ttnpb.AllowedFields(paths, getEndDeviceFromIS)
-	ns = ttnpb.AllowedFields(paths, getEndDeviceFromNS)
-	as = ttnpb.AllowedFields(paths, getEndDeviceFromAS)
-	js = ttnpb.AllowedFields(paths, getEndDeviceFromJS)
+func splitEndDeviceGetPaths() (identityServer, networkServer, applicationServer, joinServer []string) {
+	identityServer = slices.Clone(identityServerGetFieldMask)
+	networkServer = slices.Clone(networkServerGetFieldMask)
+	applicationServer = slices.Clone(applicationServerGetFieldMask)
+	joinServer = slices.Clone(joinServerGetFieldMask)
 	return
 }
 

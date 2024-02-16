@@ -30,3 +30,6 @@ go.binaries:
 
 go.test:
 	go test ./... -timeout=5m
+
+go.generate:
+	go generate ./...

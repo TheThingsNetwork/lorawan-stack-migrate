@@ -37,6 +37,8 @@ jobs:
       run: make go.fmt
     - name: Lint Code
       run: make go.lint
+    - name: Generate Code
+      run: make go.generate
     - name: Check for diff
       run: make git.diff
 
