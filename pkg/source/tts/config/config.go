@@ -120,12 +120,6 @@ func New() (*Config, *pflag.FlagSet) {
 		false,
 		"TTS delete exported devices")
 
-	flags.BoolVar(&config.ExportCACs,
-		"export-cacs",
-		false,
-		"Export Claim Authentication Codes (CAC)",
-	)
-
 	return config, flags
 }
 
@@ -138,7 +132,6 @@ type Config struct {
 	caPath    string
 	appAPIKey string
 
-	ExportCACs         bool
 	NoSession          bool
 	DeleteSourceDevice bool
 	AppID              string

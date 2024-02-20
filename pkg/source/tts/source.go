@@ -47,22 +47,7 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 		return nil, errNoAppID.New()
 	}
 
-	basePaths := ttnpb.EndDeviceFieldPathsNested
-
-	if !s.config.ExportCACs {
-		basePaths = ttnpb.ExcludeFields(basePaths, claimAuthenticationCodePaths...)
-	}
-
-	isPaths, nsPaths, asPaths, jsPaths := splitEndDeviceGetPaths(ttnpb.BottomLevelFields(basePaths)...)
-	if len(nsPaths) > 0 {
-		isPaths = ttnpb.AddFields(isPaths, "network_server_address")
-	}
-	if len(asPaths) > 0 {
-		isPaths = ttnpb.AddFields(isPaths, "application_server_address")
-	}
-	if len(jsPaths) > 0 {
-		isPaths = ttnpb.AddFields(isPaths, "join_server_address")
-	}
+	isPaths, nsPaths, asPaths, jsPaths := splitEndDeviceGetPaths()
 	is, err := api.Dial(s.ctx, s.config.ServerConfig.IdentityServerGRPCAddress)
 	if err != nil {
 		return nil, err
@@ -77,10 +62,6 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	})
 	if err != nil {
 		return nil, err
-	}
-	if dev.ClaimAuthenticationCode.GetValue() != "" || !s.config.ExportCACs {
-		// ClaimAuthenticationCode is already retrieved from the IS. We can unset the related JS paths
-		jsPaths = ttnpb.ExcludeFields(jsPaths, claimAuthenticationCodePaths...)
 	}
 	res, err := s.getEndDevice(ids, nsPaths, asPaths, jsPaths)
 	if err != nil {
@@ -186,7 +167,10 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 				if err := validateDeviceIds(res.Ids, jsRes.Ids); err != nil {
 					return nil, err
 				}
-				if err := res.SetFields(jsRes, ttnpb.AllowedReachableBottomLevelFields(jsPaths, getEndDeviceFromJS, jsRes.FieldIsZero)...); err != nil {
+				if err := res.SetFields(
+					jsRes,
+					ttnpb.AllowedReachableBottomLevelFields(jsPaths, joinServerGetFieldMask, jsRes.FieldIsZero)...,
+				); err != nil {
 					return nil, err
 				}
 				updateDeviceTimestamps(res, jsRes)
@@ -211,7 +195,10 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 			if err := validateDeviceIds(res.Ids, asRes.Ids); err != nil {
 				return nil, err
 			}
-			if err := res.SetFields(asRes, ttnpb.AllowedReachableBottomLevelFields(asPaths, getEndDeviceFromAS, asRes.FieldIsZero)...); err != nil {
+			if err := res.SetFields(
+				asRes,
+				ttnpb.AllowedReachableBottomLevelFields(asPaths, applicationServerGetFieldMask, asRes.FieldIsZero)...,
+			); err != nil {
 				return nil, err
 			}
 			updateDeviceTimestamps(res, asRes)
@@ -237,7 +224,10 @@ func (s Source) getEndDevice(ids *ttnpb.EndDeviceIdentifiers, nsPaths, asPaths, 
 			if err := validateDeviceIds(res.Ids, nsRes.Ids); err != nil {
 				return nil, err
 			}
-			if err := res.SetFields(nsRes, ttnpb.AllowedReachableBottomLevelFields(nsPaths, getEndDeviceFromNS, nsRes.FieldIsZero)...); err != nil {
+			if err := res.SetFields(
+				nsRes,
+				ttnpb.AllowedReachableBottomLevelFields(nsPaths, networkServerGetFieldMask, nsRes.FieldIsZero)...,
+			); err != nil {
 				return nil, err
 			}
 			updateDeviceTimestamps(res, nsRes)
