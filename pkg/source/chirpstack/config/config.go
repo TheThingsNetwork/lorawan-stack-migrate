@@ -24,6 +24,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack/v3/pkg/frequencyplans"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -75,32 +76,77 @@ func New() (*Config, *pflag.FlagSet) {
 }
 
 type Config struct {
-	source.Config
+	src source.Config
+
+	token, caCertPath, url, joinEUI string
+	flags                           *pflag.FlagSet
+	fpStore                         *frequencyplans.Store
+	insecure                        bool
 
 	ClientConn *grpc.ClientConn
 
-	token, caPath, url,
-	FrequencyPlanID string
-
-	joinEUI string
-	JoinEUI *types.EUI64
-
-	insecure,
 	ExportVars,
 	ExportSession bool
+	FrequencyPlanID string
+	JoinEUI         *types.EUI64
 }
 
-func (c *Config) Initialize() error {
-	if c.token == "" {
-		return errNoAPIToken.New()
-	}
-	if c.url == "" {
-		return errNoAPIURL.New()
-	}
-	if c.FrequencyPlanID == "" {
-		return errNoFrequencyPlan.New()
+func New() *Config {
+	config := &Config{
+		flags: &pflag.FlagSet{},
 	}
 
+	config.flags.StringVar(&config.url,
+		"api-url",
+		"",
+		"ChirpStack API URL")
+	config.flags.StringVar(&config.token,
+		"api-token",
+		"",
+		"ChirpStack API Token")
+	config.flags.StringVar(&config.caCertPath,
+		"ca-cert-path",
+		"",
+		"(optional) Path to the CA certificate file for ChirpStack API TLS connections")
+	config.flags.BoolVar(&config.insecure,
+		"insecure",
+		false,
+		"Do not connect to ChirpStack over TLS")
+	config.flags.BoolVar(&config.ExportVars,
+		"export-vars",
+		false,
+		"Export device variables from ChirpStack")
+	config.flags.BoolVar(&config.ExportSession,
+		"export-session",
+		false,
+		"Export device session keys from ChirpStack")
+	config.flags.StringVar(&config.joinEUI,
+		"join-eui",
+		"",
+		"JoinEUI of exported devices")
+	config.flags.StringVar(&config.FrequencyPlanID,
+		"frequency-plan-id",
+		"",
+		"Frequency Plan ID of exported devices")
+
+	return config
+}
+
+func (c *Config) Initialize(src source.Config) error {
+	c.src = src
+
+	if c.token = os.Getenv("CHIRPSTACK_API_TOKEN"); c.token == "" {
+		return errNoAPIToken.New()
+	}
+	if c.url = os.Getenv("CHIRPSTACK_API_URL"); c.url == "" {
+		return errNoAPIURL.New()
+	}
+	if c.FrequencyPlanID = os.Getenv("FREQUENCY_PLAN_ID"); c.FrequencyPlanID == "" {
+		return errNoFrequencyPlan.New()
+	}
+	if c.joinEUI = os.Getenv("JOIN_EUI"); c.joinEUI == "" {
+		return errNoJoinEUI.New()
+	}
 	c.JoinEUI = &types.EUI64{}
 	if err := c.JoinEUI.UnmarshalText([]byte(c.joinEUI)); err != nil {
 		return errInvalidJoinEUI.WithAttributes("join_eui", c.joinEUI)
@@ -115,6 +161,11 @@ func (c *Config) Initialize() error {
 	}
 
 	return nil
+}
+
+// Flags returns the flags for the configuration.
+func (c *Config) Flags() *pflag.FlagSet {
+	return c.flags
 }
 
 func (c *Config) dialGRPC(opts ...grpc.DialOption) error {

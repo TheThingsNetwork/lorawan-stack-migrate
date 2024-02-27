@@ -20,6 +20,7 @@ var (
 	errNoAPIToken      = errors.DefineInvalidArgument("no_api_token", "no API token")
 	errNoAPIURL        = errors.DefineInvalidArgument("no_api_url", "no API URL")
 	errNoFrequencyPlan = errors.DefineInvalidArgument("no_frequency_plan", "no Frequency Plan")
+	errNoJoinEUI       = errors.DefineInvalidArgument("no_join_eui", "no join eui")
 
 	errInvalidJoinEUI = errors.DefineInvalidArgument("invalid_join_eui", "invalid JoinEUI `{join_eui}`")
 )
