@@ -34,48 +34,6 @@ import (
 
 const dialTimeout = 10 * time.Second
 
-func New() (*Config, *pflag.FlagSet) {
-	var (
-		config = &Config{}
-		flags  = &pflag.FlagSet{}
-	)
-
-	flags.StringVar(&config.url,
-		"api-url",
-		os.Getenv("CHIRPSTACK_API_URL"),
-		"ChirpStack API URL")
-	flags.StringVar(&config.token,
-		"api-token",
-		os.Getenv("CHIRPSTACK_API_TOKEN"),
-		"ChirpStack API Token")
-	flags.StringVar(&config.caPath,
-		"api-ca",
-		os.Getenv("CHIRPSTACK_API_CA"),
-		"(optional) CA for TLS")
-	flags.BoolVar(&config.insecure,
-		"api-insecure",
-		os.Getenv("CHIRPSTACK_API_INSECURE") == "1",
-		"Do not connect to ChirpStack over TLS")
-	flags.BoolVar(&config.ExportVars,
-		"export-vars",
-		false,
-		"Export device variables from ChirpStack")
-	flags.BoolVar(&config.ExportSession,
-		"export-session",
-		true,
-		"Export device session keys from ChirpStack")
-	flags.StringVar(&config.joinEUI,
-		"join-eui",
-		os.Getenv("JOIN_EUI"),
-		"JoinEUI of exported devices")
-	flags.StringVar(&config.FrequencyPlanID,
-		"frequency-plan-id",
-		os.Getenv("FREQUENCY_PLAN_ID"),
-		"Frequency Plan ID of exported devices")
-
-	return config, flags
-}
-
 type Config struct {
 	src source.Config
 
@@ -177,7 +135,7 @@ func (c *Config) dialGRPC(opts ...grpc.DialOption) error {
 	if c.insecure {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else {
-		tlsConfig, err := generateTLSConfig(c.caPath)
+		tlsConfig, err := generateTLSConfig(c.caCertPath)
 		if err != nil {
 			return err
 		}

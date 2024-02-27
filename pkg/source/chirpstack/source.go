@@ -144,6 +144,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	dev.Name = csdev.Name
 	dev.Description = csdev.Description
 	dev.Attributes["chirpstack-device-profile"] = csdev.DeviceProfileId
+	dev.Attributes["chirpstack-application-id"] = csdev.ApplicationId
 	for key, value := range devProfile.Tags {
 		dev.Attributes[key] = value
 	}
