@@ -24,6 +24,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack/v3/pkg/fetch"
 	"go.thethings.network/lorawan-stack/v3/pkg/frequencyplans"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/grpc"
@@ -80,7 +81,7 @@ type Config struct {
 
 	apiKey, caCertPath, url, joinEUI string
 	flags                            *pflag.FlagSet
-	fpStore                          *frequencyplans.Store
+	FPStore                          *frequencyplans.Store
 	insecure                         bool
 
 	ClientConn *grpc.ClientConn
@@ -159,6 +160,11 @@ func (c *Config) Initialize(src source.Config) error {
 	if err != nil {
 		return err
 	}
+	fpFetcher, err := fetch.FromHTTP(http.DefaultClient, src.FrequencyPlansURL)
+	if err != nil {
+		return err
+	}
+	c.FPStore = frequencyplans.NewStore(fpFetcher)
 	return nil
 }
 

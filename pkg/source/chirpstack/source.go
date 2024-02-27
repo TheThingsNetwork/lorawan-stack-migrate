@@ -28,6 +28,7 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack/config"
 	"go.thethings.network/lorawan-stack-migrate/pkg/util"
+	"go.thethings.network/lorawan-stack/v3/pkg/networkserver/mac"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -199,7 +200,7 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 
 	// Join (OTAA/ABP)
 	dev.SupportsJoin = devProfile.SupportsOtaa
-	if !dev.SupportsJoin {
+	if !dev.SupportsJoin || p.ExportSession {
 		if freq := devProfile.AbpRx2Freq; freq > 0 {
 			dev.MacSettings.Rx2Frequency = &ttnpb.FrequencyValue{
 				Value: uint64(freq),
@@ -208,6 +209,10 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		if delay := devProfile.AbpRx1Delay; delay > 0 {
 			dev.MacSettings.Rx1Delay = &ttnpb.RxDelayValue{
 				Value: ttnpb.RxDelay(delay),
+			}
+		} else {
+			dev.MacSettings.Rx1Delay = &ttnpb.RxDelayValue{
+				Value: ttnpb.RxDelay_RX_DELAY_1,
 			}
 		}
 		if offset := devProfile.AbpRx1DrOffset; offset > 0 {
@@ -300,16 +305,19 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if p.ExportSession {
 		activation, err := p.getActivation(devEui)
 		if err == nil {
-			dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{}, StartedAt: timestamppb.Now()}
+			dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, FNwkSIntKey: &ttnpb.KeyEnvelope{}}}
+
+			// These fields cannot be empty.
+			if devProfile.SupportsOtaa {
+				dev.Session.Keys.SessionKeyId = generateBytes(16)
+				dev.Session.StartedAt = timestamppb.Now()
+			}
 
 			devAddr := &types.DevAddr{}
 			if err := devAddr.UnmarshalText([]byte(activation.DevAddr)); err != nil {
 				return nil, errInvalidDevAddr.WithAttributes("dev_addr", activation.DevAddr).WithCause(err)
 			}
 			dev.Session.DevAddr = devAddr.Bytes()
-
-			// This cannot be empty
-			dev.Session.StartedAt = timestamppb.Now()
 
 			dev.Session.Keys.AppSKey = &ttnpb.KeyEnvelope{}
 			dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.AppSKey)
@@ -336,12 +344,18 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 			default:
 			}
 
-			if devProfile.SupportsOtaa {
-				dev.Session.Keys.SessionKeyId = generateBytes(16)
-			}
+			// Set the frame counters.
 			dev.Session.LastFCntUp = activation.FCntUp
 			dev.Session.LastAFCntDown = activation.AFCntDown
 			dev.Session.LastNFCntDown = activation.NFCntDown
+
+			// Create a MACState.
+			dev.MacState, err = mac.NewState(dev, p.FPStore, &ttnpb.MACSettings{})
+			if err != nil {
+				return nil, err
+			}
+			dev.MacState.CurrentParameters = dev.MacState.DesiredParameters
+			dev.MacState.CurrentParameters.Rx1Delay = dev.MacSettings.Rx1Delay.Value
 		}
 	}
 
