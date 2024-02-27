@@ -131,7 +131,12 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		return nil, errInvalidDevEUI.WithAttributes("dev_eui", devEui).WithCause(err)
 	}
 	dev.Ids.JoinEui = p.JoinEUI.Bytes()
-	dev.Ids.ApplicationIds.ApplicationId = fmt.Sprintf("chirpstack-%d", csdev.ApplicationId)
+	// Get last index of the application ID (UUID).
+	s := strings.Split(csdev.ApplicationId, "-")
+	if len(s) < 2 {
+		return nil, errInvalidApplicationID.WithAttributes("application_id", csdev.ApplicationId)
+	}
+	dev.Ids.ApplicationIds.ApplicationId = fmt.Sprintf("chirpstack-%s", s[len(s)-1])
 	dev.Ids.DeviceId = "eui-" + strings.ToLower(devEui)
 
 	// Information

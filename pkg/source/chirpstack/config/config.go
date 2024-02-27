@@ -78,10 +78,10 @@ func New() (*Config, *pflag.FlagSet) {
 type Config struct {
 	src source.Config
 
-	token, caCertPath, url, joinEUI string
-	flags                           *pflag.FlagSet
-	fpStore                         *frequencyplans.Store
-	insecure                        bool
+	apiKey, caCertPath, url, joinEUI string
+	flags                            *pflag.FlagSet
+	fpStore                          *frequencyplans.Store
+	insecure                         bool
 
 	ClientConn *grpc.ClientConn
 
@@ -100,10 +100,10 @@ func New() *Config {
 		"api-url",
 		"",
 		"ChirpStack API URL")
-	config.flags.StringVar(&config.token,
-		"api-token",
+	config.flags.StringVar(&config.apiKey,
+		"api-key",
 		"",
-		"ChirpStack API Token")
+		"ChirpStack API key")
 	config.flags.StringVar(&config.caCertPath,
 		"ca-cert-path",
 		"",
@@ -135,7 +135,7 @@ func New() *Config {
 func (c *Config) Initialize(src source.Config) error {
 	c.src = src
 
-	if c.token = os.Getenv("CHIRPSTACK_API_TOKEN"); c.token == "" {
+	if c.apiKey = os.Getenv("CHIRPSTACK_API_KEY"); c.apiKey == "" {
 		return errNoAPIToken.New()
 	}
 	if c.url = os.Getenv("CHIRPSTACK_API_URL"); c.url == "" {
@@ -154,12 +154,11 @@ func (c *Config) Initialize(src source.Config) error {
 	err := c.dialGRPC(
 		grpc.FailOnNonTempDialError(true),
 		grpc.WithBlock(),
-		grpc.WithPerRPCCredentials(token(c.token)),
+		grpc.WithPerRPCCredentials(token(c.apiKey)),
 	)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
