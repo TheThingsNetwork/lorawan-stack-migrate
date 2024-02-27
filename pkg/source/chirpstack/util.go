@@ -16,28 +16,27 @@ package chirpstack
 
 import (
 	"context"
-	"strconv"
 
-	csapi "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
+	csv4api "github.com/chirpstack/chirpstack/api/go/v4/api"
 	log "go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/random"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-const limit = int64(100)
+const limit = uint32(100)
 
 func generateBytes(length int) []byte {
 	return random.Bytes(length)
 }
 
-func (p *Source) getDeviceProfile(id string) (*csapi.DeviceProfile, error) {
+func (p *Source) getDeviceProfile(id string) (*csv4api.DeviceProfile, error) {
 	if profile, ok := p.devProfiles[id]; ok {
 		return profile, nil
 	}
 
-	client := csapi.NewDeviceProfileServiceClient(p.ClientConn)
-	resp, err := client.Get(p.ctx, &csapi.GetDeviceProfileRequest{
+	client := csv4api.NewDeviceProfileServiceClient(p.ClientConn)
+	resp, err := client.Get(p.ctx, &csv4api.GetDeviceProfileRequest{
 		Id: id,
 	})
 	if err != nil {
@@ -47,26 +46,10 @@ func (p *Source) getDeviceProfile(id string) (*csapi.DeviceProfile, error) {
 	return resp.DeviceProfile, nil
 }
 
-func (p *Source) getServiceProfile(id string) (*csapi.ServiceProfile, error) {
-	if profile, ok := p.svcProfiles[id]; ok {
-		return profile, nil
-	}
+func (p *Source) getDevice(devEui string) (*csv4api.Device, error) {
+	client := csv4api.NewDeviceServiceClient(p.ClientConn)
 
-	client := csapi.NewServiceProfileServiceClient(p.ClientConn)
-	resp, err := client.Get(p.ctx, &csapi.GetServiceProfileRequest{
-		Id: id,
-	})
-	if err != nil {
-		return nil, errAPI.WithCause(err)
-	}
-	p.svcProfiles[id] = resp.ServiceProfile
-	return resp.ServiceProfile, nil
-}
-
-func (p *Source) getDevice(devEui string) (*csapi.Device, error) {
-	client := csapi.NewDeviceServiceClient(p.ClientConn)
-
-	resp, err := client.Get(p.ctx, &csapi.GetDeviceRequest{
+	resp, err := client.Get(p.ctx, &csv4api.GetDeviceRequest{
 		DevEui: devEui,
 	})
 	if err != nil {
@@ -75,37 +58,30 @@ func (p *Source) getDevice(devEui string) (*csapi.Device, error) {
 	return resp.Device, nil
 }
 
-func (p *Source) getApplication(application string) (*csapi.Application, error) {
-	appID, err := strconv.ParseInt(application, 10, 64)
-	if err != nil {
-		appID, err = p.getApplicationIDByName(application)
-		if err != nil {
-			return nil, err
-		}
-	}
-	app, err := p.getApplicationByID(appID)
+func (p *Source) getApplication(application string) (*csv4api.Application, error) {
+	app, err := p.getApplicationByID(application)
 	if err != nil {
 		switch status.Code(err) {
 		case codes.NotFound:
-			appID, err = p.getApplicationIDByName(application)
+			appID, err := p.getApplicationIDByName(application)
 			if err != nil {
 				return nil, err
 			}
+			return p.getApplicationByID(appID)
 		default:
 			return nil, err
 		}
-		return p.getApplicationByID(appID)
 	}
 	return app, nil
 }
 
-func (p *Source) getApplicationByID(id int64) (*csapi.Application, error) {
+func (p *Source) getApplicationByID(id string) (*csv4api.Application, error) {
 	if app, ok := p.applications[id]; ok {
 		return app, nil
 	}
 
-	client := csapi.NewApplicationServiceClient(p.ClientConn)
-	resp, err := client.Get(p.ctx, &csapi.GetApplicationRequest{
+	client := csv4api.NewApplicationServiceClient(p.ClientConn)
+	resp, err := client.Get(p.ctx, &csv4api.GetApplicationRequest{
 		Id: id,
 	})
 	if err != nil {
@@ -116,17 +92,17 @@ func (p *Source) getApplicationByID(id int64) (*csapi.Application, error) {
 	return resp.Application, nil
 }
 
-func (p *Source) getApplicationIDByName(name string) (int64, error) {
-	client := csapi.NewApplicationServiceClient(p.ClientConn)
-	offset := int64(0)
+func (p *Source) getApplicationIDByName(name string) (string, error) {
+	client := csv4api.NewApplicationServiceClient(p.ClientConn)
+	offset := uint32(0)
 	for {
-		resp, err := client.List(p.ctx, &csapi.ListApplicationRequest{
+		resp, err := client.List(p.ctx, &csv4api.ListApplicationsRequest{
 			Limit:  limit,
 			Offset: offset,
 			Search: name,
 		})
 		if err != nil {
-			return 0, err
+			return "", err
 		}
 		for _, appListItem := range resp.Result {
 			if appListItem.Name == name {
@@ -135,14 +111,14 @@ func (p *Source) getApplicationIDByName(name string) (int64, error) {
 		}
 
 		if offset += limit; offset > resp.TotalCount {
-			return 0, errAppNotFound.WithAttributes("app", name)
+			return "", errAppNotFound.WithAttributes("app", name)
 		}
 	}
 }
 
-func (p *Source) getRootKeys(devEui string) (*csapi.DeviceKeys, error) {
-	client := csapi.NewDeviceServiceClient(p.ClientConn)
-	resp, err := client.GetKeys(context.Background(), &csapi.GetDeviceKeysRequest{
+func (p *Source) getRootKeys(devEui string) (*csv4api.DeviceKeys, error) {
+	client := csv4api.NewDeviceServiceClient(p.ClientConn)
+	resp, err := client.GetKeys(context.Background(), &csv4api.GetDeviceKeysRequest{
 		DevEui: devEui,
 	})
 	if err != nil {
@@ -152,9 +128,9 @@ func (p *Source) getRootKeys(devEui string) (*csapi.DeviceKeys, error) {
 	return resp.DeviceKeys, err
 }
 
-func (p *Source) getActivation(devEui string) (*csapi.DeviceActivation, error) {
-	client := csapi.NewDeviceServiceClient(p.ClientConn)
-	resp, err := client.GetActivation(context.Background(), &csapi.GetDeviceActivationRequest{
+func (p *Source) getActivation(devEui string) (*csv4api.DeviceActivation, error) {
+	client := csv4api.NewDeviceServiceClient(p.ClientConn)
+	resp, err := client.GetActivation(context.Background(), &csv4api.GetDeviceActivationRequest{
 		DevEui: devEui,
 	})
 	if err != nil {

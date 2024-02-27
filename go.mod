@@ -11,6 +11,7 @@ require (
 	github.com/TheThingsNetwork/ttn/core/types v0.0.0-20190516112328-fcd38e2b9dc6
 	github.com/apex/log v1.9.0
 	github.com/brocaar/chirpstack-api/go/v3 v3.12.5
+	github.com/chirpstack/chirpstack/api/go/v4 v4.6.0
 	github.com/mdempsky/unconvert v0.0.0-20230125054757-2661c2c99a9b
 	github.com/mgechev/revive v1.3.6
 	github.com/smarty/assertions v1.15.1

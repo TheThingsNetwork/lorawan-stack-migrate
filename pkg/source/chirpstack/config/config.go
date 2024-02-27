@@ -22,88 +22,96 @@ import (
 
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
+	"go.thethings.network/lorawan-stack/v3/pkg/frequencyplans"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func New() (*Config, *pflag.FlagSet) {
-	var (
-		config = &Config{}
-		flags  = &pflag.FlagSet{}
-	)
-
-	flags.StringVar(&config.url,
-		"api-url",
-		os.Getenv("CHIRPSTACK_API_URL"),
-		"ChirpStack API URL")
-	flags.StringVar(&config.token,
-		"api-token",
-		os.Getenv("CHIRPSTACK_API_TOKEN"),
-		"ChirpStack API Token")
-	flags.StringVar(&config.caPath,
-		"api-ca",
-		os.Getenv("CHIRPSTACK_API_CA"),
-		"(optional) CA for TLS")
-	flags.BoolVar(&config.insecure,
-		"api-insecure",
-		os.Getenv("CHIRPSTACK_API_INSECURE") == "1",
-		"Do not connect to ChirpStack over TLS")
-	flags.BoolVar(&config.ExportVars,
-		"export-vars",
-		false,
-		"Export device variables from ChirpStack")
-	flags.BoolVar(&config.ExportSession,
-		"export-session",
-		true,
-		"Export device session keys from ChirpStack")
-	flags.StringVar(&config.joinEUI,
-		"join-eui",
-		os.Getenv("JOIN_EUI"),
-		"JoinEUI of exported devices")
-	flags.StringVar(&config.FrequencyPlanID,
-		"frequency-plan-id",
-		os.Getenv("FREQUENCY_PLAN_ID"),
-		"Frequency Plan ID of exported devices")
-
-	return config, flags
-}
-
 type Config struct {
-	source.Config
+	src source.Config
+
+	token, caCertPath, url, joinEUI string
+	flags                           *pflag.FlagSet
+	fpStore                         *frequencyplans.Store
+	insecure                        bool
 
 	ClientConn *grpc.ClientConn
 
-	token, caPath, url,
-	FrequencyPlanID string
-
-	joinEUI string
-	JoinEUI *types.EUI64
-
-	insecure,
 	ExportVars,
 	ExportSession bool
+	FrequencyPlanID string
+	JoinEUI         *types.EUI64
 }
 
-func (c *Config) Initialize() error {
-	if c.token == "" {
-		return errNoAPIToken.New()
-	}
-	if c.url == "" {
-		return errNoAPIURL.New()
-	}
-	if c.FrequencyPlanID == "" {
-		return errNoFrequencyPlan.New()
+func New() *Config {
+	config := &Config{
+		flags: &pflag.FlagSet{},
 	}
 
+	config.flags.StringVar(&config.url,
+		"api-url",
+		"",
+		"ChirpStack API URL")
+	config.flags.StringVar(&config.token,
+		"api-token",
+		"",
+		"ChirpStack API Token")
+	config.flags.StringVar(&config.caCertPath,
+		"ca-cert-path",
+		"",
+		"(optional) Path to the CA certificate file for ChirpStack API TLS connections")
+	config.flags.BoolVar(&config.insecure,
+		"insecure",
+		false,
+		"Do not connect to ChirpStack over TLS")
+	config.flags.BoolVar(&config.ExportVars,
+		"export-vars",
+		false,
+		"Export device variables from ChirpStack")
+	config.flags.BoolVar(&config.ExportSession,
+		"export-session",
+		false,
+		"Export device session keys from ChirpStack")
+	config.flags.StringVar(&config.joinEUI,
+		"join-eui",
+		"",
+		"JoinEUI of exported devices")
+	config.flags.StringVar(&config.FrequencyPlanID,
+		"frequency-plan-id",
+		"",
+		"Frequency Plan ID of exported devices")
+
+	return config
+}
+
+func (c *Config) Initialize(src source.Config) error {
+	c.src = src
+
+	if c.token = os.Getenv("CHIRPSTACK_API_TOKEN"); c.token == "" {
+		return errNoAPIToken.New()
+	}
+	if c.url = os.Getenv("CHIRPSTACK_API_URL"); c.url == "" {
+		return errNoAPIURL.New()
+	}
+	if c.FrequencyPlanID = os.Getenv("FREQUENCY_PLAN_ID"); c.FrequencyPlanID == "" {
+		return errNoFrequencyPlan.New()
+	}
+	if c.joinEUI = os.Getenv("JOIN_EUI"); c.joinEUI == "" {
+		return errNoJoinEUI.New()
+	}
 	c.JoinEUI = &types.EUI64{}
 	if err := c.JoinEUI.UnmarshalText([]byte(c.joinEUI)); err != nil {
 		return errInvalidJoinEUI.WithAttributes("join_eui", c.joinEUI)
 	}
+	c.insecure = os.Getenv("CHIRPSTACK_INSECURE") == "true"
+	c.caCertPath = os.Getenv("CHIRPSTACK_CA_CERT_PATH")
+	c.ExportVars = os.Getenv("CHIRPSTACK_EXPORT_VARS") == "true"
+	c.ExportSession = os.Getenv("CHIRPSTACK_EXPORT_SESSION") == "true"
 
-	if !c.insecure && c.caPath != "" {
-		if err := setCustomCA(c.caPath); err != nil {
+	if !c.insecure && c.caCertPath != "" {
+		if err := setCustomCA(c.caCertPath); err != nil {
 			return err
 		}
 	}
@@ -120,8 +128,13 @@ func (c *Config) Initialize() error {
 	return nil
 }
 
+// Flags returns the flags for the configuration.
+func (c *Config) Flags() *pflag.FlagSet {
+	return c.flags
+}
+
 func (c *Config) dialGRPC(opts ...grpc.DialOption) error {
-	if c.insecure || c.caPath == "" {
+	if c.insecure || c.caCertPath == "" {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 	if tls := http.DefaultTransport.(*http.Transport).TLSClientConfig; tls != nil {
