@@ -339,8 +339,8 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 			if devProfile.SupportsOtaa {
 				dev.Session.Keys.SessionKeyId = generateBytes(16)
 			}
-			dev.Session.LastAFCntDown = activation.AFCntDown
 			dev.Session.LastFCntUp = activation.FCntUp
+			dev.Session.LastAFCntDown = activation.AFCntDown
 			dev.Session.LastNFCntDown = activation.NFCntDown
 		}
 	}
