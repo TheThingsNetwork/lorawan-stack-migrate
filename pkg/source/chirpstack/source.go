@@ -30,7 +30,6 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/log"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -52,8 +51,7 @@ function Decoder(bytes, fport) {
 type Source struct {
 	*config.Config
 
-	ctx        context.Context
-	ClientConn *grpc.ClientConn
+	ctx context.Context
 
 	applications map[int64]*csapi.Application
 	devProfiles  map[string]*csapi.DeviceProfile

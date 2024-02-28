@@ -25,6 +25,7 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func New() (*Config, *pflag.FlagSet) {
@@ -101,7 +102,7 @@ func (c *Config) Initialize() error {
 		return errInvalidJoinEUI.WithAttributes("join_eui", c.joinEUI)
 	}
 
-	if !c.insecure || c.caPath != "" {
+	if !c.insecure && c.caPath != "" {
 		if err := setCustomCA(c.caPath); err != nil {
 			return err
 		}
@@ -120,8 +121,8 @@ func (c *Config) Initialize() error {
 }
 
 func (c *Config) dialGRPC(opts ...grpc.DialOption) error {
-	if c.insecure && c.caPath == "" {
-		opts = append(opts, grpc.WithInsecure())
+	if c.insecure || c.caPath == "" {
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 	if tls := http.DefaultTransport.(*http.Transport).TLSClientConfig; tls != nil {
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tls)))
