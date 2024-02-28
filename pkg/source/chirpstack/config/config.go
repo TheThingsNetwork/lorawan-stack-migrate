@@ -15,10 +15,12 @@
 package config
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/spf13/pflag"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
@@ -27,6 +29,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+const dialTimeout = 10 * time.Second
 
 func New() (*Config, *pflag.FlagSet) {
 	var (
@@ -127,8 +131,12 @@ func (c *Config) dialGRPC(opts ...grpc.DialOption) error {
 	if tls := http.DefaultTransport.(*http.Transport).TLSClientConfig; tls != nil {
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tls)))
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
+	defer cancel()
+
 	var err error
-	c.ClientConn, err = grpc.Dial(c.url, opts...)
+	c.ClientConn, err = grpc.DialContext(ctx, c.url, opts...)
 	if err != nil {
 		return err
 	}
