@@ -303,61 +303,62 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	}
 
 	// Export session information.
-	if p.ExportSession {
+	if !dev.SupportsJoin || p.ExportSession {
 		activation, err := p.getActivation(devEui)
-		if err == nil {
-			dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, FNwkSIntKey: &ttnpb.KeyEnvelope{}}}
-
-			// These fields cannot be empty.
-			if devProfile.SupportsOtaa {
-				dev.Session.Keys.SessionKeyId = generateBytes(16)
-				dev.Session.StartedAt = timestamppb.Now()
-			}
-
-			devAddr := &types.DevAddr{}
-			if err := devAddr.UnmarshalText([]byte(activation.DevAddr)); err != nil {
-				return nil, errInvalidDevAddr.WithAttributes("dev_addr", activation.DevAddr).WithCause(err)
-			}
-			dev.Session.DevAddr = devAddr.Bytes()
-
-			dev.Session.Keys.AppSKey = &ttnpb.KeyEnvelope{}
-			dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.AppSKey)
-			if err != nil {
-				return nil, errInvalidKey.WithAttributes(activation.AppSKey).WithCause(err)
-			}
-			dev.Session.Keys.FNwkSIntKey = &ttnpb.KeyEnvelope{}
-			dev.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.FNwkSIntKey)
-			if err != nil {
-				return nil, errInvalidKey.WithAttributes(activation.FNwkSIntKey).WithCause(err)
-			}
-			switch dev.LorawanVersion {
-			case ttnpb.MACVersion_MAC_V1_1:
-				dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
-				dev.Session.Keys.NwkSEncKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.NwkSEncKey)
-				if err != nil {
-					return nil, errInvalidKey.WithAttributes(activation.NwkSEncKey).WithCause(err)
-				}
-				dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
-				dev.Session.Keys.SNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.SNwkSIntKey)
-				if err != nil {
-					return nil, errInvalidKey.WithAttributes(activation.SNwkSIntKey).WithCause(err)
-				}
-			default:
-			}
-
-			// Set the frame counters.
-			dev.Session.LastFCntUp = activation.FCntUp
-			dev.Session.LastAFCntDown = activation.AFCntDown
-			dev.Session.LastNFCntDown = activation.NFCntDown
-
-			// Create a MACState.
-			dev.MacState, err = mac.NewState(dev, p.FPStore, &ttnpb.MACSettings{})
-			if err != nil {
-				return nil, err
-			}
-			dev.MacState.CurrentParameters = dev.MacState.DesiredParameters
-			dev.MacState.CurrentParameters.Rx1Delay = dev.MacSettings.Rx1Delay.Value
+		if err != nil {
+			return nil, err
 		}
+		dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, FNwkSIntKey: &ttnpb.KeyEnvelope{}}}
+
+		// These fields cannot be empty.
+		if devProfile.SupportsOtaa {
+			dev.Session.Keys.SessionKeyId = generateBytes(16)
+			dev.Session.StartedAt = timestamppb.Now()
+		}
+
+		devAddr := &types.DevAddr{}
+		if err := devAddr.UnmarshalText([]byte(activation.DevAddr)); err != nil {
+			return nil, errInvalidDevAddr.WithAttributes("dev_addr", activation.DevAddr).WithCause(err)
+		}
+		dev.Session.DevAddr = devAddr.Bytes()
+
+		dev.Session.Keys.AppSKey = &ttnpb.KeyEnvelope{}
+		dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.AppSKey)
+		if err != nil {
+			return nil, errInvalidKey.WithAttributes(activation.AppSKey).WithCause(err)
+		}
+		dev.Session.Keys.FNwkSIntKey = &ttnpb.KeyEnvelope{}
+		dev.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.FNwkSIntKey)
+		if err != nil {
+			return nil, errInvalidKey.WithAttributes(activation.FNwkSIntKey).WithCause(err)
+		}
+		switch dev.LorawanVersion {
+		case ttnpb.MACVersion_MAC_V1_1:
+			dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
+			dev.Session.Keys.NwkSEncKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.NwkSEncKey)
+			if err != nil {
+				return nil, errInvalidKey.WithAttributes(activation.NwkSEncKey).WithCause(err)
+			}
+			dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
+			dev.Session.Keys.SNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.SNwkSIntKey)
+			if err != nil {
+				return nil, errInvalidKey.WithAttributes(activation.SNwkSIntKey).WithCause(err)
+			}
+		default:
+		}
+
+		// Set the frame counters.
+		dev.Session.LastFCntUp = activation.FCntUp
+		dev.Session.LastAFCntDown = activation.AFCntDown
+		dev.Session.LastNFCntDown = activation.NFCntDown
+
+		// Create a MACState.
+		dev.MacState, err = mac.NewState(dev, p.FPStore, &ttnpb.MACSettings{})
+		if err != nil {
+			return nil, err
+		}
+		dev.MacState.CurrentParameters = dev.MacState.DesiredParameters
+		dev.MacState.CurrentParameters.Rx1Delay = dev.MacSettings.Rx1Delay.Value
 	}
 
 	return dev, nil

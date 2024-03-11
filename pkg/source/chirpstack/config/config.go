@@ -110,6 +110,11 @@ func (c *Config) Initialize(src source.Config) error {
 	if err := c.JoinEUI.UnmarshalText([]byte(c.joinEUI)); err != nil {
 		return errInvalidJoinEUI.WithAttributes("join_eui", c.joinEUI)
 	}
+	c.caCertPath = os.Getenv("CHIRPSTACK_CA_CERT_PATH")
+	c.insecure = os.Getenv("CHIRPSTACK_INSECURE") == "true"
+	c.ExportSession = os.Getenv("EXPORT_SESSION") == "true"
+	c.ExportVars = os.Getenv("EXPORT_VARS") == "true"
+
 	err := c.dialGRPC(
 		grpc.FailOnNonTempDialError(true),
 		grpc.WithBlock(),
