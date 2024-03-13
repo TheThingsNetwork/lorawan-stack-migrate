@@ -104,34 +104,55 @@ where the devices are exported but they are still valid on the firefly server
 func (c *Config) Initialize(src source.Config) error {
 	c.src = src
 
-	if c.appID = os.Getenv("APP_ID"); c.appID == "" {
-		return errNoAppID.New()
+	if appID := os.Getenv("APP_ID"); appID == "" {
+		c.appID = appID
 	}
-	if c.frequencyPlanID = os.Getenv("FREQUENCY_PLAN_ID"); c.frequencyPlanID == "" {
-		return errNoFrequencyPlanID.New()
+	if frequencyPlanID := os.Getenv("FREQUENCY_PLAN_ID"); frequencyPlanID == "" {
+		c.frequencyPlanID = frequencyPlanID
 	}
-	if c.joinEUI = os.Getenv("JOIN_EUI"); c.joinEUI == "" {
-		return errNoJoinEUI.New()
+	if joinEUI := os.Getenv("JOIN_EUI"); joinEUI == "" {
+		c.joinEUI = joinEUI
 	}
-	if invalidateKeys := os.Getenv("JOIN_EUI"); invalidateKeys == "true" {
+	if invalidateKeys := os.Getenv("INVALIDATE_KEYS"); invalidateKeys == "true" {
 		c.invalidateKeys = true
 	}
 	if all := os.Getenv("ALL"); all == "true" {
 		c.all = true
 	}
 
-	if c.Host = os.Getenv("FIREFLY_HOST"); c.Host == "" {
-		return errNoHost.New()
+	if host := os.Getenv("FIREFLY_HOST"); host == "" {
+		c.Host = host
 	}
-	if c.APIKey = os.Getenv("FIREFLY_API_KEY"); c.APIKey == "" {
-		return errNoAPIKey.New()
+	if apiKey := os.Getenv("FIREFLY_API_KEY"); apiKey == "" {
+		c.APIKey = apiKey
 	}
-	c.CACertPath = os.Getenv("FIREFLY_CA_CERT_PATH")
+	if caCertPath := os.Getenv("FIREFLY_CA_CERT_PATH"); caCertPath == "" {
+		c.CACertPath = caCertPath
+	}
 	if useHTTP := os.Getenv("FIREFLY_USE_HTTP"); useHTTP == "true" {
 		c.UseHTTP = true
 	}
+	if macVersion := os.Getenv("MAC_VERSION"); macVersion == "" {
+		c.macVersion = macVersion
+	}
 
-	c.macVersion = os.Getenv("MAC_VERSION")
+	if c.appID == "" {
+		return errNoAppID.New()
+	}
+	if c.frequencyPlanID == "" {
+		return errNoFrequencyPlanID.New()
+	}
+	if c.joinEUI == "" {
+		return errNoJoinEUI.New()
+	}
+
+	if c.Host == "" {
+		return errNoHost.New()
+	}
+	if c.APIKey == "" {
+		return errNoAPIKey.New()
+	}
+
 	switch c.macVersion {
 	case "1.0.0":
 		c.derivedMacVersion = ttnpb.MACVersion_MAC_V1_0

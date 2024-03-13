@@ -94,26 +94,47 @@ func New() *Config {
 func (c *Config) Initialize(src source.Config) error {
 	c.src = src
 
-	if c.apiKey = os.Getenv("CHIRPSTACK_API_KEY"); c.apiKey == "" {
+	if apiKey := os.Getenv("CHIRPSTACK_API_KEY"); apiKey != "" {
+		c.apiKey = apiKey
+	}
+	if url := os.Getenv("CHIRPSTACK_API_URL"); url != "" {
+		c.url = url
+	}
+	if caCertPath := os.Getenv("CHIRPSTACK_CA_CERT_PATH"); caCertPath != "" {
+		c.caCertPath = caCertPath
+	}
+	if insecure := os.Getenv("CHIRPSTACK_INSECURE"); insecure != "" {
+		c.insecure = insecure == "true"
+	}
+	if exportVars := os.Getenv("EXPORT_VARS"); exportVars != "" {
+		c.ExportVars = exportVars == "true"
+	}
+	if exportSession := os.Getenv("EXPORT_SESSION"); exportSession != "" {
+		c.ExportSession = exportSession == "true"
+	}
+	if joinEUI := os.Getenv("JOIN_EUI"); joinEUI != "" {
+		c.joinEUI = joinEUI
+	}
+	if frequencyPlanID := os.Getenv("FREQUENCY_PLAN_ID"); frequencyPlanID != "" {
+		c.FrequencyPlanID = frequencyPlanID
+	}
+
+	if c.apiKey == "" {
 		return errNoAPIToken.New()
 	}
-	if c.url = os.Getenv("CHIRPSTACK_API_URL"); c.url == "" {
+	if c.url == "" {
 		return errNoAPIURL.New()
 	}
-	if c.FrequencyPlanID = os.Getenv("FREQUENCY_PLAN_ID"); c.FrequencyPlanID == "" {
+	if c.FrequencyPlanID == "" {
 		return errNoFrequencyPlan.New()
 	}
-	if c.joinEUI = os.Getenv("JOIN_EUI"); c.joinEUI == "" {
+	if c.joinEUI == "" {
 		return errNoJoinEUI.New()
 	}
 	c.JoinEUI = &types.EUI64{}
 	if err := c.JoinEUI.UnmarshalText([]byte(c.joinEUI)); err != nil {
 		return errInvalidJoinEUI.WithAttributes("join_eui", c.joinEUI)
 	}
-	c.caCertPath = os.Getenv("CHIRPSTACK_CA_CERT_PATH")
-	c.insecure = os.Getenv("CHIRPSTACK_INSECURE") == "true"
-	c.ExportSession = os.Getenv("EXPORT_SESSION") == "true"
-	c.ExportVars = os.Getenv("EXPORT_VARS") == "true"
 
 	err := c.dialGRPC(
 		grpc.FailOnNonTempDialError(true),

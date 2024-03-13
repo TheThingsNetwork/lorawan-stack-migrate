@@ -72,13 +72,22 @@ func NewConfig() *Config {
 func (c *Config) Initialize(src source.Config) error {
 	c.src = src
 
-	if c.appID = os.Getenv("APP_ID"); c.appID == "" {
+	if appID := os.Getenv("APP_ID"); appID != "" {
+		c.appID = appID
+	}
+	if frequencyPlanID := os.Getenv("FREQUENCY_PLAN_ID"); frequencyPlanID != "" {
+		c.frequencyPlanID = frequencyPlanID
+	}
+	if csvPath := os.Getenv("CSV_PATH"); csvPath != "" {
+		c.csvPath = csvPath
+	}
+	if c.appID == "" {
 		return errNoAppID.New()
 	}
-	if c.frequencyPlanID = os.Getenv("FREQUENCY_PLAN_ID"); c.frequencyPlanID == "" {
+	if c.frequencyPlanID == "" {
 		return errNoFrequencyPlanID.New()
 	}
-	if c.csvPath = os.Getenv("CSV_PATH"); c.csvPath == "" {
+	if c.csvPath == "" {
 		return errNoCSVFileProvided.New()
 	}
 
