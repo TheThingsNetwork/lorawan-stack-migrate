@@ -74,7 +74,7 @@ func New() *Config {
 
 	config.flags.StringVar(&config.AppID,
 		"app-id",
-		"",
+		os.Getenv("TTS_APP_ID"),
 		"TTS Application ID")
 	config.flags.StringVar(&config.appAPIKey,
 		"app-api-key",
@@ -83,41 +83,41 @@ func New() *Config {
 
 	config.flags.StringVar(&config.caPath,
 		"ca-file",
-		"",
+		os.Getenv("TTS_CA_FILE"),
 		"TTS Path to a CA file (optional)")
 	config.flags.BoolVar(&config.insecure,
 		"insecure",
-		false,
+		os.Getenv("TTS_INSECURE") == "true",
 		"TTS allow TCP connection")
 
 	config.flags.StringVar(&config.ServerConfig.defaultGRPCAddress,
 		"default-grpc-address",
-		"",
+		os.Getenv("TTS_DEFAULT_GRPC_ADDRESS"),
 		"TTS default GRPC Address (optional)")
 	config.flags.StringVar(&config.ServerConfig.ApplicationServerGRPCAddress,
 		"application-server-grpc-address",
-		"",
+		os.Getenv("TTS_APPLICATION_SERVER_GRPC_ADDRESS"),
 		"TTS Application Server GRPC Address")
 	config.flags.StringVar(&config.ServerConfig.IdentityServerGRPCAddress,
 		"identity-server-grpc-address",
-		"",
+		os.Getenv("TTS_IDENTITY_SERVER_GRPC_ADDRESS"),
 		"TTS Identity Server GRPC Address")
 	config.flags.StringVar(&config.ServerConfig.JoinServerGRPCAddress,
 		"join-server-grpc-address",
-		"",
+		os.Getenv("TTS_JOIN_SERVER_GRPC_ADDRESS"),
 		"TTS Join Server GRPC Address")
 	config.flags.StringVar(&config.ServerConfig.NetworkServerGRPCAddress,
 		"network-server-grpc-address",
-		"",
+		os.Getenv("TTS_NETWORK_SERVER_GRPC_ADDRESS"),
 		"TTS Network Server GRPC Address")
 
 	config.flags.BoolVar(&config.NoSession,
 		"no-session",
-		false,
+		os.Getenv("TTS_NO_SESSION") == "true",
 		"TTS export devices without session")
 	config.flags.BoolVar(&config.DeleteSourceDevice,
 		"delete-source-device",
-		false,
+		os.Getenv("TTS_DELETE_SOURCE_DEVICE") == "true",
 		"TTS delete exported devices")
 
 	return config
@@ -142,40 +142,9 @@ type Config struct {
 func (c *Config) Initialize(rootConfig source.Config) error {
 	c.Config = rootConfig
 
-	if appID := os.Getenv("TTS_APP_ID"); appID != "" {
-		c.AppID = appID
-	}
-	if appAPIKey := os.Getenv("TTS_APP_API_KEY"); appAPIKey != "" {
+	if appAPIKey := os.Getenv("TTS_APP_API_KEY"); appAPIKey != "" && c.appAPIKey == "" {
 		c.appAPIKey = appAPIKey
 	}
-	if caPath := os.Getenv("TTS_CA_FILE"); caPath != "" {
-		c.caPath = caPath
-	}
-	if insecure := os.Getenv("TTS_INSECURE"); insecure == "true" {
-		c.insecure = true
-	}
-	if noSession := os.Getenv("TTS_NO_SESSION"); noSession == "true" {
-		c.NoSession = true
-	}
-	if deleteSourceDevice := os.Getenv("TTS_DELETE_SOURCE_DEVICE"); deleteSourceDevice == "true" {
-		c.DeleteSourceDevice = true
-	}
-	if defaultGRPCAddress := os.Getenv("TTS_DEFAULT_GRPC_ADDRESS"); defaultGRPCAddress != "" {
-		c.ServerConfig.defaultGRPCAddress = defaultGRPCAddress
-	}
-	if applicationServerGRPCAddress := os.Getenv("TTS_APPLICATION_SERVER_GRPC_ADDRESS"); applicationServerGRPCAddress != "" {
-		c.ServerConfig.ApplicationServerGRPCAddress = applicationServerGRPCAddress
-	}
-	if identityServerGRPCAddress := os.Getenv("TTS_IDENTITY_SERVER_GRPC_ADDRESS"); identityServerGRPCAddress != "" {
-		c.ServerConfig.IdentityServerGRPCAddress = identityServerGRPCAddress
-	}
-	if joinServerGRPCAddress := os.Getenv("TTS_JOIN_SERVER_GRPC_ADDRESS"); joinServerGRPCAddress != "" {
-		c.ServerConfig.JoinServerGRPCAddress = joinServerGRPCAddress
-	}
-	if networkServerGRPCAddress := os.Getenv("TTS_NETWORK_SERVER_GRPC_ADDRESS"); networkServerGRPCAddress != "" {
-		c.ServerConfig.NetworkServerGRPCAddress = networkServerGRPCAddress
-	}
-
 	if c.AppID == "" {
 		return errNoAppID.New()
 	}

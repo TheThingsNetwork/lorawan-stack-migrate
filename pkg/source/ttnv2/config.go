@@ -43,11 +43,11 @@ func NewConfig() *Config {
 
 	config.flags.StringVar(&config.frequencyPlanID,
 		"frequency-plan-id",
-		"",
+		os.Getenv("FREQUENCY_PLAN_ID"),
 		"Frequency Plan ID of exported devices")
 	config.flags.StringVar(&config.appID,
 		"app-id",
-		"",
+		os.Getenv("TTNV2_APP_ID"),
 		"TTN Application ID")
 	config.flags.StringVar(&config.appAccessKey,
 		"app-access-key",
@@ -55,19 +55,19 @@ func NewConfig() *Config {
 		"TTN Application Access Key (with 'devices' permissions")
 	config.flags.StringVar(&config.caCert,
 		"ca-cert",
-		"",
+		os.Getenv("TTNV2_CA_CERT"),
 		"(only for private networks)")
 	config.flags.StringVar(&config.sdkConfig.HandlerAddress,
 		"handler-address",
-		"",
+		os.Getenv("TTNV2_HANDLER_ADDRESS"),
 		"(only for private networks) Address for the Handler")
 	config.flags.StringVar(&config.sdkConfig.AccountServerAddress,
 		"account-server-address",
-		"",
+		os.Getenv("TTNV2_ACCOUNT_SERVER_ADDRESS"),
 		"(only for private networks) Address for the Account Server")
 	config.flags.StringVar(&config.sdkConfig.AccountServerClientID,
 		"account-server-client-id",
-		"",
+		os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_ID"),
 		"(only for private networks) Client ID for the Account Server")
 	config.flags.StringVar(&config.sdkConfig.AccountServerClientSecret,
 		"account-server-client-secret",
@@ -75,19 +75,19 @@ func NewConfig() *Config {
 		"(only for private networks) Client secret for the Account Server")
 	config.flags.StringVar(&config.sdkConfig.DiscoveryServerAddress,
 		"discovery-server-address",
-		"",
+		os.Getenv("TTNV2_DISCOVERY_SERVER_ADDRESS"),
 		"(only for private networks) Address for the Discovery Server")
 	config.flags.BoolVar(&config.sdkConfig.DiscoveryServerInsecure,
 		"discovery-server-insecure",
-		false,
+		os.Getenv("TTNV2_DISCOVERY_SERVER_INSECURE") == "true",
 		"(only for private networks) Not recommended")
 	config.flags.BoolVar(&config.withSession,
 		"with-session",
-		true,
+		os.Getenv("TTNV2_WITH_SESSION") == "true",
 		"Export device session keys and frame counters")
 	config.flags.BoolVar(&config.resetsToFrequencyPlan,
 		"resets-to-frequency-plan",
-		false,
+		os.Getenv("TTNV2_RESETS_TO_FREQUENCY_PLAN") == "true",
 		"Configure preset frequencies for ABP devices so that they match the used Frequency Plan")
 
 	return config
@@ -111,41 +111,11 @@ type Config struct {
 }
 
 func (c *Config) Initialize(rootConfig source.Config) error {
-	if frequencyPlanID := os.Getenv("FREQUENCY_PLAN_ID"); frequencyPlanID != "" {
-		c.frequencyPlanID = frequencyPlanID
-	}
-	if appID := os.Getenv("TTNV2_APP_ID"); appID != "" {
-		c.appID = appID
-	}
-	if appAccessKey := os.Getenv("TTNV2_APP_ACCESS_KEY"); appAccessKey != "" {
+	if appAccessKey := os.Getenv("TTNV2_APP_ACCESS_KEY"); appAccessKey != "" && c.appAccessKey == "" {
 		c.appAccessKey = appAccessKey
-	}
-	if caCert := os.Getenv("TTNV2_CA_CERT"); caCert != "" {
-		c.caCert = caCert
-	}
-	if handlerAddress := os.Getenv("TTNV2_HANDLER_ADDRESS"); handlerAddress != "" {
-		c.sdkConfig.HandlerAddress = handlerAddress
-	}
-	if accountServerAddress := os.Getenv("TTNV2_ACCOUNT_SERVER_ADDRESS"); accountServerAddress != "" {
-		c.sdkConfig.AccountServerAddress = accountServerAddress
-	}
-	if accountServerClientID := os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_ID"); accountServerClientID != "" {
-		c.sdkConfig.AccountServerClientID = accountServerClientID
 	}
 	if accountServerClientSecret := os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_SECRET"); accountServerClientSecret != "" {
 		c.sdkConfig.AccountServerClientSecret = accountServerClientSecret
-	}
-	if discoveryServerAddress := os.Getenv("TTNV2_DISCOVERY_SERVER_ADDRESS"); discoveryServerAddress != "" {
-		c.sdkConfig.DiscoveryServerAddress = discoveryServerAddress
-	}
-	if discoveryServerInsecure := os.Getenv("TTNV2_DISCOVERY_SERVER_INSECURE"); discoveryServerInsecure == "true" {
-		c.sdkConfig.DiscoveryServerInsecure = true
-	}
-	if withSession := os.Getenv("TTNV2_WITH_SESSION"); withSession == "true" {
-		c.withSession = true
-	}
-	if resetsToFrequencyPlan := os.Getenv("TTNV2_RESETS_TO_FREQUENCY_PLAN"); resetsToFrequencyPlan == "true" {
-		c.resetsToFrequencyPlan = true
 	}
 
 	if c.caCert != "" {

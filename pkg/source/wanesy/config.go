@@ -51,15 +51,15 @@ func NewConfig() *Config {
 	}
 	config.flags.StringVar(&config.frequencyPlanID,
 		"frequency-plan-id",
-		"",
+		os.Getenv("FREQUENCY_PLAN_ID"),
 		"Frequency Plan ID for the exported devices")
 	config.flags.StringVar(&config.appID,
 		"app-id",
-		"",
+		os.Getenv("APP_ID"),
 		"Application ID for the exported devices")
 	config.flags.StringVar(&config.csvPath,
 		"csv-path",
-		"",
+		os.Getenv("CSV_PATH"),
 		"Path to the CSV file exported from Wanesy Management Center")
 	config.flags.BoolVar(&config.all,
 		"all",
@@ -72,15 +72,6 @@ func NewConfig() *Config {
 func (c *Config) Initialize(src source.Config) error {
 	c.src = src
 
-	if appID := os.Getenv("APP_ID"); appID != "" {
-		c.appID = appID
-	}
-	if frequencyPlanID := os.Getenv("FREQUENCY_PLAN_ID"); frequencyPlanID != "" {
-		c.frequencyPlanID = frequencyPlanID
-	}
-	if csvPath := os.Getenv("CSV_PATH"); csvPath != "" {
-		c.csvPath = csvPath
-	}
 	if c.appID == "" {
 		return errNoAppID.New()
 	}

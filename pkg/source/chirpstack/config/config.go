@@ -57,7 +57,7 @@ func New() *Config {
 
 	config.flags.StringVar(&config.url,
 		"api-url",
-		"",
+		os.Getenv("CHIRPSTACK_API_URL"),
 		"ChirpStack API URL")
 	config.flags.StringVar(&config.apiKey,
 		"api-key",
@@ -65,27 +65,27 @@ func New() *Config {
 		"ChirpStack API key")
 	config.flags.StringVar(&config.caCertPath,
 		"ca-cert-path",
-		"",
+		os.Getenv("CHIRPSTACK_CA_CERT_PATH"),
 		"(optional) Path to the CA certificate file for ChirpStack API TLS connections")
 	config.flags.BoolVar(&config.insecure,
 		"insecure",
-		false,
+		os.Getenv("CHIRPSTACK_INSECURE") == "true",
 		"Do not connect to ChirpStack over TLS")
 	config.flags.BoolVar(&config.ExportVars,
 		"export-vars",
-		false,
+		os.Getenv("EXPORT_VARS") == "true",
 		"Export device variables from ChirpStack")
 	config.flags.BoolVar(&config.ExportSession,
 		"export-session",
-		false,
+		os.Getenv("EXPORT_SESSION") == "true",
 		"Export device session keys from ChirpStack")
 	config.flags.StringVar(&config.joinEUI,
 		"join-eui",
-		"",
+		os.Getenv("JOIN_EUI"),
 		"JoinEUI of exported devices")
 	config.flags.StringVar(&config.FrequencyPlanID,
 		"frequency-plan-id",
-		"",
+		os.Getenv("FREQUENCY_PLAN_ID"),
 		"Frequency Plan ID of exported devices")
 
 	return config
@@ -94,31 +94,9 @@ func New() *Config {
 func (c *Config) Initialize(src source.Config) error {
 	c.src = src
 
-	if apiKey := os.Getenv("CHIRPSTACK_API_KEY"); apiKey != "" {
+	if apiKey := os.Getenv("CHIRPSTACK_API_KEY"); apiKey != "" && c.apiKey == "" {
 		c.apiKey = apiKey
 	}
-	if url := os.Getenv("CHIRPSTACK_API_URL"); url != "" {
-		c.url = url
-	}
-	if caCertPath := os.Getenv("CHIRPSTACK_CA_CERT_PATH"); caCertPath != "" {
-		c.caCertPath = caCertPath
-	}
-	if insecure := os.Getenv("CHIRPSTACK_INSECURE"); insecure != "" {
-		c.insecure = insecure == "true"
-	}
-	if exportVars := os.Getenv("EXPORT_VARS"); exportVars != "" {
-		c.ExportVars = exportVars == "true"
-	}
-	if exportSession := os.Getenv("EXPORT_SESSION"); exportSession != "" {
-		c.ExportSession = exportSession == "true"
-	}
-	if joinEUI := os.Getenv("JOIN_EUI"); joinEUI != "" {
-		c.joinEUI = joinEUI
-	}
-	if frequencyPlanID := os.Getenv("FREQUENCY_PLAN_ID"); frequencyPlanID != "" {
-		c.FrequencyPlanID = frequencyPlanID
-	}
-
 	if c.apiKey == "" {
 		return errNoAPIToken.New()
 	}
