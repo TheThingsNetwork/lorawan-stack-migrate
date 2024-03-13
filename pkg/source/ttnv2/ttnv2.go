@@ -17,12 +17,12 @@ package ttnv2
 import "go.thethings.network/lorawan-stack-migrate/pkg/source"
 
 func init() {
-	cfg, flags := New()
+	cfg := NewConfig()
 
 	source.RegisterSource(source.Registration{
 		Name:        "ttnv2",
 		Description: "Migrate from The Things Network Stack V2",
-		FlagSet:     flags,
+		FlagSet:     cfg.Flags(),
 		Create:      createNewSource(cfg),
 	})
 }

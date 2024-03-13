@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- Flags are always only loaded from the env. Now flags are loaded from env only if set.
+
 ## [v0.11.2] (2024-03-04)
 
 ### Fixed

@@ -50,6 +50,9 @@ func createNewSource(cfg *Config) source.CreateSource {
 
 // NewSource creates a new TTNv2 Source.
 func NewSource(ctx context.Context, cfg *Config, rootCfg source.Config) (source.Source, error) {
+	if err := cfg.Initialize(rootCfg); err != nil {
+		return nil, err
+	}
 	s := &Source{
 		ctx:    ctx,
 		config: cfg,
@@ -60,7 +63,7 @@ func NewSource(ctx context.Context, cfg *Config, rootCfg source.Config) (source.
 		return nil, err
 	}
 	s.mgr = newDeviceManager(ctx, mgr)
-	return s, cfg.Initialize(rootCfg)
+	return s, nil
 }
 
 // ExportDevice implements the source.Source interface.

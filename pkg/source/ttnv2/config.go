@@ -35,62 +35,62 @@ const (
 	clientName = "ttn-lw-migrate"
 )
 
-func New() (*Config, *pflag.FlagSet) {
-	var (
-		config = &Config{sdkConfig: ttnsdk.NewCommunityConfig(clientName)}
-		flags  = &pflag.FlagSet{}
-	)
+func NewConfig() *Config {
+	config := &Config{
+		sdkConfig: ttnsdk.NewCommunityConfig(clientName),
+		flags:     &pflag.FlagSet{},
+	}
 
-	flags.StringVar(&config.frequencyPlanID,
+	config.flags.StringVar(&config.frequencyPlanID,
 		"frequency-plan-id",
-		os.Getenv("FREQUENCY_PLAN_ID"),
+		"",
 		"Frequency Plan ID of exported devices")
-	flags.StringVar(&config.appID,
+	config.flags.StringVar(&config.appID,
 		"app-id",
-		os.Getenv("TTNV2_APP_ID"),
+		"",
 		"TTN Application ID")
-	flags.StringVar(&config.appAccessKey,
+	config.flags.StringVar(&config.appAccessKey,
 		"app-access-key",
-		os.Getenv("TTNV2_APP_ACCESS_KEY"),
+		"",
 		"TTN Application Access Key (with 'devices' permissions")
-	flags.StringVar(&config.caCert,
+	config.flags.StringVar(&config.caCert,
 		"ca-cert",
-		os.Getenv("TTNV2_CA_CERT"),
+		"",
 		"(only for private networks)")
-	flags.StringVar(&config.sdkConfig.HandlerAddress,
+	config.flags.StringVar(&config.sdkConfig.HandlerAddress,
 		"handler-address",
-		os.Getenv("TTNV2_HANDLER_ADDRESS"),
+		"",
 		"(only for private networks) Address for the Handler")
-	flags.StringVar(&config.sdkConfig.AccountServerAddress,
+	config.flags.StringVar(&config.sdkConfig.AccountServerAddress,
 		"account-server-address",
-		os.Getenv("TTNV2_ACCOUNT_SERVER_ADDRESS"),
+		"",
 		"(only for private networks) Address for the Account Server")
-	flags.StringVar(&config.sdkConfig.AccountServerClientID,
+	config.flags.StringVar(&config.sdkConfig.AccountServerClientID,
 		"account-server-client-id",
-		os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_ID"),
+		"",
 		"(only for private networks) Client ID for the Account Server")
-	flags.StringVar(&config.sdkConfig.AccountServerClientSecret,
+	config.flags.StringVar(&config.sdkConfig.AccountServerClientSecret,
 		"account-server-client-secret",
-		os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_SECRET"),
+		"",
 		"(only for private networks) Client secret for the Account Server")
-	flags.StringVar(&config.sdkConfig.DiscoveryServerAddress,
+	config.flags.StringVar(&config.sdkConfig.DiscoveryServerAddress,
 		"discovery-server-address",
-		os.Getenv("TTNV2_DISCOVERY_SERVER_ADDRESS"),
+		"",
 		"(only for private networks) Address for the Discovery Server")
-	flags.BoolVar(&config.sdkConfig.DiscoveryServerInsecure,
+	config.flags.BoolVar(&config.sdkConfig.DiscoveryServerInsecure,
 		"discovery-server-insecure",
 		false,
 		"(only for private networks) Not recommended")
-	flags.BoolVar(&config.withSession,
+	config.flags.BoolVar(&config.withSession,
 		"with-session",
 		true,
 		"Export device session keys and frame counters")
-	flags.BoolVar(&config.resetsToFrequencyPlan,
+	config.flags.BoolVar(&config.resetsToFrequencyPlan,
 		"resets-to-frequency-plan",
 		false,
 		"Configure preset frequencies for ABP devices so that they match the used Frequency Plan")
 
-	return config, flags
+	return config
 }
 
 type Config struct {
@@ -106,10 +106,48 @@ type Config struct {
 	dryRun                bool
 	resetsToFrequencyPlan bool
 
+	flags   *pflag.FlagSet
 	fpStore *frequencyplans.Store
 }
 
 func (c *Config) Initialize(rootConfig source.Config) error {
+	if frequencyPlanID := os.Getenv("FREQUENCY_PLAN_ID"); frequencyPlanID != "" {
+		c.frequencyPlanID = frequencyPlanID
+	}
+	if appID := os.Getenv("TTNV2_APP_ID"); appID != "" {
+		c.appID = appID
+	}
+	if appAccessKey := os.Getenv("TTNV2_APP_ACCESS_KEY"); appAccessKey != "" {
+		c.appAccessKey = appAccessKey
+	}
+	if caCert := os.Getenv("TTNV2_CA_CERT"); caCert != "" {
+		c.caCert = caCert
+	}
+	if handlerAddress := os.Getenv("TTNV2_HANDLER_ADDRESS"); handlerAddress != "" {
+		c.sdkConfig.HandlerAddress = handlerAddress
+	}
+	if accountServerAddress := os.Getenv("TTNV2_ACCOUNT_SERVER_ADDRESS"); accountServerAddress != "" {
+		c.sdkConfig.AccountServerAddress = accountServerAddress
+	}
+	if accountServerClientID := os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_ID"); accountServerClientID != "" {
+		c.sdkConfig.AccountServerClientID = accountServerClientID
+	}
+	if accountServerClientSecret := os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_SECRET"); accountServerClientSecret != "" {
+		c.sdkConfig.AccountServerClientSecret = accountServerClientSecret
+	}
+	if discoveryServerAddress := os.Getenv("TTNV2_DISCOVERY_SERVER_ADDRESS"); discoveryServerAddress != "" {
+		c.sdkConfig.DiscoveryServerAddress = discoveryServerAddress
+	}
+	if discoveryServerInsecure := os.Getenv("TTNV2_DISCOVERY_SERVER_INSECURE"); discoveryServerInsecure == "true" {
+		c.sdkConfig.DiscoveryServerInsecure = true
+	}
+	if withSession := os.Getenv("TTNV2_WITH_SESSION"); withSession == "true" {
+		c.withSession = true
+	}
+	if resetsToFrequencyPlan := os.Getenv("TTNV2_RESETS_TO_FREQUENCY_PLAN"); resetsToFrequencyPlan == "true" {
+		c.resetsToFrequencyPlan = true
+	}
+
 	if c.caCert != "" {
 		if c.sdkConfig.TLSConfig == nil {
 			c.sdkConfig.TLSConfig = new(tls.Config)
@@ -128,6 +166,9 @@ func (c *Config) Initialize(rootConfig source.Config) error {
 		rootCAs.AppendCertsFromPEM(pemBytes)
 	}
 
+	if c.appID == "" {
+		return errNoAppID.New()
+	}
 	if c.appAccessKey == "" {
 		return errNoAppAccessKey.New()
 	}
@@ -154,4 +195,9 @@ func (c *Config) Initialize(rootConfig source.Config) error {
 	c.dryRun = rootConfig.DryRun
 
 	return nil
+}
+
+// Flags returns the flags for the configuration.
+func (c *Config) Flags() *pflag.FlagSet {
+	return c.flags
 }
