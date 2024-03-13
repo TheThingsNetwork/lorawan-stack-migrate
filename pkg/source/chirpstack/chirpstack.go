@@ -20,12 +20,12 @@ import (
 )
 
 func init() {
-	cfg, flags := config.New()
+	cfg := config.New()
 
 	source.RegisterSource(source.Registration{
 		Name:        "chirpstack",
-		Description: "Migrate from ChirpStack LoRaWAN Network Server",
-		FlagSet:     flags,
+		Description: "Migrate from ChirpStack LoRaWAN Network Server v4",
+		FlagSet:     cfg.Flags(),
 		Create:      createNewSource(cfg),
 	})
 }

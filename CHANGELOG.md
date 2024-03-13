@@ -8,13 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Support for ChirpStack v4.
+
 ### Changed
 
 ### Deprecated
 
 ### Removed
 
+- Support for ChirpStack v3. Use versions `0.11.x` for ChirpStack v3.
+
 ### Fixed
+
+## [v0.11.2] (2024-03-04)
+
+### Fixed
+
+- Exporting devices from ChirpStack v3.
 
 ## [v0.11.1] (2024-01-20)
 

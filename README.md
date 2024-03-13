@@ -11,7 +11,8 @@ Binaries are available on [GitHub](https://github.com/TheThingsNetwork/lorawan-s
 ## Support
 
 - [x] The Things Network Stack V2
-- [x] [ChirpStack Network Server](https://www.chirpstack.io/)
+- [x] [ChirpStack Network Server v4](https://www.chirpstack.io/)
+- [x] [ChirpStack Network Server v3](https://www.chirpstack.io/docs/v3-documentation.html) (only versions `v0.11.x`).
 - [x] [The Things Stack](https://www.github.com/TheThingsNetwork/lorawan-stack/)
 - [x] [Firefly](https://fireflyiot.com/)
 - [ ] [LORIOT Network Server](https://www.loriot.io/)
@@ -106,7 +107,9 @@ $ ttn-lw-migrate ttnv2 application 'my-app-id' --dry-run --verbose > devices.jso
 $ ttn-lw-migrate ttnv2 application 'my-app-id' > devices.json
 ```
 
-## ChirpStack
+## ChirpStack v3
+
+> Note: ChirpStack v3 support is removed from versions `v0.12.0` onwards. Use `v0.11.x` for ChirpStack v3.
 
 ### Configuration
 
@@ -128,6 +131,81 @@ See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for 
 - ABP devices without an active session are successfully exported from ChirpStack, but cannot be imported into The Things Stack.
 - MaxEIRP may not be always set properly.
 - ChirpStack payload formatters also accept a `variables` parameter. This will always be `null` on The Things Stack.
+
+### Export Devices
+
+To export a single device using its DevEUI (e.g. `0102030405060708`):
+
+```
+$ ttn-lw-migrate chirpstack device '0102030405060708' > devices.json
+```
+
+In order to export a large number of devices, create a file named `device_euis.txt` with one DevEUI per line:
+
+```
+0102030405060701
+0102030405060702
+0102030405060703
+0102030405060704
+0102030405060705
+0102030405060706
+```
+
+And then export with:
+
+```bash
+$ ttn-lw-migrate chirpstack device < device_euis.txt > devices.json
+```
+
+### Export Applications
+
+Similarly, to export all devices of application `chirpstack-app-1`:
+
+```bash
+$ ttn-lw-migrate chirpstack application 'chirpstack-app-1' > devices.json
+```
+
+In order to export multiple applications, create a file named `application_names.txt` with one Application name per line:
+
+```
+chirpstack-app-1
+chirpstack-app-2
+chirpstack-app-3
+```
+
+And export with:
+
+```bash
+$ ttn-lw-migrate chirpstack application < application_names.txt > devices.json
+```
+
+## ChirpStack v4
+
+> Minimum supported version: `v0.12.0`
+
+### Configuration
+
+Configure with environment variables, or command-line arguments. See `--help` for more details:
+
+```bash
+$ export CHIRPSTACK_API_URL="localhost:8080"    # ChirpStack Application Server URL
+$ export CHIRPSTACK_API_KEY="eyJ0eX........"    # Generate from ChirpStack GUI
+$ export JOIN_EUI="0101010102020203"            # JoinEUI for exported devices
+$ export FREQUENCY_PLAN_ID="EU_863_870"         # Frequency Plan for exported devices
+$ export CHIRPSTACK_EXPORT_SESSION="true"       # Set to true for session migration.
+```
+
+See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for the list of frequency plans available on The Things Stack. For example, to use `United States 902-928 MHz, FSB 1`, you need to specify the `US_902_928_FSB_1` frequency plan ID.
+
+> _NOTE_: `JoinEUI` and `FrequencyPlanID` are required because ChirpStack does not store these fields.
+
+### Notes
+
+- ABP devices without an active session are successfully exported from ChirpStack, but cannot be imported into The Things Stack.
+- MaxEIRP may not be always set properly.
+- ChirpStack payload formatters also accept a `variables` parameter. This will always be `null` on The Things Stack.
+- ChirpStack v4 uses UUIDs as application ID. The migration tool uses the appends the last index of the UUID to application ID.
+  - Ex: If the ChirpStack v4 application ID is `59459ffa-bfd3-4ef3-9cee-e1ca219397f2`, the tool generates `chirpstack-e1ca219397f2` as the application ID.
 
 ### Export Devices
 

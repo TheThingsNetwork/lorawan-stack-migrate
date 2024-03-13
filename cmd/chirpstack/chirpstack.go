@@ -23,7 +23,7 @@ const sourceName = "chirpstack"
 
 // ChirpStackCmd represents the chirpstack source.
 var ChirpStackCmd = commands.Source(sourceName,
-	"Export devices from ChirpStack V3",
+	"Export devices from ChirpStack v4",
 	commands.WithDevicesOptions(
 		commands.WithShort("Export devices by DevEUI"),
 	),

@@ -22,12 +22,13 @@ import (
 	"strings"
 	"time"
 
-	csapi "github.com/brocaar/chirpstack-api/go/v3/as/external/api"
+	csv4api "github.com/chirpstack/chirpstack/api/go/v4/api"
+	"github.com/chirpstack/chirpstack/api/go/v4/common"
 	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/chirpstack/config"
 	"go.thethings.network/lorawan-stack-migrate/pkg/util"
-	"go.thethings.network/lorawan-stack/v3/pkg/log"
+	"go.thethings.network/lorawan-stack/v3/pkg/networkserver/mac"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"go.thethings.network/lorawan-stack/v3/pkg/types"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -53,28 +54,21 @@ type Source struct {
 
 	ctx context.Context
 
-	applications map[int64]*csapi.Application
-	devProfiles  map[string]*csapi.DeviceProfile
-	svcProfiles  map[string]*csapi.ServiceProfile
+	applications map[string]*csv4api.Application
+	devProfiles  map[string]*csv4api.DeviceProfile
 }
 
 func createNewSource(cfg *config.Config) source.CreateSource {
-	return func(ctx context.Context, _ source.Config) (source.Source, error) {
-		s := &Source{
-			ctx:    ctx,
-			Config: cfg,
-		}
-
-		if err := cfg.Initialize(); err != nil {
+	return func(ctx context.Context, src source.Config) (source.Source, error) {
+		if err := cfg.Initialize(src); err != nil {
 			return nil, err
 		}
-		log.FromContext(s.ctx).WithFields(s.LogFields()).Info("Initialized ChirpStack source")
-
-		s.applications = make(map[int64]*csapi.Application)
-		s.devProfiles = make(map[string]*csapi.DeviceProfile)
-		s.svcProfiles = make(map[string]*csapi.ServiceProfile)
-
-		return s, nil
+		return &Source{
+			ctx:          ctx,
+			Config:       cfg,
+			applications: make(map[string]*csv4api.Application),
+			devProfiles:  make(map[string]*csv4api.DeviceProfile),
+		}, nil
 	}
 }
 
@@ -89,10 +83,10 @@ func (p *Source) RangeDevices(id string, f func(source.Source, string) error) er
 	if err != nil {
 		return err
 	}
-	client := csapi.NewDeviceServiceClient(p.ClientConn)
-	offset := int64(0)
+	client := csv4api.NewDeviceServiceClient(p.ClientConn)
+	offset := uint32(0)
 	for {
-		devices, err := client.List(p.ctx, &csapi.ListDeviceRequest{
+		devices, err := client.List(p.ctx, &csv4api.ListDevicesRequest{
 			ApplicationId: app.Id,
 			Limit:         limit,
 			Offset:        offset,
@@ -127,14 +121,6 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	if err != nil {
 		return nil, err
 	}
-	app, err := p.getApplicationByID(csdev.ApplicationId)
-	if err != nil {
-		return nil, err
-	}
-	svcProfile, err := p.getServiceProfile(app.ServiceProfileId)
-	if err != nil {
-		return nil, err
-	}
 	devProfile, err := p.getDeviceProfile(csdev.DeviceProfileId)
 	if err != nil {
 		return nil, err
@@ -146,13 +132,19 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		return nil, errInvalidDevEUI.WithAttributes("dev_eui", devEui).WithCause(err)
 	}
 	dev.Ids.JoinEui = p.JoinEUI.Bytes()
-	dev.Ids.ApplicationIds.ApplicationId = fmt.Sprintf("chirpstack-%d", csdev.ApplicationId)
+	// Get last index of the application ID (UUID).
+	s := strings.Split(csdev.ApplicationId, "-")
+	if len(s) < 2 {
+		return nil, errInvalidApplicationID.WithAttributes("application_id", csdev.ApplicationId)
+	}
+	dev.Ids.ApplicationIds.ApplicationId = fmt.Sprintf("chirpstack-%s", s[len(s)-1])
 	dev.Ids.DeviceId = "eui-" + strings.ToLower(devEui)
 
 	// Information
 	dev.Name = csdev.Name
 	dev.Description = csdev.Description
 	dev.Attributes["chirpstack-device-profile"] = csdev.DeviceProfileId
+	dev.Attributes["chirpstack-application-id"] = csdev.ApplicationId
 	for key, value := range devProfile.Tags {
 		dev.Attributes[key] = value
 	}
@@ -165,11 +157,8 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		}
 	}
 
-	// Service Profile
-	if svcProfile.DevStatusReqFreq > 0 {
-		// ChirpStack frequency is requests/day. TTS is time.Duration of interval
-		d := time.Duration(24) * time.Hour / time.Duration(svcProfile.DevStatusReqFreq)
-		dev.MacSettings.StatusTimePeriodicity = durationpb.New(d)
+	if d := devProfile.DeviceStatusReqInterval; d > 0 {
+		dev.MacSettings.StatusTimePeriodicity = durationpb.New(time.Duration(d))
 	}
 
 	// Frequency Plan
@@ -177,31 +166,31 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 
 	// General
 	switch devProfile.MacVersion {
-	case "1.0.0":
+	case common.MacVersion_LORAWAN_1_0_0:
 		dev.LorawanVersion = ttnpb.MACVersion_MAC_V1_0
 		dev.LorawanPhyVersion = ttnpb.PHYVersion_TS001_V1_0
-	case "1.0.1":
+	case common.MacVersion_LORAWAN_1_0_1:
 		dev.LorawanVersion = ttnpb.MACVersion_MAC_V1_0_1
 		dev.LorawanPhyVersion = ttnpb.PHYVersion_TS001_V1_0_1
-	case "1.0.2":
+	case common.MacVersion_LORAWAN_1_0_2:
 		dev.LorawanVersion = ttnpb.MACVersion_MAC_V1_0_2
 		switch devProfile.RegParamsRevision {
-		case "A":
+		case common.RegParamsRevision_A:
 			dev.LorawanPhyVersion = ttnpb.PHYVersion_RP001_V1_0_2
-		case "B":
+		case common.RegParamsRevision_B:
 			dev.LorawanPhyVersion = ttnpb.PHYVersion_RP001_V1_0_2_REV_B
 		default:
 			return nil, errInvalidPHYVersion.WithAttributes("phy_version", devProfile.RegParamsRevision)
 		}
-	case "1.0.3":
+	case common.MacVersion_LORAWAN_1_0_3:
 		dev.LorawanVersion = ttnpb.MACVersion_MAC_V1_0_3
 		dev.LorawanPhyVersion = ttnpb.PHYVersion_RP001_V1_0_3_REV_A
-	case "1.1.0":
+	case common.MacVersion_LORAWAN_1_1_0:
 		dev.LorawanVersion = ttnpb.MACVersion_MAC_V1_1
 		switch devProfile.RegParamsRevision {
-		case "A":
+		case common.RegParamsRevision_A:
 			dev.LorawanPhyVersion = ttnpb.PHYVersion_RP001_V1_1_REV_A
-		case "B":
+		case common.RegParamsRevision_B:
 			dev.LorawanPhyVersion = ttnpb.PHYVersion_RP001_V1_1_REV_B
 		default:
 			return nil, errInvalidPHYVersion.WithAttributes("phy_version", devProfile.RegParamsRevision)
@@ -211,30 +200,31 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	}
 
 	// Join (OTAA/ABP)
-	dev.SupportsJoin = devProfile.SupportsJoin
-	if !dev.SupportsJoin {
-		if devProfile.RxFreq_2 > 0 {
+	dev.SupportsJoin = devProfile.SupportsOtaa
+	if !dev.SupportsJoin || p.ExportSession {
+		if freq := devProfile.AbpRx2Freq; freq > 0 {
 			dev.MacSettings.Rx2Frequency = &ttnpb.FrequencyValue{
-				Value: uint64(devProfile.RxFreq_2),
+				Value: uint64(freq),
 			}
 		}
-		if devProfile.RxDelay_1 > 0 {
+		if delay := devProfile.AbpRx1Delay; delay > 0 {
 			dev.MacSettings.Rx1Delay = &ttnpb.RxDelayValue{
-				Value: ttnpb.RxDelay(devProfile.RxDelay_1),
+				Value: ttnpb.RxDelay(delay),
+			}
+		} else {
+			dev.MacSettings.Rx1Delay = &ttnpb.RxDelayValue{
+				Value: ttnpb.RxDelay_RX_DELAY_1,
 			}
 		}
-		if devProfile.RxDrOffset_1 >= 0 {
+		if offset := devProfile.AbpRx1DrOffset; offset > 0 {
 			dev.MacSettings.DesiredRx1DataRateOffset = &ttnpb.DataRateOffsetValue{
-				Value: ttnpb.DataRateOffset(devProfile.RxDrOffset_1),
+				Value: ttnpb.DataRateOffset(offset),
 			}
 		}
-		if devProfile.RxDatarate_2 >= 0 {
+		if dataRate := devProfile.AbpRx2Dr; dataRate > 0 {
 			dev.MacSettings.DesiredRx2DataRateIndex = &ttnpb.DataRateIndexValue{
-				Value: ttnpb.DataRateIndex(devProfile.RxDatarate_2),
+				Value: ttnpb.DataRateIndex(dataRate),
 			}
-		}
-		for _, freq := range devProfile.FactoryPresetFreqs {
-			dev.MacSettings.FactoryPresetFrequencies = append(dev.MacSettings.FactoryPresetFrequencies, uint64(freq))
 		}
 	}
 
@@ -247,16 +237,13 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 		}
 		// ChirpStack API returns 2^(seconds + 5)
 		dev.MacSettings.PingSlotPeriodicity = &ttnpb.PingSlotPeriodValue{
-			Value: ttnpb.PingSlotPeriod(math.Log2(float64(devProfile.PingSlotPeriod)) - 5),
+			Value: ttnpb.PingSlotPeriod(math.Log2(float64(devProfile.ClassBPingSlotNbK)) - 5),
 		}
 
-		if devProfile.PingSlotFreq > 0 {
+		if devProfile.ClassBPingSlotNbK > 0 {
 			dev.MacSettings.DesiredPingSlotFrequency = &ttnpb.ZeroableFrequencyValue{
-				Value: uint64(devProfile.PingSlotFreq),
+				Value: uint64(devProfile.ClassBPingSlotNbK),
 			}
-		}
-		dev.MacSettings.DesiredPingSlotDataRateIndex = &ttnpb.DataRateIndexValue{
-			Value: ttnpb.DataRateIndex(devProfile.PingSlotDr),
 		}
 	}
 
@@ -295,75 +282,83 @@ func (p *Source) ExportDevice(devEui string) (*ttnpb.EndDevice, error) {
 	}
 
 	// Payload formatters
-	switch devProfile.PayloadCodec {
-	case "CAYENNE_LPP":
+	switch devProfile.PayloadCodecRuntime {
+	case csv4api.CodecRuntime_CAYENNE_LPP:
 		dev.Formatters.UpFormatter = ttnpb.PayloadFormatter_FORMATTER_CAYENNELPP
 		dev.Formatters.DownFormatter = ttnpb.PayloadFormatter_FORMATTER_CAYENNELPP
-	case "CUSTOM_JS":
-		if devProfile.PayloadEncoderScript != "" {
+	case csv4api.CodecRuntime_JS:
+		if s := devProfile.PayloadCodecScript; s != "" {
 			dev.Formatters.UpFormatter = ttnpb.PayloadFormatter_FORMATTER_JAVASCRIPT
-			dev.Formatters.UpFormatterParameter = fmt.Sprintf(encoderFormat, devProfile.PayloadEncoderScript)
-		}
-		if devProfile.PayloadDecoderScript != "" {
 			dev.Formatters.DownFormatter = ttnpb.PayloadFormatter_FORMATTER_JAVASCRIPT
-			dev.Formatters.DownFormatterParameter = fmt.Sprintf(decoderFormat, devProfile.PayloadDecoderScript)
+			dev.Formatters.UpFormatterParameter = fmt.Sprintf(encoderFormat, s)
+			dev.Formatters.DownFormatterParameter = fmt.Sprintf(encoderFormat, s)
 		}
 	}
 
 	// Configuration
-	if csdev.SkipFCntCheck {
+	if csdev.SkipFcntCheck {
 		dev.MacSettings.ResetsFCnt = &ttnpb.BoolValue{
-			Value: csdev.SkipFCntCheck,
+			Value: csdev.SkipFcntCheck,
 		}
 	}
 
-	// Session
-	if p.ExportSession {
+	// Export session information.
+	if !dev.SupportsJoin || p.ExportSession {
 		activation, err := p.getActivation(devEui)
-		if err == nil {
-			dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{}, StartedAt: timestamppb.Now()}
-
-			devAddr := &types.DevAddr{}
-			if err := devAddr.UnmarshalText([]byte(activation.DevAddr)); err != nil {
-				return nil, errInvalidDevAddr.WithAttributes("dev_addr", activation.DevAddr).WithCause(err)
-			}
-			dev.Session.DevAddr = devAddr.Bytes()
-
-			// This cannot be empty
-			dev.Session.StartedAt = timestamppb.Now()
-
-			dev.Session.Keys.AppSKey = &ttnpb.KeyEnvelope{}
-			dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.AppSKey)
-			if err != nil {
-				return nil, errInvalidKey.WithAttributes(activation.AppSKey).WithCause(err)
-			}
-			dev.Session.Keys.FNwkSIntKey = &ttnpb.KeyEnvelope{}
-			dev.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.FNwkSIntKey)
-			if err != nil {
-				return nil, errInvalidKey.WithAttributes(activation.FNwkSIntKey).WithCause(err)
-			}
-			switch dev.LorawanVersion {
-			case ttnpb.MACVersion_MAC_V1_1:
-				dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
-				dev.Session.Keys.NwkSEncKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.NwkSEncKey)
-				if err != nil {
-					return nil, errInvalidKey.WithAttributes(activation.NwkSEncKey).WithCause(err)
-				}
-				dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
-				dev.Session.Keys.SNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.SNwkSIntKey)
-				if err != nil {
-					return nil, errInvalidKey.WithAttributes(activation.SNwkSIntKey).WithCause(err)
-				}
-			default:
-			}
-
-			if devProfile.SupportsJoin {
-				dev.Session.Keys.SessionKeyId = generateBytes(16)
-			}
-			dev.Session.LastAFCntDown = activation.AFCntDown
-			dev.Session.LastFCntUp = activation.FCntUp
-			dev.Session.LastNFCntDown = activation.NFCntDown
+		if err != nil {
+			return nil, err
 		}
+		dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{AppSKey: &ttnpb.KeyEnvelope{}, FNwkSIntKey: &ttnpb.KeyEnvelope{}}}
+
+		// These fields cannot be empty.
+		if devProfile.SupportsOtaa {
+			dev.Session.Keys.SessionKeyId = generateBytes(16)
+			dev.Session.StartedAt = timestamppb.Now()
+		}
+
+		devAddr := &types.DevAddr{}
+		if err := devAddr.UnmarshalText([]byte(activation.DevAddr)); err != nil {
+			return nil, errInvalidDevAddr.WithAttributes("dev_addr", activation.DevAddr).WithCause(err)
+		}
+		dev.Session.DevAddr = devAddr.Bytes()
+
+		dev.Session.Keys.AppSKey = &ttnpb.KeyEnvelope{}
+		dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.AppSKey)
+		if err != nil {
+			return nil, errInvalidKey.WithAttributes(activation.AppSKey).WithCause(err)
+		}
+		dev.Session.Keys.FNwkSIntKey = &ttnpb.KeyEnvelope{}
+		dev.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.FNwkSIntKey)
+		if err != nil {
+			return nil, errInvalidKey.WithAttributes(activation.FNwkSIntKey).WithCause(err)
+		}
+		switch dev.LorawanVersion {
+		case ttnpb.MACVersion_MAC_V1_1:
+			dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
+			dev.Session.Keys.NwkSEncKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.NwkSEncKey)
+			if err != nil {
+				return nil, errInvalidKey.WithAttributes(activation.NwkSEncKey).WithCause(err)
+			}
+			dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
+			dev.Session.Keys.SNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&types.AES128Key{}, activation.SNwkSIntKey)
+			if err != nil {
+				return nil, errInvalidKey.WithAttributes(activation.SNwkSIntKey).WithCause(err)
+			}
+		default:
+		}
+
+		// Set the frame counters.
+		dev.Session.LastFCntUp = activation.FCntUp
+		dev.Session.LastAFCntDown = activation.AFCntDown
+		dev.Session.LastNFCntDown = activation.NFCntDown
+
+		// Create a MACState.
+		dev.MacState, err = mac.NewState(dev, p.FPStore, &ttnpb.MACSettings{})
+		if err != nil {
+			return nil, err
+		}
+		dev.MacState.CurrentParameters = dev.MacState.DesiredParameters
+		dev.MacState.CurrentParameters.Rx1Delay = dev.MacSettings.Rx1Delay.Value
 	}
 
 	return dev, nil
