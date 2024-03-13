@@ -104,7 +104,7 @@ where the devices are exported but they are still valid on the firefly server
 func (c *Config) Initialize(src source.Config) error {
 	c.src = src
 
-	if apiKey := os.Getenv("FIREFLY_API_KEY"); apiKey == "" && c.APIKey == "" {
+	if apiKey := os.Getenv("FIREFLY_API_KEY"); apiKey != "" && c.APIKey == "" {
 		c.APIKey = apiKey
 	}
 	if c.appID == "" {

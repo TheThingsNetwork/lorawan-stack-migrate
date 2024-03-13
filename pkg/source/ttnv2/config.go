@@ -114,7 +114,7 @@ func (c *Config) Initialize(rootConfig source.Config) error {
 	if appAccessKey := os.Getenv("TTNV2_APP_ACCESS_KEY"); appAccessKey != "" && c.appAccessKey == "" {
 		c.appAccessKey = appAccessKey
 	}
-	if accountServerClientSecret := os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_SECRET"); accountServerClientSecret != "" {
+	if accountServerClientSecret := os.Getenv("TTNV2_ACCOUNT_SERVER_CLIENT_SECRET"); accountServerClientSecret != "" && c.sdkConfig.AccountServerClientSecret == "" {
 		c.sdkConfig.AccountServerClientSecret = accountServerClientSecret
 	}
 
