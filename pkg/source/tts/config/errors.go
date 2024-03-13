@@ -17,6 +17,7 @@ package config
 import "go.thethings.network/lorawan-stack/v3/pkg/errors"
 
 var (
+	errNoAppID                        = errors.DefineInvalidArgument("no_app_id", "no app id")
 	errNoAppAPIKey                    = errors.DefineInvalidArgument("no_app_api_key", "no app api key")
 	errNoIdentityServerGRPCAddress    = errors.DefineInvalidArgument("no_identity_server_grpc_address", "no identity server grpc address")
 	errNoJoinServerGRPCAddress        = errors.DefineInvalidArgument("no_join_server_grpc_address", "no join server grpc address")

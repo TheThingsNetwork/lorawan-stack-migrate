@@ -34,10 +34,13 @@ type Source struct {
 
 func createNewSource(cfg *config.Config) source.CreateSource {
 	return func(ctx context.Context, rootCfg source.Config) (source.Source, error) {
+		if err := cfg.Initialize(rootCfg); err != nil {
+			return nil, err
+		}
 		return Source{
 			ctx:    ctx,
 			config: cfg,
-		}, cfg.Initialize(rootCfg)
+		}, nil
 	}
 }
 

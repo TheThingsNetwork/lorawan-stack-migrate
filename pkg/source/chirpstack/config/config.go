@@ -57,7 +57,7 @@ func New() *Config {
 
 	config.flags.StringVar(&config.url,
 		"api-url",
-		"",
+		os.Getenv("CHIRPSTACK_API_URL"),
 		"ChirpStack API URL")
 	config.flags.StringVar(&config.apiKey,
 		"api-key",
@@ -65,27 +65,27 @@ func New() *Config {
 		"ChirpStack API key")
 	config.flags.StringVar(&config.caCertPath,
 		"ca-cert-path",
-		"",
+		os.Getenv("CHIRPSTACK_CA_CERT_PATH"),
 		"(optional) Path to the CA certificate file for ChirpStack API TLS connections")
 	config.flags.BoolVar(&config.insecure,
 		"insecure",
-		false,
+		os.Getenv("CHIRPSTACK_INSECURE") == "true",
 		"Do not connect to ChirpStack over TLS")
 	config.flags.BoolVar(&config.ExportVars,
 		"export-vars",
-		false,
+		os.Getenv("EXPORT_VARS") == "true",
 		"Export device variables from ChirpStack")
 	config.flags.BoolVar(&config.ExportSession,
 		"export-session",
-		false,
+		os.Getenv("EXPORT_SESSION") == "true",
 		"Export device session keys from ChirpStack")
 	config.flags.StringVar(&config.joinEUI,
 		"join-eui",
-		"",
+		os.Getenv("JOIN_EUI"),
 		"JoinEUI of exported devices")
 	config.flags.StringVar(&config.FrequencyPlanID,
 		"frequency-plan-id",
-		"",
+		os.Getenv("FREQUENCY_PLAN_ID"),
 		"Frequency Plan ID of exported devices")
 
 	return config
@@ -94,26 +94,25 @@ func New() *Config {
 func (c *Config) Initialize(src source.Config) error {
 	c.src = src
 
-	if c.apiKey = os.Getenv("CHIRPSTACK_API_KEY"); c.apiKey == "" {
+	if apiKey := os.Getenv("CHIRPSTACK_API_KEY"); apiKey != "" && c.apiKey == "" {
+		c.apiKey = apiKey
+	}
+	if c.apiKey == "" {
 		return errNoAPIToken.New()
 	}
-	if c.url = os.Getenv("CHIRPSTACK_API_URL"); c.url == "" {
+	if c.url == "" {
 		return errNoAPIURL.New()
 	}
-	if c.FrequencyPlanID = os.Getenv("FREQUENCY_PLAN_ID"); c.FrequencyPlanID == "" {
+	if c.FrequencyPlanID == "" {
 		return errNoFrequencyPlan.New()
 	}
-	if c.joinEUI = os.Getenv("JOIN_EUI"); c.joinEUI == "" {
+	if c.joinEUI == "" {
 		return errNoJoinEUI.New()
 	}
 	c.JoinEUI = &types.EUI64{}
 	if err := c.JoinEUI.UnmarshalText([]byte(c.joinEUI)); err != nil {
 		return errInvalidJoinEUI.WithAttributes("join_eui", c.joinEUI)
 	}
-	c.caCertPath = os.Getenv("CHIRPSTACK_CA_CERT_PATH")
-	c.insecure = os.Getenv("CHIRPSTACK_INSECURE") == "true"
-	c.ExportSession = os.Getenv("EXPORT_SESSION") == "true"
-	c.ExportVars = os.Getenv("EXPORT_VARS") == "true"
 
 	err := c.dialGRPC(
 		grpc.FailOnNonTempDialError(true),

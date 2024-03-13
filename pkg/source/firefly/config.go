@@ -53,11 +53,11 @@ func NewConfig() *Config {
 
 	config.flags.StringVar(&config.Host,
 		"host",
-		"",
+		os.Getenv("FIREFLY_HOST"),
 		"Host of the Firefly API. Don't use the scheme (http/https). Port is optional")
 	config.flags.StringVar(&config.CACertPath,
 		"ca-cert-path",
-		"",
+		os.Getenv("FIREFLY_CA_CERT_PATH"),
 		"(optional) Path to the CA certificate for the Firefly API")
 	config.flags.StringVar(&config.APIKey,
 		"api-key",
@@ -65,24 +65,24 @@ func NewConfig() *Config {
 		"Key to access the Firefly API")
 	config.flags.StringVar(&config.joinEUI,
 		"join-eui",
-		"",
+		os.Getenv("JOIN_EUI"),
 		"JoinEUI for the exported devices")
 	config.flags.StringVar(&config.frequencyPlanID,
 		"frequency-plan-id",
-		"",
+		os.Getenv("FREQUENCY_PLAN_ID"),
 		"Frequency Plan ID for the exported devices")
 	config.flags.StringVar(&config.macVersion,
 		"mac-version",
-		"",
+		os.Getenv("MAC_VERSION"),
 		`LoRaWAN MAC version for the exported devices.
 Supported options are 1.0.0, 1.0.1, 1.0.2a, 1.0.2b, 1.0.3, 1.1.0a, 1.1.0b`)
 	config.flags.StringVar(&config.appID,
 		"app-id",
-		"",
+		os.Getenv("APP_ID"),
 		"Application ID for the exported devices")
 	config.flags.BoolVar(&config.invalidateKeys,
 		"invalidate-keys",
-		false,
+		os.Getenv("INVALIDATE_KEYS") == "true",
 		`Invalidate the root and/or session keys of the devices on the Firefly server.
 This is necessary to prevent both networks from communicating with the same device.
 The last byte of the keys will be incremented by 0x01. This enables an easy rollback if necessary.
@@ -91,11 +91,11 @@ where the devices are exported but they are still valid on the firefly server
 		`)
 	config.flags.BoolVar(&config.UseHTTP,
 		"use-http",
-		false,
+		os.Getenv("FIREFLY_USE_HTTP") == "true",
 		"(optional) Use HTTP instead of HTTPS for the Firefly API. Only for testing")
 	config.flags.BoolVar(&config.all,
 		"all",
-		false,
+		os.Getenv("EXPORT_ALL") == "true",
 		"Export all devices that the API key has access to. This is only used by the application command")
 	return config
 }
@@ -104,34 +104,25 @@ where the devices are exported but they are still valid on the firefly server
 func (c *Config) Initialize(src source.Config) error {
 	c.src = src
 
-	if c.appID = os.Getenv("APP_ID"); c.appID == "" {
+	if apiKey := os.Getenv("FIREFLY_API_KEY"); apiKey != "" && c.APIKey == "" {
+		c.APIKey = apiKey
+	}
+	if c.appID == "" {
 		return errNoAppID.New()
 	}
-	if c.frequencyPlanID = os.Getenv("FREQUENCY_PLAN_ID"); c.frequencyPlanID == "" {
+	if c.frequencyPlanID == "" {
 		return errNoFrequencyPlanID.New()
 	}
-	if c.joinEUI = os.Getenv("JOIN_EUI"); c.joinEUI == "" {
+	if c.joinEUI == "" {
 		return errNoJoinEUI.New()
 	}
-	if invalidateKeys := os.Getenv("JOIN_EUI"); invalidateKeys == "true" {
-		c.invalidateKeys = true
-	}
-	if all := os.Getenv("ALL"); all == "true" {
-		c.all = true
-	}
-
-	if c.Host = os.Getenv("FIREFLY_HOST"); c.Host == "" {
+	if c.Host == "" {
 		return errNoHost.New()
 	}
-	if c.APIKey = os.Getenv("FIREFLY_API_KEY"); c.APIKey == "" {
+	if c.APIKey == "" {
 		return errNoAPIKey.New()
 	}
-	c.CACertPath = os.Getenv("FIREFLY_CA_CERT_PATH")
-	if useHTTP := os.Getenv("FIREFLY_USE_HTTP"); useHTTP == "true" {
-		c.UseHTTP = true
-	}
 
-	c.macVersion = os.Getenv("MAC_VERSION")
 	switch c.macVersion {
 	case "1.0.0":
 		c.derivedMacVersion = ttnpb.MACVersion_MAC_V1_0

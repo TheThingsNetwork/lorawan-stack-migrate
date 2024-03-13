@@ -20,12 +20,12 @@ import (
 )
 
 func init() {
-	cfg, flags := config.New()
+	cfg := config.New()
 
 	source.RegisterSource(source.Registration{
 		Name:        "tts",
 		Description: "Migrate from The Things Stack",
-		FlagSet:     flags,
+		FlagSet:     cfg.Flags(),
 		Create:      createNewSource(cfg),
 	})
 }
