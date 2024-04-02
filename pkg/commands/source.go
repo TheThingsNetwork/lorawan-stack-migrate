@@ -115,7 +115,7 @@ func SourcePersistentPreRunE() CobraRunE {
 	return func(cmd *cobra.Command, args []string) error {
 		s := cmd.Name()
 		if ok := source.RootConfig.SetSource(s); !ok {
-			return source.ErrNotRegistered.WithAttributes("source", s).New()
+			return source.ErrNotRegistered.WithAttributes("source", s)
 		}
 		return ExecuteParentPersistentPreRun(cmd, args)
 	}
