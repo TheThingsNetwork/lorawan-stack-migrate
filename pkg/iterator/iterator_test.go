@@ -20,8 +20,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/smartystreets/assertions"
-	"github.com/smartystreets/assertions/should"
+	"github.com/smarty/assertions"
+	"github.com/smarty/assertions/should"
 	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 )
 

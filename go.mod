@@ -2,9 +2,6 @@ module go.thethings.network/lorawan-stack-migrate
 
 go 1.21
 
-// Dependency of lorawan-stack.
-replace github.com/throttled/throttled/v2 => github.com/TheThingsIndustries/throttled/v2 v2.7.1-noredis
-
 require (
 	github.com/TheThingsNetwork/go-app-sdk v0.0.0-20191121100818-5bae20ae2b27
 	github.com/TheThingsNetwork/go-utils v0.0.0-20200807125606-b3493662e4bf
@@ -14,7 +11,6 @@ require (
 	github.com/mdempsky/unconvert v0.0.0-20230125054757-2661c2c99a9b
 	github.com/mgechev/revive v1.3.7
 	github.com/smarty/assertions v1.15.1
-	github.com/smartystreets/assertions v1.13.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	go.thethings.network/lorawan-stack/v3 v3.29.2
@@ -50,7 +46,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
@@ -82,6 +78,7 @@ require (
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
+	github.com/smartystreets/assertions v1.13.1 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
