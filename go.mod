@@ -10,7 +10,7 @@ require (
 	github.com/chirpstack/chirpstack/api/go/v4 v4.7.0
 	github.com/mdempsky/unconvert v0.0.0-20230125054757-2661c2c99a9b
 	github.com/mgechev/revive v1.3.7
-	github.com/smarty/assertions v1.15.1
+	github.com/smarty/assertions v1.16.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	go.thethings.network/lorawan-stack/v3 v3.30.0
