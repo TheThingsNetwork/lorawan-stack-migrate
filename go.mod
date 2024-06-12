@@ -7,7 +7,7 @@ require (
 	github.com/TheThingsNetwork/go-utils v0.0.0-20200807125606-b3493662e4bf
 	github.com/TheThingsNetwork/ttn/core/types v0.0.0-20190516112328-fcd38e2b9dc6
 	github.com/apex/log v1.9.0
-	github.com/chirpstack/chirpstack/api/go/v4 v4.7.0
+	github.com/chirpstack/chirpstack/api/go/v4 v4.8.1
 	github.com/mdempsky/unconvert v0.0.0-20230125054757-2661c2c99a9b
 	github.com/mgechev/revive v1.3.7
 	github.com/smarty/assertions v1.16.0
@@ -105,7 +105,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.169.0 // indirect
 	google.golang.org/genproto v0.0.0-20240311173647-c811ad7063a7 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240311173647-c811ad7063a7 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240325203815-454cdb8f5daa // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda // indirect
 	gopkg.in/redis.v5 v5.2.9 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

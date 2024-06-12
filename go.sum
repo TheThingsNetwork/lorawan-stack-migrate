@@ -168,8 +168,8 @@ github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/chavacava/garif v0.1.0 h1:2JHa3hbYf5D9dsgseMKAmc/MZ109otzgNFk5s87H9Pc=
 github.com/chavacava/garif v0.1.0/go.mod h1:XMyYCkEL58DF0oyW4qDjjnPWONs2HBqYKI+UIPD+Gww=
-github.com/chirpstack/chirpstack/api/go/v4 v4.7.0 h1:LgtwvUm/pDvmBYgVc62khybuFdXnx0Hyj9MfKGkXufI=
-github.com/chirpstack/chirpstack/api/go/v4 v4.7.0/go.mod h1:6+68s1PGHq2QWZ216RTwXhp7h1vCiMc6kX3f4s74ZzQ=
+github.com/chirpstack/chirpstack/api/go/v4 v4.8.1 h1:SqbHUYtSMAhIKOb+yYlOrjB0NvEOy2sg4PvuisRa91g=
+github.com/chirpstack/chirpstack/api/go/v4 v4.8.1/go.mod h1:NNVeEib9I7GGomK2bPiP5c5UstkoMfxYiJ1Z5wrYCh4=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
@@ -881,8 +881,8 @@ google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98/go.mod h1:FWY/as6D
 google.golang.org/genproto v0.0.0-20200825200019-8632dd797987/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
 google.golang.org/genproto v0.0.0-20240311173647-c811ad7063a7 h1:ImUcDPHjTrAqNhlOkSocDLfG9rrNHH7w7uoKWPaWZ8s=
 google.golang.org/genproto v0.0.0-20240311173647-c811ad7063a7/go.mod h1:/3XmxOjePkvmKrHuBy4zNFw7IzxJXtAgdpXi8Ll990U=
-google.golang.org/genproto/googleapis/api v0.0.0-20240311173647-c811ad7063a7 h1:oqta3O3AnlWbmIE3bFnWbu4bRxZjfbWCp0cKSuZh01E=
-google.golang.org/genproto/googleapis/api v0.0.0-20240311173647-c811ad7063a7/go.mod h1:VQW3tUculP/D4B+xVCo+VgSq8As6wA9ZjHl//pmk+6s=
+google.golang.org/genproto/googleapis/api v0.0.0-20240325203815-454cdb8f5daa h1:Jt1XW5PaLXF1/ePZrznsh/aAUvI7Adfc3LY1dAKlzRs=
+google.golang.org/genproto/googleapis/api v0.0.0-20240325203815-454cdb8f5daa/go.mod h1:K4kfzHtI0kqWA79gecJarFtDn/Mls+GxQcg3Zox91Ac=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda h1:LI5DOvAxUPMv/50agcLLoo+AdWc1irS9Rzz4vPuD1V4=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda/go.mod h1:WtryC6hu0hhx87FDGxWCDptyssuo68sk10vYjF+T9fY=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
