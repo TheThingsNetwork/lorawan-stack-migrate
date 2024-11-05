@@ -1,7 +1,8 @@
 module go.thethings.network/lorawan-stack-migrate
 
-go 1.21
-toolchain go1.22.5
+go 1.22
+
+toolchain go1.23.2
 
 require (
 	github.com/TheThingsNetwork/go-app-sdk v0.0.0-20191121100818-5bae20ae2b27
