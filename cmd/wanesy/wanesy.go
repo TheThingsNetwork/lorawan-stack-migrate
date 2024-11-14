@@ -21,7 +21,7 @@ import (
 
 const sourceName = "wanesy"
 
-// WanesyCmd represents the Wanesy source.
-var WanesyCmd = commands.Source(sourceName,
+// Command represents the Wanesy source.
+var Command = commands.Source(sourceName,
 	"Migrate from Wanesy Management Center",
 )

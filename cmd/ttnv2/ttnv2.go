@@ -21,5 +21,5 @@ import (
 
 const sourceName = "ttnv2"
 
-// TTNv2Cmd represents the ttnv2 source.
-var TTNv2Cmd = commands.Source(sourceName, "Export devices from TTN V2")
+// Command represents the ttnv2 source.
+var Command = commands.Source(sourceName, "Export devices from TTN V2")
