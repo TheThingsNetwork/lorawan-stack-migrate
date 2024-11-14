@@ -14,12 +14,14 @@
 
 package util
 
+type Unmarshaler interface {
+	UnmarshalText([]byte) error
+	Bytes() []byte
+}
+
 // UnmarshalTextToBytes unmarshals the given source into the given unmarshaller and returns the bytes.
 func UnmarshalTextToBytes(
-	unmarshaller interface {
-		UnmarshalText([]byte) error
-		Bytes() []byte
-	},
+	unmarshaller Unmarshaler,
 	source string,
 ) ([]byte, error) {
 	err := unmarshaller.UnmarshalText([]byte(source))
