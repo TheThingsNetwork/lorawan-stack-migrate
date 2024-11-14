@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"go.thethings.network/lorawan-stack-migrate/cmd/awsiot"
 	"go.thethings.network/lorawan-stack-migrate/cmd/chirpstack"
 	"go.thethings.network/lorawan-stack-migrate/cmd/firefly"
 	"go.thethings.network/lorawan-stack-migrate/cmd/ttnv2"
@@ -78,9 +79,12 @@ func init() {
 		Title: "Sources:",
 	})
 
-	rootCmd.AddCommand(ttnv2.TTNv2Cmd)
-	rootCmd.AddCommand(tts.TTSCmd)
-	rootCmd.AddCommand(chirpstack.ChirpStackCmd)
-	rootCmd.AddCommand(firefly.FireflyCmd)
-	rootCmd.AddCommand(wanesy.WanesyCmd)
+	rootCmd.AddCommand(
+		awsiot.Command,
+		chirpstack.Command,
+		firefly.Command,
+		ttnv2.Command,
+		tts.Command,
+		wanesy.Command,
+	)
 }

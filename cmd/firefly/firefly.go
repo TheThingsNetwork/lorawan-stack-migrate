@@ -21,7 +21,7 @@ import (
 
 const sourceName = "firefly"
 
-// FireflyCmd represents the firefly source.
-var FireflyCmd = commands.Source(sourceName,
+// Command represents the firefly source.
+var Command = commands.Source(sourceName,
 	"Export devices from Digimondo's Firefly",
 )
