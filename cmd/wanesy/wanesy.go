@@ -1,4 +1,4 @@
-// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2024 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import (
 
 const sourceName = "wanesy"
 
-// WanesyCmd represents the Wanesy source.
-var WanesyCmd = commands.Source(sourceName,
+// Command represents the Wanesy source.
+var Command = commands.Source(sourceName,
 	"Migrate from Wanesy Management Center",
 )
