@@ -18,7 +18,7 @@ require (
 	go.thethings.network/lorawan-stack/v3 v3.32.1
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.67.1
-	google.golang.org/protobuf v1.35.1
+	google.golang.org/protobuf v1.35.2
 )
 
 require (
