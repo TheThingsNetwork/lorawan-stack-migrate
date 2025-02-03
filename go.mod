@@ -12,7 +12,7 @@ require (
 	github.com/mgechev/revive v1.6.0
 	github.com/smarty/assertions v1.16.0
 	github.com/spf13/cobra v1.8.1
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/pflag v1.0.6
 	go.thethings.network/lorawan-stack/v3 v3.33.0
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.69.2
