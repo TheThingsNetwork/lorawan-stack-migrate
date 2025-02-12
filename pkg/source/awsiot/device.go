@@ -1,4 +1,4 @@
-// Copyright © 2024 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2025 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 package awsiot
 
 import (
+	"github.com/TheThingsNetwork/go-utils/random"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iotwireless/types"
 	"go.thethings.network/lorawan-stack-migrate/pkg/util"
@@ -28,54 +29,102 @@ func (d Device) SetFields(dev *ttnpb.EndDevice, noSession bool) (err error) {
 	if dev.Ids == nil {
 		dev.Ids = &ttnpb.EndDeviceIdentifiers{}
 	}
-
-	eui, err := util.UnmarshalTextToBytes(&ttntypes.EUI64{}, aws.ToString(d.DevEui))
+	dev.Ids.DevEui, err = util.UnmarshalTextToBytes(&ttntypes.EUI64{}, aws.ToString(d.DevEui))
 	if err != nil {
-		return err
-	}
-	dev.Ids.DevEui = eui
-
-	if dev.Session == nil {
-		dev.Session = &ttnpb.Session{}
-	}
-	if dev.Session.Keys == nil {
-		dev.Session.Keys = &ttnpb.SessionKeys{}
+		return errInvalidDevEUI.WithAttributes("dev_eui", aws.ToString(d.DevEui)).WithCause(err)
 	}
 
+	if dev.RootKeys == nil {
+		dev.RootKeys = &ttnpb.RootKeys{}
+	}
+
+	abp, otaa := d.sessionKeys()
+
+	if otaa.appKey != nil {
+		if dev.RootKeys.AppKey == nil {
+			dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{}
+		}
+		dev.RootKeys.AppKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(otaa.appKey))
+		if err != nil {
+			return errInvalidKey.WithAttributes("key", aws.ToString(otaa.appKey)).WithCause(err)
+		}
+	}
+	if otaa.nwkKey != nil {
+		if dev.RootKeys.NwkKey == nil {
+			dev.RootKeys.NwkKey = &ttnpb.KeyEnvelope{}
+		}
+		dev.RootKeys.NwkKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(otaa.nwkKey))
+		if err != nil {
+			return errInvalidKey.WithAttributes("key", aws.ToString(otaa.nwkKey)).WithCause(err)
+		}
+	}
+	dev.Ids.JoinEui, err = util.UnmarshalTextToBytes(&ttntypes.EUI64{}, aws.ToString(otaa.joinEUI))
+	if err != nil {
+		return errInvalidJoinEUI.WithAttributes("join_eui", aws.ToString(otaa.joinEUI)).WithCause(err)
+	}
+
+	// If we are not exporting session keys, we can return early.
 	if noSession {
 		return nil
 	}
 
-	apb, otaa := d.sessionKeys()
-	keys := dev.Session.Keys
-	if err := unmarshalKeys([]struct {
-		envelope *ttnpb.KeyEnvelope
-		key      *string
-	}{
-		{keys.AppSKey, apb.appSKey},
-		{keys.NwkSEncKey, apb.nwkSKey},
-		{keys.FNwkSIntKey, apb.fNwkSIntKey},
-		{keys.SNwkSIntKey, apb.sNwkSIntKey},
-		{dev.RootKeys.AppKey, otaa.appKey},
-		{dev.RootKeys.NwkKey, otaa.nwkKey},
-	}); err != nil {
-		return err
+	if dev.Session == nil {
+		dev.Session = &ttnpb.Session{
+			Keys: &ttnpb.SessionKeys{
+				AppSKey:     &ttnpb.KeyEnvelope{},
+				FNwkSIntKey: &ttnpb.KeyEnvelope{},
+			},
+		}
+	}
+	if abp.appSKey != nil {
+		dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(abp.appSKey))
+		if err != nil {
+			return errInvalidKey.WithAttributes("key", aws.ToString(abp.appSKey)).WithCause(err)
+		}
+	} else {
+		dev.Session.Keys.AppSKey.Key = random.Bytes(16)
+	}
+	if abp.fNwkSIntKey != nil {
+		dev.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(abp.fNwkSIntKey))
+		if err != nil {
+			return errInvalidKey.WithAttributes("key", aws.ToString(abp.fNwkSIntKey)).WithCause(err)
+		}
+	} else {
+		dev.Session.Keys.FNwkSIntKey.Key = random.Bytes(16)
+	}
+	if abp.nwkSKey != nil {
+		if dev.Session.Keys.NwkSEncKey == nil {
+			dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
+		}
+		dev.Session.Keys.NwkSEncKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(abp.nwkSKey))
+		if err != nil {
+			return errInvalidKey.WithAttributes("key", aws.ToString(abp.nwkSKey)).WithCause(err)
+		}
+	}
+	if abp.sNwkSIntKey != nil {
+		if dev.Session.Keys.SNwkSIntKey == nil {
+			dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
+		}
+		dev.Session.Keys.SNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(abp.sNwkSIntKey))
+		if err != nil {
+			return errInvalidKey.WithAttributes("key", aws.ToString(abp.sNwkSIntKey)).WithCause(err)
+		}
 	}
 
-	var b []byte
-	if b, err = util.UnmarshalTextToBytes(&ttntypes.DevAddr{}, aws.ToString(apb.devAddr)); err != nil {
-		return err
+	if abp.devAddr != nil {
+		dev.Session.DevAddr, err = util.UnmarshalTextToBytes(&ttntypes.DevAddr{}, aws.ToString(abp.devAddr))
+		if err != nil {
+			return errInvalidDevAddr.WithAttributes("dev_addr", aws.ToString(abp.devAddr)).WithCause(err)
+		}
+	} else {
+		dev.Session.DevAddr = random.Bytes(4)
+		dev.Session.Keys.SessionKeyId = random.Bytes(16)
 	}
-	dev.Session.DevAddr = b
-	if b, err = util.UnmarshalTextToBytes(&ttntypes.EUI64{}, aws.ToString(otaa.joinEUI)); err != nil {
-		return err
-	}
-	dev.Ids.JoinEui = b
 
 	return nil
 }
 
-type apbKeys struct {
+type abpKeys struct {
 	appSKey, fNwkSIntKey, nwkSKey, sNwkSIntKey, devAddr *string
 }
 
@@ -83,16 +132,16 @@ type otaaKeys struct {
 	joinEUI, appKey, nwkKey *string
 }
 
-func (d Device) sessionKeys() (apb apbKeys, otaa otaaKeys) {
+func (d Device) sessionKeys() (abp abpKeys, otaa otaaKeys) {
 	if v := d.AbpV1_0_x; v != nil {
-		apb = apbKeys{
-			devAddr: v.DevAddr,
-			appSKey: v.SessionKeys.AppSKey,
-			nwkSKey: v.SessionKeys.NwkSKey,
+		abp = abpKeys{
+			devAddr:     v.DevAddr,
+			appSKey:     v.SessionKeys.AppSKey,
+			fNwkSIntKey: v.SessionKeys.NwkSKey,
 		}
 	}
 	if v := d.AbpV1_1; v != nil {
-		apb = apbKeys{
+		abp = abpKeys{
 			devAddr:     v.DevAddr,
 			appSKey:     v.SessionKeys.AppSKey,
 			fNwkSIntKey: v.SessionKeys.FNwkSIntKey,
@@ -116,23 +165,5 @@ func (d Device) sessionKeys() (apb apbKeys, otaa otaaKeys) {
 			nwkKey:  o.NwkKey,
 		}
 	}
-	return apb, otaa
-}
-
-func unmarshalKeys(data []struct {
-	envelope *ttnpb.KeyEnvelope
-	key      *string
-},
-) (err error) {
-	for _, v := range data {
-		if v.envelope == nil {
-			v.envelope = &ttnpb.KeyEnvelope{}
-		}
-		b, err := util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(v.key))
-		if err != nil {
-			return err
-		}
-		v.envelope.Key = b
-	}
-	return nil
+	return abp, otaa
 }

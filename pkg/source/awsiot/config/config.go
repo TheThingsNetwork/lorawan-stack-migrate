@@ -1,4 +1,4 @@
-// Copyright © 2024 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2025 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,13 +56,20 @@ func New() *Config {
 	c.flags.BoolVar(&c.NoSession,
 		"no-session",
 		os.Getenv("NO_SESSION") == "true",
-		"TTS export devices without session")
+		"Export devices without session")
 
 	return c
 }
 
 func (c *Config) Initialize(rootCfg source.Config) error {
 	c.Config = rootCfg
+
+	if c.AppID == "" {
+		return errNoAppID.New()
+	}
+	if c.FrequencyPlanID == "" {
+		return errNoFrequencyPlanID.New()
+	}
 
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
@@ -84,6 +91,7 @@ func (c *Config) Flags() *pflag.FlagSet {
 	return c.flags
 }
 
+// FPStore returns the frequency plan store.
 func (c *Config) FPStore() *frequencyplans.Store {
 	return c.fpStore
 }

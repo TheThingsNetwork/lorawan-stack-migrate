@@ -1,4 +1,4 @@
-// Copyright © 2024 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2025 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,7 +57,8 @@ func (s Source) getDevice(id string) (*ttnpb.EndDevice, *Device, error) {
 		return nil, nil, err
 	}
 	endDev := &ttnpb.EndDevice{
-		Name: aws.ToString(resp.Name),
+		Name:        aws.ToString(resp.Name),
+		Description: aws.ToString(resp.Description),
 		Ids: &ttnpb.EndDeviceIdentifiers{
 			ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: s.config.AppID},
 			DeviceId:       aws.ToString(resp.Id),
@@ -81,26 +82,21 @@ func (s Source) getDeviceProfile(id *string) (*Profile, error) {
 
 // ExportDevice implements the source.Source interface.
 func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
-	if s.config.AppID == "" {
-		return nil, errNoAppID.New()
-	}
-
 	endDev, awsDev, err := s.getDevice(devID)
 	if err != nil {
 		return nil, err
 	}
-	if err := awsDev.SetFields(endDev, s.config.NoSession); err != nil {
-		return nil, err
-	}
-
-	endDev.FrequencyPlanId = s.config.FrequencyPlanID
-
 	p, err := s.getDeviceProfile(awsDev.DeviceProfileId)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := p.SetFields(endDev, s.config.FPStore()); err != nil {
+	endDev.FrequencyPlanId = s.config.FrequencyPlanID
+
+	if err := p.SetFields(endDev, s.config.FPStore(), s.config.NoSession); err != nil {
+		return nil, err
+	}
+	if err := awsDev.SetFields(endDev, s.config.NoSession); err != nil {
 		return nil, err
 	}
 

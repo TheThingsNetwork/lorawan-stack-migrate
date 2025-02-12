@@ -1,4 +1,4 @@
-// Copyright © 2024 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2025 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@ package awsiot
 import "go.thethings.network/lorawan-stack/v3/pkg/errors"
 
 var (
-	errNoValuesInCSV           = errors.DefineInvalidArgument("no_values_in_csv", "no values in CSV file")
-	errNoAppID                 = errors.DefineInvalidArgument("no_app_id", "no app id")
-	errNoCSVFileProvided       = errors.DefineInvalidArgument("no_csv_file_provided", "no csv file provided")
-	errNoJoinEUI               = errors.DefineInvalidArgument("no_join_eui", "no join eui")
-	errNoDeviceFound           = errors.DefineInvalidArgument("no_device_found", "no device with eui `{eui}` found")
-	errNoFrequencyPlanID       = errors.DefineInvalidArgument("no_frequency_plan_id", "no frequency plan ID")
 	errInvalidMACVersion       = errors.DefineInvalidArgument("invalid_mac_version", "invalid MAC version `{mac_version}`")
 	errInvalidPHYForMACVersion = errors.DefineInvalidArgument("invalid_phy_for_mac_version", "invalid PHY version `{phy_version}` for MAC version `{mac_version}`")
+	errInvalidDevAddr          = errors.DefineInvalidArgument("invalid_dev_addr", "invalid DevAddr `{dev_addr}`")
+	errInvalidDevEUI           = errors.DefineInvalidArgument("invalid_dev_eui", "invalid DevEUI `{dev_eui}`")
+	errInvalidJoinEUI          = errors.DefineInvalidArgument("invalid_join_eui", "invalid JoinEUI `{join_eui}`")
+	errInvalidKey              = errors.DefineInvalidArgument("invalid_key", "invalid key `{key}`")
 )

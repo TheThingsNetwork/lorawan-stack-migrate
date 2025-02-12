@@ -1,4 +1,4 @@
-// Copyright © 2024 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2025 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ func (p Profile) supportsJoin() bool {
 	return mode == "OTAA"
 }
 
-func (p Profile) SetFields(dev *ttnpb.EndDevice, fpStore *frequencyplans.Store) (err error) {
+func (p Profile) SetFields(dev *ttnpb.EndDevice, fpStore *frequencyplans.Store, noSession bool) (err error) {
 	dev.LorawanVersion, dev.LorawanPhyVersion, err = p.macVersion()
 	if err != nil {
 		return err
@@ -146,10 +146,12 @@ func (p Profile) SetFields(dev *ttnpb.EndDevice, fpStore *frequencyplans.Store) 
 	}
 	m.Supports_32BitFCnt = &ttnpb.BoolValue{Value: p.Supports32BitFCnt}
 
-	if dev.MacState, err = mac.NewState(dev, fpStore, dev.MacSettings); err != nil {
-		return err
+	if !noSession {
+		if dev.MacState, err = mac.NewState(dev, fpStore, &ttnpb.MACSettings{}); err != nil {
+			return err
+		}
+		dev.MacState.CurrentParameters = dev.MacState.DesiredParameters
 	}
-	dev.MacState.CurrentParameters = dev.MacState.DesiredParameters
 
 	return nil
 }

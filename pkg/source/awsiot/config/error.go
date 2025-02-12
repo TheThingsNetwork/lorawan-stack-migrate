@@ -12,20 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package awsiot
+package config
 
-import (
-	"go.thethings.network/lorawan-stack-migrate/pkg/source"
-	"go.thethings.network/lorawan-stack-migrate/pkg/source/awsiot/config"
+import "go.thethings.network/lorawan-stack/v3/pkg/errors"
+
+var (
+	errNoAppID           = errors.DefineInvalidArgument("no_app_id", "no app id")
+	errNoFrequencyPlanID = errors.DefineInvalidArgument("no_frequency_plan_id", "no frequency plan ID")
 )
-
-func init() {
-	cfg := config.New()
-
-	source.RegisterSource(source.Registration{
-		Name:        "awsiot",
-		Description: "Migrate from AWS IoT",
-		FlagSet:     cfg.Flags(),
-		Create:      createNewSource(cfg),
-	})
-}
