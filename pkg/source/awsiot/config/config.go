@@ -34,12 +34,12 @@ type Config struct {
 
 	AppID           string
 	FrequencyPlanID string
-	NoSession       bool
 
 	flags   *pflag.FlagSet
 	fpStore *frequencyplans.Store
 }
 
+// New returns a new configuration.
 func New() *Config {
 	c := &Config{
 		flags: new(pflag.FlagSet),
@@ -53,14 +53,11 @@ func New() *Config {
 		"frequency-plan-id",
 		os.Getenv("FREQUENCY_PLAN_ID"),
 		"Frequency Plan ID for the exported devices")
-	c.flags.BoolVar(&c.NoSession,
-		"no-session",
-		os.Getenv("NO_SESSION") == "true",
-		"Export devices without session")
 
 	return c
 }
 
+// Initialize initializes the configuration.
 func (c *Config) Initialize(rootCfg source.Config) error {
 	c.Config = rootCfg
 

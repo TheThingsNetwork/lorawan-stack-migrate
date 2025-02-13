@@ -24,7 +24,9 @@ import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/iterator"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source"
 	"go.thethings.network/lorawan-stack-migrate/pkg/source/awsiot/config"
+	"go.thethings.network/lorawan-stack-migrate/pkg/util"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
+	ttntypes "go.thethings.network/lorawan-stack/v3/pkg/types"
 )
 
 // Source implements the Source interface.
@@ -48,7 +50,7 @@ func createNewSource(cfg *config.Config) source.CreateSource {
 	}
 }
 
-func (s Source) getDevice(id string) (*ttnpb.EndDevice, *Device, error) {
+func (s Source) getDevice(id string) (*DeviceIdentifiers, *Device, error) {
 	resp, err := s.config.Client.GetWirelessDevice(s.ctx, &iotwireless.GetWirelessDeviceInput{
 		IdentifierType: types.WirelessDeviceIdTypeWirelessDeviceId,
 		Identifier:     aws.String(id),
@@ -56,17 +58,12 @@ func (s Source) getDevice(id string) (*ttnpb.EndDevice, *Device, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	endDev := &ttnpb.EndDevice{
-		Name:        aws.ToString(resp.Name),
-		Description: aws.ToString(resp.Description),
-		Ids: &ttnpb.EndDeviceIdentifiers{
-			ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: s.config.AppID},
-			DeviceId:       aws.ToString(resp.Id),
-		},
-		MacSettings: &ttnpb.MACSettings{},
+	deviceIds := &DeviceIdentifiers{
+		Id:          resp.Id,
+		Name:        resp.Name,
+		Description: resp.Description,
 	}
-	awsDev := &Device{resp.LoRaWAN}
-	return endDev, awsDev, nil
+	return deviceIds, &Device{resp.LoRaWAN}, nil
 }
 
 func (s Source) getDeviceProfile(id *string) (*Profile, error) {
@@ -76,30 +73,49 @@ func (s Source) getDeviceProfile(id *string) (*Profile, error) {
 	if err != nil {
 		return nil, err
 	}
-	p := &Profile{resp.LoRaWAN}
-	return p, nil
+	return &Profile{resp.LoRaWAN}, nil
 }
 
 // ExportDevice implements the source.Source interface.
 func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
-	endDev, awsDev, err := s.getDevice(devID)
-	if err != nil {
-		return nil, err
-	}
-	p, err := s.getDeviceProfile(awsDev.DeviceProfileId)
+	devIds, awsDev, err := s.getDevice(devID)
 	if err != nil {
 		return nil, err
 	}
 
-	endDev.FrequencyPlanId = s.config.FrequencyPlanID
+	endDev := &ttnpb.EndDevice{
+		Name:        aws.ToString(devIds.Name),
+		Description: aws.ToString(devIds.Description),
+		Ids: &ttnpb.EndDeviceIdentifiers{
+			ApplicationIds: &ttnpb.ApplicationIdentifiers{ApplicationId: s.config.AppID},
+			DeviceId:       aws.ToString(devIds.Id),
+		},
+		FrequencyPlanId: s.config.FrequencyPlanID,
+		MacSettings:     &ttnpb.MACSettings{},
+		RootKeys:        &ttnpb.RootKeys{},
+	}
+	endDev.Ids.DevEui, err = util.UnmarshalTextToBytes(&ttntypes.EUI64{}, aws.ToString(awsDev.DevEui))
+	if err != nil {
+		return nil, errInvalidDevEUI.WithAttributes("dev_eui", aws.ToString(awsDev.DevEui)).WithCause(err)
+	}
 
-	if err := p.SetFields(endDev, s.config.FPStore(), s.config.NoSession); err != nil {
+	profile, err := s.getDeviceProfile(awsDev.DeviceProfileId)
+	if err != nil {
 		return nil, err
 	}
-	if err := awsDev.SetFields(endDev, s.config.NoSession); err != nil {
+	if err := profile.SetFields(endDev); err != nil {
 		return nil, err
 	}
 
+	if endDev.SupportsJoin {
+		if err := awsDev.SetOTAADevice(endDev); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := awsDev.SetABPDevice(endDev); err != nil {
+			return nil, err
+		}
+	}
 	return endDev, nil
 }
 

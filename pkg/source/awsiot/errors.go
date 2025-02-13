@@ -23,4 +23,5 @@ var (
 	errInvalidDevEUI           = errors.DefineInvalidArgument("invalid_dev_eui", "invalid DevEUI `{dev_eui}`")
 	errInvalidJoinEUI          = errors.DefineInvalidArgument("invalid_join_eui", "invalid JoinEUI `{join_eui}`")
 	errInvalidKey              = errors.DefineInvalidArgument("invalid_key", "invalid key `{key}`")
+	errEmptyKey                = errors.DefineInvalidArgument("empty_key", "empty key `{key}`")
 )

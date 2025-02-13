@@ -15,7 +15,6 @@
 package awsiot
 
 import (
-	"github.com/TheThingsNetwork/go-utils/random"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iotwireless/types"
 	"go.thethings.network/lorawan-stack-migrate/pkg/util"
@@ -25,145 +24,148 @@ import (
 
 type Device struct{ *types.LoRaWANDevice }
 
-func (d Device) SetFields(dev *ttnpb.EndDevice, noSession bool) (err error) {
-	if dev.Ids == nil {
-		dev.Ids = &ttnpb.EndDeviceIdentifiers{}
-	}
-	dev.Ids.DevEui, err = util.UnmarshalTextToBytes(&ttntypes.EUI64{}, aws.ToString(d.DevEui))
-	if err != nil {
-		return errInvalidDevEUI.WithAttributes("dev_eui", aws.ToString(d.DevEui)).WithCause(err)
-	}
+type DeviceIdentifiers struct {
+	Id, Name, Description *string
+}
 
-	if dev.RootKeys == nil {
-		dev.RootKeys = &ttnpb.RootKeys{}
-	}
-
-	abp, otaa := d.sessionKeys()
-
-	if otaa.appKey != nil {
-		if dev.RootKeys.AppKey == nil {
-			dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{}
-		}
-		dev.RootKeys.AppKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(otaa.appKey))
+// SetOTAADevice sets the OTAA device fields.
+func (d Device) SetOTAADevice(dev *ttnpb.EndDevice) (err error) {
+	rootKeys := d.rootKeys()
+	if rootKeys.appKey != nil {
+		dev.RootKeys.AppKey = &ttnpb.KeyEnvelope{}
+		dev.RootKeys.AppKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(rootKeys.appKey))
 		if err != nil {
-			return errInvalidKey.WithAttributes("key", aws.ToString(otaa.appKey)).WithCause(err)
+			return errInvalidKey.WithAttributes("key", aws.ToString(rootKeys.appKey)).WithCause(err)
 		}
+	} else {
+		return errEmptyKey.WithAttributes("key", "AppKey")
 	}
-	if otaa.nwkKey != nil {
-		if dev.RootKeys.NwkKey == nil {
+	if dev.LorawanVersion == ttnpb.MACVersion_MAC_V1_1 {
+		if rootKeys.nwkKey != nil {
 			dev.RootKeys.NwkKey = &ttnpb.KeyEnvelope{}
-		}
-		dev.RootKeys.NwkKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(otaa.nwkKey))
-		if err != nil {
-			return errInvalidKey.WithAttributes("key", aws.ToString(otaa.nwkKey)).WithCause(err)
+			dev.RootKeys.NwkKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(rootKeys.nwkKey))
+			if err != nil {
+				return errInvalidKey.WithAttributes("key", aws.ToString(rootKeys.nwkKey)).WithCause(err)
+			}
+		} else {
+			return errEmptyKey.WithAttributes("key", "NwkKey")
 		}
 	}
-	dev.Ids.JoinEui, err = util.UnmarshalTextToBytes(&ttntypes.EUI64{}, aws.ToString(otaa.joinEUI))
+	joinEui := d.joinEui()
+	dev.Ids.JoinEui, err = util.UnmarshalTextToBytes(&ttntypes.EUI64{}, aws.ToString(joinEui))
 	if err != nil {
-		return errInvalidJoinEUI.WithAttributes("join_eui", aws.ToString(otaa.joinEUI)).WithCause(err)
+		return errInvalidJoinEUI.WithAttributes("join_eui", aws.ToString(joinEui)).WithCause(err)
 	}
-
-	// If we are not exporting session keys, we can return early.
-	if noSession {
-		return nil
-	}
-
-	if dev.Session == nil {
-		dev.Session = &ttnpb.Session{
-			Keys: &ttnpb.SessionKeys{
-				AppSKey:     &ttnpb.KeyEnvelope{},
-				FNwkSIntKey: &ttnpb.KeyEnvelope{},
-			},
-		}
-	}
-	if abp.appSKey != nil {
-		dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(abp.appSKey))
-		if err != nil {
-			return errInvalidKey.WithAttributes("key", aws.ToString(abp.appSKey)).WithCause(err)
-		}
-	} else {
-		dev.Session.Keys.AppSKey.Key = random.Bytes(16)
-	}
-	if abp.fNwkSIntKey != nil {
-		dev.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(abp.fNwkSIntKey))
-		if err != nil {
-			return errInvalidKey.WithAttributes("key", aws.ToString(abp.fNwkSIntKey)).WithCause(err)
-		}
-	} else {
-		dev.Session.Keys.FNwkSIntKey.Key = random.Bytes(16)
-	}
-	if abp.nwkSKey != nil {
-		if dev.Session.Keys.NwkSEncKey == nil {
-			dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
-		}
-		dev.Session.Keys.NwkSEncKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(abp.nwkSKey))
-		if err != nil {
-			return errInvalidKey.WithAttributes("key", aws.ToString(abp.nwkSKey)).WithCause(err)
-		}
-	}
-	if abp.sNwkSIntKey != nil {
-		if dev.Session.Keys.SNwkSIntKey == nil {
-			dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
-		}
-		dev.Session.Keys.SNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(abp.sNwkSIntKey))
-		if err != nil {
-			return errInvalidKey.WithAttributes("key", aws.ToString(abp.sNwkSIntKey)).WithCause(err)
-		}
-	}
-
-	if abp.devAddr != nil {
-		dev.Session.DevAddr, err = util.UnmarshalTextToBytes(&ttntypes.DevAddr{}, aws.ToString(abp.devAddr))
-		if err != nil {
-			return errInvalidDevAddr.WithAttributes("dev_addr", aws.ToString(abp.devAddr)).WithCause(err)
-		}
-	} else {
-		dev.Session.DevAddr = random.Bytes(4)
-		dev.Session.Keys.SessionKeyId = random.Bytes(16)
-	}
-
 	return nil
 }
 
-type abpKeys struct {
-	appSKey, fNwkSIntKey, nwkSKey, sNwkSIntKey, devAddr *string
+// SetABPDevice sets the ABP device fields.
+func (d Device) SetABPDevice(dev *ttnpb.EndDevice) (err error) {
+	dev.Session = &ttnpb.Session{Keys: &ttnpb.SessionKeys{}}
+
+	sessionKeys := d.sessionKeys()
+	if sessionKeys.appSKey != nil {
+		dev.Session.Keys.AppSKey = &ttnpb.KeyEnvelope{}
+		dev.Session.Keys.AppSKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(sessionKeys.appSKey))
+		if err != nil {
+			return errInvalidKey.WithAttributes("key", aws.ToString(sessionKeys.appSKey)).WithCause(err)
+		}
+	} else {
+		return errEmptyKey.WithAttributes("key", "AppSKey")
+	}
+	if sessionKeys.fNwkSIntKey != nil {
+		dev.Session.Keys.FNwkSIntKey = &ttnpb.KeyEnvelope{}
+		dev.Session.Keys.FNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(sessionKeys.fNwkSIntKey))
+		if err != nil {
+			return errInvalidKey.WithAttributes("key", aws.ToString(sessionKeys.fNwkSIntKey)).WithCause(err)
+		}
+	} else {
+		return errEmptyKey.WithAttributes("key", "FNwkSIntKey")
+	}
+	if dev.LorawanVersion == ttnpb.MACVersion_MAC_V1_1 {
+		if sessionKeys.nwkSEncKey != nil {
+			dev.Session.Keys.NwkSEncKey = &ttnpb.KeyEnvelope{}
+			dev.Session.Keys.NwkSEncKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(sessionKeys.nwkSEncKey))
+			if err != nil {
+				return errInvalidKey.WithAttributes("key", aws.ToString(sessionKeys.nwkSEncKey)).WithCause(err)
+			}
+		} else {
+			return errEmptyKey.WithAttributes("key", "NwkSEncKey")
+		}
+		if sessionKeys.sNwkSIntKey != nil {
+			dev.Session.Keys.SNwkSIntKey = &ttnpb.KeyEnvelope{}
+			dev.Session.Keys.SNwkSIntKey.Key, err = util.UnmarshalTextToBytes(&ttntypes.AES128Key{}, aws.ToString(sessionKeys.sNwkSIntKey))
+			if err != nil {
+				return errInvalidKey.WithAttributes("key", aws.ToString(sessionKeys.sNwkSIntKey)).WithCause(err)
+			}
+		} else {
+			return errEmptyKey.WithAttributes("key", "SNwkSIntKey")
+		}
+	}
+	devAddr := d.devAddr()
+	if devAddr != nil {
+		dev.Session.DevAddr, err = util.UnmarshalTextToBytes(&ttntypes.DevAddr{}, aws.ToString(devAddr))
+		if err != nil {
+			return errInvalidDevAddr.WithAttributes("dev_addr", aws.ToString(devAddr)).WithCause(err)
+		}
+	}
+	return nil
 }
 
-type otaaKeys struct {
-	joinEUI, appKey, nwkKey *string
+type sessionKeys struct {
+	appSKey, fNwkSIntKey, nwkSEncKey, sNwkSIntKey *string
 }
 
-func (d Device) sessionKeys() (abp abpKeys, otaa otaaKeys) {
-	if v := d.AbpV1_0_x; v != nil {
-		abp = abpKeys{
-			devAddr:     v.DevAddr,
-			appSKey:     v.SessionKeys.AppSKey,
-			fNwkSIntKey: v.SessionKeys.NwkSKey,
+type rootKeys struct {
+	appKey, nwkKey *string
+}
+
+func (d Device) sessionKeys() sessionKeys {
+	k := sessionKeys{}
+	if d.AbpV1_0_x != nil {
+		k.appSKey = d.AbpV1_0_x.SessionKeys.AppSKey
+		k.fNwkSIntKey = d.AbpV1_0_x.SessionKeys.NwkSKey
+	}
+	if d.AbpV1_1 != nil {
+		k.appSKey = d.AbpV1_1.SessionKeys.AppSKey
+		k.fNwkSIntKey = d.AbpV1_1.SessionKeys.FNwkSIntKey
+		k.nwkSEncKey = d.AbpV1_1.SessionKeys.NwkSEncKey
+		k.sNwkSIntKey = d.AbpV1_1.SessionKeys.SNwkSIntKey
+	}
+	return k
+}
+
+func (d Device) devAddr() (addr *string) {
+	if d.AbpV1_0_x != nil {
+		addr = d.AbpV1_0_x.DevAddr
+	}
+	if d.AbpV1_1 != nil {
+		addr = d.AbpV1_1.DevAddr
+	}
+	return addr
+}
+
+func (d Device) rootKeys() (keys rootKeys) {
+	if d.OtaaV1_0_x != nil {
+		keys.appKey = d.OtaaV1_0_x.AppKey
+	}
+	if d.OtaaV1_1 != nil {
+		keys.appKey = d.OtaaV1_1.AppKey
+		keys.nwkKey = d.OtaaV1_1.NwkKey
+	}
+	return keys
+}
+
+func (d Device) joinEui() (joinEui *string) {
+	if d.OtaaV1_0_x != nil {
+		if d.OtaaV1_0_x.AppEui != nil {
+			joinEui = d.OtaaV1_0_x.AppEui
+		} else {
+			joinEui = d.OtaaV1_0_x.JoinEui
 		}
 	}
-	if v := d.AbpV1_1; v != nil {
-		abp = abpKeys{
-			devAddr:     v.DevAddr,
-			appSKey:     v.SessionKeys.AppSKey,
-			fNwkSIntKey: v.SessionKeys.FNwkSIntKey,
-			nwkSKey:     v.SessionKeys.NwkSEncKey,
-			sNwkSIntKey: v.SessionKeys.SNwkSIntKey,
-		}
+	if d.OtaaV1_1 != nil {
+		joinEui = d.OtaaV1_1.JoinEui
 	}
-	if o := d.OtaaV1_0_x; o != nil {
-		otaa = otaaKeys{
-			appKey:  o.AppKey,
-			joinEUI: o.AppEui,
-		}
-		if eui := o.AppEui; eui != nil {
-			otaa.joinEUI = eui
-		}
-	}
-	if o := d.OtaaV1_1; o != nil {
-		otaa = otaaKeys{
-			appKey:  o.AppKey,
-			joinEUI: o.JoinEui,
-			nwkKey:  o.NwkKey,
-		}
-	}
-	return abp, otaa
+	return joinEui
 }

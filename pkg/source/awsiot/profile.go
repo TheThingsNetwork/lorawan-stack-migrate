@@ -20,21 +20,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iotwireless/types"
-	"go.thethings.network/lorawan-stack/v3/pkg/frequencyplans"
-	"go.thethings.network/lorawan-stack/v3/pkg/networkserver/mac"
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 type Profile struct{ *types.LoRaWANDeviceProfile }
 
-func splitMacVersion(v string) (string, string) {
-	sep := " "
-	split := strings.Split(v, sep)
-	return split[0], strings.Join(split[1:], sep)
-}
-
-func (p Profile) macVersion() (mac ttnpb.MACVersion, phy ttnpb.PHYVersion, _ error) {
+func (p Profile) macVersion() (mac ttnpb.MACVersion, phy ttnpb.PHYVersion, err error) {
 	regParamsRevision := aws.ToString(p.RegParamsRevision)
 
 	switch v := aws.ToString(p.MacVersion); v {
@@ -93,11 +85,12 @@ func (p Profile) supportsJoin() bool {
 	if v := p.SupportsJoin; v != nil {
 		return *v
 	}
-	mode, _ := splitMacVersion(aws.ToString(p.MacVersion))
+	mode, _, _ := strings.Cut(aws.ToString(p.MacVersion), " ")
 	return mode == "OTAA"
 }
 
-func (p Profile) SetFields(dev *ttnpb.EndDevice, fpStore *frequencyplans.Store, noSession bool) (err error) {
+// SetFields sets the fields of the device from the profile.
+func (p Profile) SetFields(dev *ttnpb.EndDevice) (err error) {
 	dev.LorawanVersion, dev.LorawanPhyVersion, err = p.macVersion()
 	if err != nil {
 		return err
@@ -107,10 +100,6 @@ func (p Profile) SetFields(dev *ttnpb.EndDevice, fpStore *frequencyplans.Store, 
 	dev.SupportsJoin = p.supportsJoin()
 
 	m := dev.MacSettings
-	if m == nil {
-		m = new(ttnpb.MACSettings)
-	}
-
 	if v := p.ClassBTimeout; v != nil {
 		m.ClassBTimeout = durationpb.New(time.Duration(aws.ToInt32(v)))
 	}
@@ -145,13 +134,6 @@ func (p Profile) SetFields(dev *ttnpb.EndDevice, fpStore *frequencyplans.Store, 
 		m.Rx2Frequency = &ttnpb.FrequencyValue{Value: uint64(aws.ToInt32(v))}
 	}
 	m.Supports_32BitFCnt = &ttnpb.BoolValue{Value: p.Supports32BitFCnt}
-
-	if !noSession {
-		if dev.MacState, err = mac.NewState(dev, fpStore, &ttnpb.MACSettings{}); err != nil {
-			return err
-		}
-		dev.MacState.CurrentParameters = dev.MacState.DesiredParameters
-	}
 
 	return nil
 }
