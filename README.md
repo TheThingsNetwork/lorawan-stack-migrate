@@ -432,13 +432,16 @@ $ ttn-lw-migrate wanesy application --all
 
 ### Configuration
 
+> Note: `awsiot` source using the Shared AWS Configuration (~/.aws/config) file. To setup this configuration file please check out the [AWS SDK documentation](https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html)
+
 Configure with environment variables, or command-line arguments. See `--help` for more details:
 
 ```bash
 $ export APP_ID="my-app"                    # Application ID for the exported devices
 $ export FREQUENCY_PLAN_ID="EU_863_870"     # Frequency Plan ID for the exported devices
-$ export NO_SESSION="true"                  # Export devices without session
 ```
+
+> Important: AWS IoT does not provide a way to export session information.
 
 ### Notes
 
