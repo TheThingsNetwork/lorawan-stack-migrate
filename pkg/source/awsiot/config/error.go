@@ -1,4 +1,4 @@
-// Copyright © 2024 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2025 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package firefly
+package config
 
-import (
-	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/firefly"
-)
+import "go.thethings.network/lorawan-stack/v3/pkg/errors"
 
-const sourceName = "firefly"
-
-// Command represents the firefly source.
-var Command = commands.Source(sourceName,
-	"Export devices from Digimondo's Firefly",
+var (
+	errNoAppID           = errors.DefineInvalidArgument("no_app_id", "no app id")
+	errNoFrequencyPlanID = errors.DefineInvalidArgument("no_frequency_plan_id", "no frequency plan ID")
 )
