@@ -441,7 +441,8 @@ $ export APP_ID="my-app"                    # Application ID for the exported de
 $ export FREQUENCY_PLAN_ID="EU_863_870"     # Frequency Plan ID for the exported devices
 ```
 
-> Important: AWS IoT does not provide a way to export session information.
+> Important: AWS IoT does not provide a way to export session information. Therefore OTAA devices needs to rejoin after the import.
+> For more details please check the [AWS IoT API documentation](https://docs.aws.amazon.com/iot-wireless/2020-11-22/apireference/API_GetWirelessDevice.html)
 
 ### Notes
 
