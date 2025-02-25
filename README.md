@@ -432,7 +432,7 @@ $ ttn-lw-migrate wanesy application --all
 
 ### Configuration
 
-> Note: `awsiot` source using the Shared AWS Configuration (~/.aws/config) file. To setup this configuration file please check out the [AWS SDK documentation](https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html)
+> Note: `awsiot` source uses the Shared AWS Configuration (~/.aws/config) file. To setup this configuration file please check out the [AWS SDK documentation](https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html)
 
 Configure with environment variables, or command-line arguments. See `--help` for more details:
 
@@ -441,7 +441,7 @@ $ export APP_ID="my-app"                    # Application ID for the exported de
 $ export FREQUENCY_PLAN_ID="EU_863_870"     # Frequency Plan ID for the exported devices
 ```
 
-> Important: AWS IoT does not provide a way to export session information. Therefore OTAA devices needs to rejoin after the import.
+> Important: AWS IoT does not provide a way to export session information. Therefore OTAA devices needs to rejoin after the import. For ABP devices is not possible to import the session counters (**FCntUp** and **FCntDown**).
 > For more details please check the [AWS IoT API documentation](https://docs.aws.amazon.com/iot-wireless/2020-11-22/apireference/API_GetWirelessDevice.html)
 
 ### Notes

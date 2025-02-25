@@ -159,7 +159,7 @@ func (s Source) RangeDevices(appID string, f func(source.Source, string) error) 
 	return nil
 }
 
-// Close implements the Source interface.
+// Close implements the source.Source interface.
 func (s Source) Close() error {
 	return nil
 }
