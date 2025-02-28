@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package firefly
+package awsiot
 
 import (
 	"go.thethings.network/lorawan-stack-migrate/pkg/commands"
-	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/firefly"
+	_ "go.thethings.network/lorawan-stack-migrate/pkg/source/awsiot"
 )
 
-const sourceName = "firefly"
+const sourceName = "awsiot"
 
-// Command represents the firefly source.
+// Command represents the awsiot source.
 var Command = commands.Source(sourceName,
-	"Export devices from Digimondo's Firefly",
+	"Export devices from AWS IoT",
+	commands.WithSourceOptions(
+		commands.WithAliases([]string{"aws-iot"}),
+	),
 )

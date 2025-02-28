@@ -11,10 +11,12 @@ Binaries are available on [GitHub](https://github.com/TheThingsNetwork/lorawan-s
 ## Support
 
 - [x] The Things Network Stack V2
-- [x] [ChirpStack Network Server v4](https://www.chirpstack.io/)
 - [x] [ChirpStack Network Server v3](https://www.chirpstack.io/docs/v3-documentation.html) (only versions `v0.11.x`).
+- [x] [ChirpStack Network Server v4](https://www.chirpstack.io/)
 - [x] [The Things Stack](https://www.github.com/TheThingsNetwork/lorawan-stack/)
 - [x] [Firefly](https://fireflyiot.com/)
+- [x] [Wanesy](https://www.kerlink.com/)
+- [x] [AWS IoT](https://aws.amazon.com/iot-core/)
 - [ ] [LORIOT Network Server](https://www.loriot.io/)
 
 Support for different sources is done by creating Source plugins. List available sources with:
@@ -192,7 +194,7 @@ $ export CHIRPSTACK_API_URL="localhost:8080"    # ChirpStack Application Server 
 $ export CHIRPSTACK_API_KEY="eyJ0eX........"    # Generate from ChirpStack GUI
 $ export JOIN_EUI="0101010102020203"            # JoinEUI for exported devices
 $ export FREQUENCY_PLAN_ID="EU_863_870"         # Frequency Plan for exported devices
-$ export CHIRPSTACK_EXPORT_SESSION="true"       # Set to true for session migration.
+$ export CHIRPSTACK_EXPORT_SESSION="true"       # Set to true for session migration
 ```
 
 See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for the list of frequency plans available on The Things Stack. For example, to use `United States 902-928 MHz, FSB 1`, you need to specify the `US_902_928_FSB_1` frequency plan ID.
@@ -211,7 +213,7 @@ See [Frequency Plans](https://thethingsstack.io/reference/frequency-plans/) for 
 
 To export a single device using its DevEUI (e.g. `0102030405060708`):
 
-```
+```bash
 $ ttn-lw-migrate chirpstack device '0102030405060708' > devices.json
 ```
 
@@ -426,9 +428,60 @@ In order to export all devices from the CSV file, use the `application` command.
 $ ttn-lw-migrate wanesy application --all
 ```
 
+## AWS IoT
+
+### Configuration
+
+> Note: `awsiot` source uses the Shared AWS Configuration (~/.aws/config) file. To setup this configuration file please check out the [AWS SDK documentation](https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html)
+
+Configure with environment variables, or command-line arguments. See `--help` for more details:
+
+```bash
+$ export APP_ID="my-app"                    # Application ID for the exported devices
+$ export FREQUENCY_PLAN_ID="EU_863_870"     # Frequency Plan ID for the exported devices
+```
+
+> Important: AWS IoT does not provide a way to export session information. Therefore OTAA devices needs to rejoin after the import. For ABP devices is not possible to import the session counters (**FCntUp** and **FCntDown**).
+> For more details please check the [AWS IoT API documentation](https://docs.aws.amazon.com/iot-wireless/2020-11-22/apireference/API_GetWirelessDevice.html)
+
+### Notes
+
+- The export process will halt if any error occurs.
+- Execute commands with the `--dry-run` flag to verify whether the outcome will be as expected.
+
+### Export Device
+
+To export a single device using its Device ID (e.g. `f198fd57-e52d-49fd-bcec-5b5494748469`):
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate awsiot device 'f198fd57-e52d-49fd-bcec-5b5494748469' --dry-run --verbose > devices.json
+# export device
+$ ttn-lw-migrate awsiot device 'f198fd57-e52d-49fd-bcec-5b5494748469' > devices.json
+```
+
+In order to export a large number of devices, create a file named `device_ids.txt` with one device ID per line:
+
+```
+f198fd57-e52d-49fd-bcec-5b5494748469
+3b4c29ea-6c2f-4d2a-a2b4-494a6c0fc33b
+393306e1-73f8-42c5-b593-21eb64a3bf0b
+bed4284c-ebaf-4a34-970b-2ff1d0008daf
+c5b08612-af8b-41cf-80fa-da3d861ed81c
+```
+
+And then export with:
+
+```bash
+# dry run first, verify that no errors occur
+$ ttn-lw-migrate awsiot device --dry-run --verbose < device_ids.txt > devices.json
+# export devices
+$ ttn-lw-migrate awsiot device < device_ids.txt > devices.json
+```
+
 ## Development Environment
 
-Requires Go version 1.16 or higher. [Download Go](https://golang.org/dl/).
+Requires Go version 1.23 or higher. [Download Go](https://golang.org/dl/).
 
 ### Building from source
 

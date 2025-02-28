@@ -1,4 +1,4 @@
-// Copyright © 2023 The Things Network Foundation, The Things Industries B.V.
+// Copyright © 2024 The Things Network Foundation, The Things Industries B.V.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,5 +21,5 @@ import (
 
 const sourceName = "ttnv2"
 
-// TTNv2Cmd represents the ttnv2 source.
-var TTNv2Cmd = commands.Source(sourceName, "Export devices from TTN V2")
+// Command represents the ttnv2 source.
+var Command = commands.Source(sourceName, "Export devices from TTN V2")
