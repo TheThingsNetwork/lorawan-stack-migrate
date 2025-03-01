@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.32.5
 	github.com/aws/aws-sdk-go-v2/config v1.28.5
 	github.com/aws/aws-sdk-go-v2/service/iotwireless v1.44.2
-	github.com/chirpstack/chirpstack/api/go/v4 v4.11.0
+	github.com/chirpstack/chirpstack/api/go/v4 v4.11.1
 	github.com/mdempsky/unconvert v0.0.0-20230125054757-2661c2c99a9b
 	github.com/mgechev/revive v1.6.0
 	github.com/smarty/assertions v1.16.0
