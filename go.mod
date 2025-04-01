@@ -2,6 +2,8 @@ module go.thethings.network/lorawan-stack-migrate
 
 go 1.23.3
 
+toolchain go1.24.1
+
 require (
 	github.com/TheThingsNetwork/go-app-sdk v0.0.0-20191121100818-5bae20ae2b27
 	github.com/TheThingsNetwork/go-utils v0.0.0-20200807125606-b3493662e4bf
@@ -14,7 +16,7 @@ require (
 	github.com/mdempsky/unconvert v0.0.0-20230125054757-2661c2c99a9b
 	github.com/mgechev/revive v1.7.0
 	github.com/smarty/assertions v1.16.0
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
 	go.thethings.network/lorawan-stack/v3 v3.33.1
 	go.uber.org/zap v1.27.0
