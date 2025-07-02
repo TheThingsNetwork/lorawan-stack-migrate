@@ -14,7 +14,7 @@ on:
 jobs:
   quality:
     name: Go Code Quality
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - name: Check out Code
       uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
 
   test:
     name: Go Tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - name: Check out Code
       uses: actions/checkout@v4
