@@ -20,3 +20,6 @@
 
 # macOS related
 *.DS_store
+
+# Go
+**/vendor/*
