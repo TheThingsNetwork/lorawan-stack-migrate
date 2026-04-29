@@ -113,7 +113,10 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 }
 
 // Iterator implements source.Source.
-func (s Source) Iterator(bool) iterator.Iterator {
+func (s Source) Iterator(isApplication bool) iterator.Iterator {
+	if isApplication && s.config.AppID != "" {
+		return iterator.NewListIterator([]string{s.config.AppID})
+	}
 	return iterator.NewReaderIterator(os.Stdin, '\n')
 }
 
