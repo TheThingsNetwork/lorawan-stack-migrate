@@ -73,9 +73,14 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 	if err := validateDeviceIds(dev.Ids, res.Ids); err != nil {
 		return nil, err
 	}
-	paths := ttnpb.AddFields(nsPaths, ttnpb.AddFields(asPaths, ttnpb.AddFields(jsPaths, "ids.dev_addr")...)...)
+	paths := ttnpb.AddFields(nsPaths, ttnpb.AddFields(asPaths, jsPaths...)...)
 	if err := dev.SetFields(res, paths...); err != nil {
 		return nil, err
+	}
+	// Clear ids.dev_addr (denormalized session state) so the export can be
+	// re-imported via the CLI; session.dev_addr remains the source of truth.
+	if dev.Ids != nil {
+		dev.Ids.DevAddr = nil
 	}
 	// Clear all "{server}_address" fields from exported device
 	if err := dev.SetFields(nil, "application_server_address", "join_server_address", "network_server_address"); err != nil {
@@ -108,7 +113,10 @@ func (s Source) ExportDevice(devID string) (*ttnpb.EndDevice, error) {
 }
 
 // Iterator implements source.Source.
-func (s Source) Iterator(bool) iterator.Iterator {
+func (s Source) Iterator(isApplication bool) iterator.Iterator {
+	if isApplication && s.config.AppID != "" {
+		return iterator.NewListIterator([]string{s.config.AppID})
+	}
 	return iterator.NewReaderIterator(os.Stdin, '\n')
 }
 

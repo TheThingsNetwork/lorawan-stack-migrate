@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- Strip ids.dev_addr from exported devices
+
 ## [v0.12.0] (2024-03-13)
 
 ### Added
@@ -145,6 +147,3 @@ NOTE: These links should respect backports. See https://github.com/TheThingsNetw
 -->
 
 [unreleased]: https://github.com/TheThingsNetwork/lorawan-stack-migrate/v0.7.0...master
-[0.7.0]: https://github.com/TheThingsNetwork/lorawan-stack-migrate/compare/v0.6.0...v0.7.0
-[0.6.0]: https://github.com/TheThingsNetwork/lorawan-stack-migrate/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/TheThingsNetwork/lorawan-stack-migrate/compare/v0.4.0...v0.5.0
