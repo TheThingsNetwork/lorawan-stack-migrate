@@ -1,7 +1,9 @@
+version: 2
+
 project_name: lorawan-stack-migrate
 
 changelog:
-  skip: true
+  disable: true
 
 release:
   prerelease: auto
@@ -37,7 +39,7 @@ builds:
 archives:
   - id: ttn-lw-migrate
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    builds:
+    ids:
       - ttn-lw-migrate
     files:
       - LICENSE
@@ -45,11 +47,12 @@ archives:
     wrap_in_directory: true
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
 
 nfpms:
   - id: ttn-lw-migrate
-    builds:
+    ids:
       - ttn-lw-migrate
     vendor: The Things Network
     homepage: https://www.thethingsnetwork.org
@@ -64,7 +67,7 @@ nfpms:
 
 snapcrafts:
   - id: ttn-lw-migrate
-    builds:
+    ids:
       - ttn-lw-migrate
     name: ttn-lw-migrate
     summary: Migrate from other LoRaWAN network servers to The Things Stack
@@ -81,7 +84,7 @@ brews:
   - name: ttn-lw-migrate
     ids:
       - ttn-lw-migrate
-    tap:
+    repository:
       owner: TheThingsNetwork
       name: homebrew-lorawan-stack
     commit_author:
