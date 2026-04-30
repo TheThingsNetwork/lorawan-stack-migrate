@@ -3,47 +3,47 @@ name: Tag release
 on:
   push:
     tags:
-      - 'v[0-9].[0-9]+.[0-9]+'
-      - 'v[0-9].[0-9]+.[0-9]+-rc[0-9]'
+      - "v[0-9].[0-9]+.[0-9]+"
+      - "v[0-9].[0-9]+.[0-9]+-rc[0-9]"
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v6
-    - name: Install Snapcraft
-      run: sudo apt-get -yq --no-install-suggests --no-install-recommends install snapcraft
-    - name: Create Snapcraft folders
-      run: |
-        mkdir -p $HOME/.cache/snapcraft/download
-        mkdir -p $HOME/.cache/snapcraft/stage-packages
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '~1.24'
-    - name: Download Go dependencies
-      run: go mod download
-    - name: Check for diff
-      run: make git.diff
-    - name: Determine date
-      id: date
-      run: echo "value=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
-    - name: Generate CHANGELOG reference
-      uses: actions/github-script@v8
-      id: changelog_reference
-      with:
-        result-encoding: string
-        script: |
-          const tag = context.ref.slice('refs/rev/v'.length);
-          const tagParts = tag.split('.');
-          require('fs').writeFileSync('/tmp/release-notes.md', `[Release notes](https://github.com/TheThingsNetwork/lorawan-stack-migrate/blob/${tag}/CHANGELOG.md#${tagParts[0]}${tagParts[1]}${tagParts[2]}---${{ steps.date.outputs.value }})`);
-    - name: Run Goreleaser
-      uses: goreleaser/goreleaser-action@v5
-      with:
-        version: 'v1.18.2'
-        args: release --release-notes /tmp/release-notes.md
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN }}
+      - name: Check out code
+        uses: actions/checkout@v6
+      - name: Install Snapcraft
+        run: sudo snap install snapcraft --classic
+      - name: Create Snapcraft folders
+        run: |
+          mkdir -p $HOME/.cache/snapcraft/download
+          mkdir -p $HOME/.cache/snapcraft/stage-packages
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Download Go dependencies
+        run: go mod download
+      - name: Check for diff
+        run: make git.diff
+      - name: Determine date
+        id: date
+        run: echo "value=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
+      - name: Generate CHANGELOG reference
+        uses: actions/github-script@v8
+        id: changelog_reference
+        with:
+          result-encoding: string
+          script: |
+            const tag = context.ref.slice('refs/rev/v'.length);
+            const tagParts = tag.split('.');
+            require('fs').writeFileSync('/tmp/release-notes.md', `[Release notes](https://github.com/TheThingsNetwork/lorawan-stack-migrate/blob/${tag}/CHANGELOG.md#${tagParts[0]}${tagParts[1]}${tagParts[2]}---${{ steps.date.outputs.value }})`);
+      - name: Run Goreleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: "v1.18.2"
+          args: release --release-notes /tmp/release-notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_LOGIN }}
