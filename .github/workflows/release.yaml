@@ -31,7 +31,7 @@ jobs:
       id: date
       run: echo "value=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
     - name: Generate CHANGELOG reference
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       id: changelog_reference
       with:
         result-encoding: string
